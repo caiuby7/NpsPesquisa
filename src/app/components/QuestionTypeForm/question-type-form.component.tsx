@@ -5,11 +5,9 @@ import {
     Input,
     Text,
     Textarea,
-
-    Stack,
-    Button,
   } from "@chakra-ui/react";
-  import { UseFormRegister, Control, useFieldArray } from "react-hook-form";
+  import { UseFormRegister, Control } from "react-hook-form";
+import MultipleChoiceQuestion from "../MultipleChoiceQuestion/multiple-choice-question.component";
   
   interface Props {
     type: string;
@@ -19,31 +17,11 @@ import {
   }
   
   export function QuestionTypeForm({ type, index, register, control }: Props) {
-    const { fields, append, remove } = useFieldArray({
-      name: `questions.${index}.options`,
-      control,
-    });
-  
     if (type === "multiple_choice" || type === "dropdown" || type === "worst_best") {
       return (
         <Box>
           <Text>Opções:</Text>
-          <Stack>
-            {fields.map((field, optIdx) => (
-              <Stack key={field.id} direction="row">
-                <Input
-                  placeholder={`Opção ${optIdx + 1}`}
-                  {...register(`questions.${index}.options.${optIdx}.label`)}
-                />
-                <Button colorScheme="red" onClick={() => remove(optIdx)}>
-                  Remover
-                </Button>
-              </Stack>
-            ))}
-          </Stack>
-          <Button mt={2} onClick={() => append({ label: "" })}>
-            Adicionar opção
-          </Button>
+          <MultipleChoiceQuestion register={register} control={control} element={index} />
         </Box>
       );
     }

@@ -18,7 +18,7 @@ export default function FormBuilderPage() {
   const { control, register, handleSubmit, watch } = useForm({
     defaultValues: {
       questions: [
-        { title: "", type: "text_box", options: [] }, // valor inicial
+        { title: "", type: ["text_box"], options: [] }, // valor inicial
       ],
     },
   });
@@ -37,9 +37,10 @@ export default function FormBuilderPage() {
     console.log("Form data:", data);
   };
 
+  console.log(questions)
   return (
     <Box p={8}>
-      <Button variant="outline" onClick={toggleColorMode} alignSelf="end" mb="12px">  
+      <Button variant="outline" onClick={toggleColorMode} alignSelf="end" mb="12px">
         Toggle Mode
       </Button>
       <Heading mb={6}>Criar Formulário</Heading>
@@ -57,21 +58,15 @@ export default function FormBuilderPage() {
                       {...register(`questions.${index}.title`)}
                     />
                   </Box>
-
-
-                  <CustomSelect />
+                  <CustomSelect control={control} element={index} register={register} />
                 </Flex>
-
-
                 {/* Renderiza o tipo específico de componente para a questão */}
                 <QuestionTypeForm
-                  type={questions[index]?.type}
+                  type={questions[index]?.type[0]}
                   index={index}
                   register={register}
                   control={control}
                 />
-
-
               </Stack>
             </Box>
           ))}
