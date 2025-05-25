@@ -21,22 +21,20 @@ import {
     Input,
     VStack
 } from '@chakra-ui/react';
-import { useFieldArray } from 'react-hook-form';
+import { Control, useFieldArray, UseFormRegister } from 'react-hook-form';
 import { FiTrash } from 'react-icons/fi';
+import { FormSchemaType } from '@/app/features/create-question/useCreateQuestionForm';
 
-type Option = {
-    id: string;
-    label: string;
-    correct: boolean;
-};
 
-export default function MultipleChoiceQuestion({ register, control, element }: { register: any, control: any, element: number }) {
-    const { fields, append, remove, move } = useFieldArray({
-        name: `questions.${element}.options`,
+export default function MultipleChoiceQuestion({ register, control, isMultipleChoice }: {
+    register: UseFormRegister<FormSchemaType>;
+    control: Control<FormSchemaType>;
+    isMultipleChoice: boolean
+}) {
+    const { fields, append, remove, move } = useFieldArray<FormSchemaType>({
+        name: `options`,
         control,
     });
-
-    console.log(fields)
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -52,12 +50,9 @@ export default function MultipleChoiceQuestion({ register, control, element }: {
                     sensors={sensors}
                     collisionDetection={closestCenter}
                     onDragEnd={({ active, over }) => {
-                        console.log(active.id, over?.id)
                         if (active.id !== over?.id) {
                             const oldIndex = fields.findIndex(f => f.id === active.id);
                             const newIndex = fields.findIndex(f => f.id === over?.id);
-                            console.log(oldIndex, "old")
-                            console.log(newIndex, "newIndex")
                             move(oldIndex, newIndex);
                         }
                     }}
@@ -68,13 +63,13 @@ export default function MultipleChoiceQuestion({ register, control, element }: {
                     >
                         {fields.map((field, index) => (
                             <SortableItem
+                                isMultipleChoice={isMultipleChoice}
                                 key={field.id}
                                 id={field.id}
                                 index={index}
                                 register={register}
-                                name={`${name}.options.${index}`}
+                                name={`options.${index}`}
                                 remove={() => remove(index)}
-                                element={element}
                             />
                         ))}
                     </SortableContext>
@@ -84,7 +79,7 @@ export default function MultipleChoiceQuestion({ register, control, element }: {
                     <button
                         type="button"
                         onClick={() =>
-                            append({ id: crypto.randomUUID(), label: '', correct: false })
+                            append({ idOpcao: crypto.randomUUID(), texto: '', ordem: fields.length + 1, peso: 1 })
                         }
                     >
                         + Adicionar opção
@@ -98,17 +93,16 @@ export default function MultipleChoiceQuestion({ register, control, element }: {
 function SortableItem({
     id,
     index,
-    name,
     register,
     remove,
-    element
+    isMultipleChoice
 }: {
     id: string;
     index: number;
     name: string;
-    register: any;
+    register: UseFormRegister<FormSchemaType>;
     remove: () => void;
-    element: number;
+    isMultipleChoice: boolean
 }) {
     const {
         attributes,
@@ -135,16 +129,20 @@ function SortableItem({
             <Box {...listeners} cursor="grab">
                 <TfiAlignJustify />
             </Box>
-            <Checkbox.Root {...register(`${name}.correct`)} disabled>
-                <Checkbox.HiddenInput />
-                <Checkbox.Control>
-                    <Checkbox.Indicator />
-                </Checkbox.Control>
-                <Checkbox.Label />
-            </Checkbox.Root>
+            
+            {isMultipleChoice && (
+                <Checkbox.Root disabled>
+                    <Checkbox.HiddenInput />
+                    <Checkbox.Control>
+                        <Checkbox.Indicator />
+                    </Checkbox.Control>
+                    <Checkbox.Label />
+                </Checkbox.Root>
+            )}
+
             <Input
                 placeholder={`Opção ${index + 1}`}
-                {...register(`questions.${element}.options.${index}.label`)}
+                {...register(`options.${index}.texto`)}
             />
             <button
                 type="button"

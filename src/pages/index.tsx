@@ -1,88 +1,33 @@
 // pages/form-builder.tsx
-import {
-  Box,
-  Button,
-  Input,
-  Stack,
-  Heading,
-  Flex,
-} from "@chakra-ui/react";
-import { useForm, useFieldArray } from "react-hook-form";
-import { QuestionTypeForm } from "../app/components/QuestionTypeForm/question-type-form.component";
-import { useColorMode } from "@/components/ui/color-mode";
-import { CustomSelect } from "@/app/components/Select/select.component";
-/*
+import { Box, Heading } from "@chakra-ui/react";
+import CreateQuestion from "@/app/features/create-question/create-question.component";
+import { EscalaLinear } from "@/app/components/execution/LinearScale/linear-scale.component";
+import { MatrixQuestion } from "@/app/components/execution/ArrayQuestion/array-question.component";
 
-*/
 export default function FormBuilderPage() {
-  const { control, register, handleSubmit, watch } = useForm({
-    defaultValues: {
-      questions: [
-        { title: "", type: ["text_box"], options: [] }, // valor inicial
-      ],
-    },
-  });
-
-  const { toggleColorMode } = useColorMode()
-
-  const { fields, append } = useFieldArray({
-    control,
-    name: "questions",
-  });
-
-  const questions = watch("questions");
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const onSubmit = (data: any) => {
-    console.log("Form data:", data);
-  };
-
-  console.log(questions)
   return (
     <Box p={8}>
-      <Button variant="outline" onClick={toggleColorMode} alignSelf="end" mb="12px">
-        Toggle Mode
-      </Button>
-      <Heading mb={6}>Criar Formulário</Heading>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <Stack>
-          {fields.map((field, index) => (
-            <Box key={field.id} borderWidth="1px" p={4} borderRadius="md">
-              <Stack>
-                <Flex d="row" gap={8}>
-                  <Box w="100%">
-                    <label>Título da questão</label>
-                    <Input
-                      title="Título da questão"
-                      placeholder="Título da questão"
-                      {...register(`questions.${index}.title`)}
-                    />
-                  </Box>
-                  <CustomSelect control={control} element={index} register={register} />
-                </Flex>
-                {/* Renderiza o tipo específico de componente para a questão */}
-                <QuestionTypeForm
-                  type={questions[index]?.type[0]}
-                  index={index}
-                  register={register}
-                  control={control}
-                />
-              </Stack>
-            </Box>
-          ))}
-          <Button
-            onClick={() =>
-              append({ title: "", type: "text_box", options: [] })
-            }
-          >
-            Adicionar questão
-          </Button>
-        </Stack>
-
-        <Button mt={8} colorScheme="blue" type="submit">
-          Salvar formulário
-        </Button>
-      </form>
+      <Heading mb={6}>Criar Questão</Heading>
+      <CreateQuestion />
+      <EscalaLinear
+        min={0}
+        max={10}
+        minLabel={"Ruim"}
+        maxLabel={"Bom"}
+        value={""}
+        onChange={console.log}
+      />
+      <MatrixQuestion
+        texto="Como você avalia os seguintes aspectos?"
+        opcoes={[
+          { idOpcao: "linha1", texto: "Linha 1", ordem: 1, peso: 1 },
+          { idOpcao: "linha2", texto: "Linha 2", ordem: 2, peso: 1 },
+        ]}
+        colunas={[
+          { idOpcao: "col1", texto: "Coluna 1", ordem: 1, peso: 1 },
+          { idOpcao: "col2", texto: "Coluna 2", ordem: 2, peso: 1 },
+        ]}
+      />
     </Box>
   );
 }
