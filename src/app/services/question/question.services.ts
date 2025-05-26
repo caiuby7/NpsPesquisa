@@ -1,4 +1,4 @@
-import { QuestionPostParams } from "./"
+import { QuestionPostParams } from "."
 
 export const QuestionService = {
   post: async (payload: QuestionPostParams): Promise<void> => {

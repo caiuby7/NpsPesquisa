@@ -1,24 +1,24 @@
-import { Box, Checkbox, VStack } from "@chakra-ui/react";
+import { Box, Checkbox, VStack, Text } from "@chakra-ui/react";
 import { Control, useFieldArray, UseFormRegister } from "react-hook-form";
 
 import { FormSchemaType } from "@/app/features/create-question/useCreateQuestionForm";
+import { QuestionResponse } from "@/app/services/form";
 
 export default function MultipleChoiceQuestion({
   register,
   control,
+  question
 }: {
   register: UseFormRegister<FormSchemaType>;
   control: Control<FormSchemaType>;
+  question: QuestionResponse
 }) {
-  const { fields } = useFieldArray<FormSchemaType>({
-    name: `options`,
-    control,
-  });
-
+  console.log(question)
   return (
-    <Box mt={4} p={2} borderWidth="1px" borderRadius="md">
+    <Box p={2} borderRadius="md">
+      <Text mb={4} fontWeight="bold" textAlign="left">{question.texto}</Text>
       <VStack align="stretch">
-        {fields.map((field, index) => (
+        {question?.opcoes?.map((field, index) => (
           <Checkbox.Root
             key={field.idOpcao}
             {...register(`opcoes.${index}.idOpcao`)}

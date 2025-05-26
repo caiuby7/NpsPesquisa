@@ -33,7 +33,7 @@ import {
 } from "react-hook-form";
 import { FiTrash } from "react-icons/fi";
 import { FormSchemaType } from "@/app/features/create-question/useCreateQuestionForm";
-import { OptionItem } from "@/app/services/question";
+import { OptionItem } from "@/app/services/form";
 
 export default function DualSortableFieldArray({
   register,

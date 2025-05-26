@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query"
-import { QuestionPostParams, QuestionService } from "./"
+import { QuestionPostParams, QuestionService } from "."
 
 const QUESTION_POST_KEY = "question-post-key"
 

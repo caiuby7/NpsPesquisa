@@ -7,7 +7,7 @@ import { UseFormRegister, Control, UseFormGetValues, UseFormSetValue, } from "re
 import MultipleChoiceQuestion from "../MultipleChoiceQuestion/multiple-choice-question.component";
 import SortableFieldArray from "../ArrayQuestion/array-question.component";
 import RatingLabelsEditorForm from "../LinearScale/linear-scale.component";
-import { QuestionType, QuestionTypeEnum } from "@/app/services/question";
+import { QuestionType, QuestionTypeEnum } from "@/app/services/form";
 import { FormSchemaType } from "@/app/features/create-question/useCreateQuestionForm";
 
 interface Props {

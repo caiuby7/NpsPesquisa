@@ -41,8 +41,8 @@ export const MatrixQuestion: React.FC<MatrixQuestionProps> = ({
   };
 
   return (
-    <Box borderRadius="md" p={4} w="100%" borderWidth="1px" mt="24px">
-      <Text mb={4} fontWeight="bold">
+    <Box borderRadius="md" p={4} w="100%">
+      <Text mb={4} fontWeight="bold" textAlign="left">
         {texto}
       </Text>
 

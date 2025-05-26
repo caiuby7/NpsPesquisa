@@ -1,6 +1,6 @@
 import { Box, Button, Flex, Input, Stack } from "@chakra-ui/react";
 import { QuestionTypeForm } from "@/app/components/create/QuestionTypeForm/question-type-form.component";
-import { useQuestionPostMutate } from "@/app/services/question/question.service.hooks";
+import { useQuestionPostMutate } from "@/app/services/question";
 import {
     QuestionPostParams,
     QUESTIONS_TYPES,

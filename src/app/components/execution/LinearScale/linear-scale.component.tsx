@@ -29,8 +29,6 @@ export const EscalaLinear: React.FC<EscalaLinearProps> = ({
     <Box
       borderRadius="md"
       p={4}
-      borderWidth="1px"
-      mt="24px"
       textAlign="center"
       w="100%"
     >
