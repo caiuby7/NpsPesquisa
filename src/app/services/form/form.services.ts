@@ -2,8 +2,8 @@ import { FormGetParams, FormResponse } from ".";
 
 export const FormServices = {
   get: async (payload: FormGetParams): Promise<FormResponse> => {
-    const BASE_PATH = "api/questionario";
-
+    //const BASE_PATH = "api/questionario";
+    console.log(payload)
     return {
       titulo: "Pesquisa de Satisfação",
       dataExpiracao: "2024-12-31T23:59:59Z",
@@ -106,6 +106,6 @@ export const FormServices = {
       ],
     };
 
-    return (await HTTP.post(BASE_PATH, payload)).data;
+    //return (await HTTP.post(BASE_PATH, payload)).data;
   },
 };

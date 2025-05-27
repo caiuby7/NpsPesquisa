@@ -18,7 +18,7 @@ export default function HomePage() {
       <Heading mb={4}>Painel Administrativo</Heading>
       <Text mb={6}>Escolha uma ação abaixo:</Text>
 
-      <VStack spacing={4}>
+      <VStack >
         <Button
           size="lg"
           colorScheme="teal"

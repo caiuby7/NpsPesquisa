@@ -19,7 +19,7 @@ export default function RatingLabelsEditorForm({
 
   return (
     <Box p={4} as="form">
-      <HStack spacing={4} mb={4}>
+      <HStack  mb={4}>
         <CustomSelect
           control={control}
           register={register}
@@ -35,7 +35,7 @@ export default function RatingLabelsEditorForm({
         />
       </HStack>
 
-      <VStack align="stretch" spacing={4}>
+      <VStack align="stretch" >
         <Flex align="center" gap={2}>
           <Text width="20px">{minValue}</Text>
           <Input

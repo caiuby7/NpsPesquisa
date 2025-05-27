@@ -7,7 +7,7 @@ import {
   Stack,
   RadioGroup,
 } from "@chakra-ui/react";
-import { useState } from "react";
+//import { useState } from "react";
 
 interface Option {
   idOpcao: string;
@@ -27,17 +27,21 @@ export const MatrixQuestion: React.FC<MatrixQuestionProps> = ({
   opcoes,
   colunas,
 }) => {
-  const [respostas, setRespostas] = useState<Record<string, string>>({});
+  //const [setRespostas] = useState<Record<string, string>>({});
 
   const handleChange = (linhaId: string, colunaId: string) => {
-    setRespostas((prev) => ({
+    console.log(linhaId, colunaId)
+    /*
+        setRespostas((prev) => ({
       ...prev,
       [linhaId]: colunaId,
     }));
+    */
+
   };
 
   const limparSelecao = () => {
-    setRespostas({});
+    //setRespostas({});
   };
 
   return (
@@ -46,7 +50,7 @@ export const MatrixQuestion: React.FC<MatrixQuestionProps> = ({
         {texto}
       </Text>
 
-      <VStack spacing={2} w="100%">
+      <VStack w="100%">
         {/* Cabeçalho */}
         <HStack pl="10%" w="100%" justifyContent="space-around">
           {colunas.map((coluna) => (
@@ -90,7 +94,7 @@ export const MatrixQuestion: React.FC<MatrixQuestionProps> = ({
       </VStack>
 
       <Stack mt={4} direction="row" justify="flex-end">
-        <Button variant="link" color="gray.600" onClick={limparSelecao}>
+        <Button variant="ghost" color="gray.600" onClick={limparSelecao}>
           Limpar seleção
         </Button>
       </Stack>

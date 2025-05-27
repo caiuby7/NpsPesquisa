@@ -6,7 +6,7 @@ import { QuestionTypeExecution } from "@/app/features/execution/QuestionTypeExec
 
 export default function CreateForm() {
   const { data } = useGetForm({ id: "" });
-  const { control, register, handleSubmit, setValue, getValues, watch } =
+  const { control, register, handleSubmit, setValue, getValues } =
     useCreateQuestionForm();
 
   if (!data) return;
@@ -16,7 +16,7 @@ export default function CreateForm() {
       <Heading mb={8}>{data.titulo}</Heading>
       <form onSubmit={handleSubmit(console.log)}>
         <Stack>
-          {data?.questoes.map((question, index) => (
+          {data?.questoes.map((question) => (
             <Box key={question.tipo} borderWidth="1px" p={4} borderRadius="md">
               <Stack>
                 <QuestionTypeExecution

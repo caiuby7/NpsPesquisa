@@ -29,8 +29,6 @@ export function QuestionTypeExecution({
   type,
   register,
   control,
-  getValues,
-  setValue,
   question,
 }: Props) {
   if (

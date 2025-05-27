@@ -1,9 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Box,
   Button,
   ButtonGroup,
   Heading,
-  Icon,
   IconButton,
   Pagination,
   Stack,
@@ -11,13 +11,13 @@ import {
 import { useGetForm } from "@/app/services/form/form.service.hooks";
 
 import { RiArrowRightLine } from "react-icons/ri";
-import { QuestionTypeForm } from "@/app/features/execution/QuestionTypeExecution/question-type-execution.component";
 import { useForm } from "react-hook-form";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
+import { QuestionTypeExecution } from "@/app/features/execution/QuestionTypeExecution/question-type-execution.component";
 
 export default function ExecutionQuestion() {
   const { data } = useGetForm({ id: "" });
-  const { control, setValue, watch, register } = useForm({
+  const { control, setValue, watch, register, getValues } = useForm({
     defaultValues: {
       selectedQuestionIds: [], // seleção múltipla
     },
@@ -31,7 +31,7 @@ export default function ExecutionQuestion() {
       ? selectedIds.filter((i) => i !== id)
       : [...selectedIds, id];
 
-    setValue("selectedQuestionIds", updated);
+    setValue("selectedQuestionIds", updated as never);
   };
 
   console.log(data);
@@ -71,11 +71,13 @@ export default function ExecutionQuestion() {
               onClick={() => toggleSelection(question.id)}
             >
               <Stack>
-                <QuestionTypeForm
+                <QuestionTypeExecution
                   type={question.tipo}
-                  register={register}
                   question={question}
-                  control={control}
+                  control={control as any}
+                  register={register as any}
+                  setValue={setValue as any}
+                  getValues={getValues as any}
                 />
               </Stack>
             </Box>

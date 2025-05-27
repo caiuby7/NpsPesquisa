@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import { Portal, Select, createListCollection } from "@chakra-ui/react"
@@ -35,7 +36,7 @@ export const CustomSelect = ({ control, items, label, placeholder, name }: any) 
           <Portal>
             <Select.Positioner>
               <Select.Content>
-                {frameworks.items.map((framework) => (
+                {frameworks.items.map((framework: any) => (
                   <Select.Item item={framework} key={framework.value}>
                     {framework.label}
                     <Select.ItemIndicator />

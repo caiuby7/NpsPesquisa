@@ -32,8 +32,8 @@ import {
   UseFormSetValue,
 } from "react-hook-form";
 import { FiTrash } from "react-icons/fi";
-import { FormSchemaType } from "@/app/features/create-question/useCreateQuestionForm";
 import { OptionItem } from "@/app/services/form";
+import { FormSchemaType } from "@/app/widgets/create-question/useCreateQuestionForm";
 
 export default function DualSortableFieldArray({
   register,
@@ -61,7 +61,8 @@ export default function DualSortableFieldArray({
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { active, over } = event as any;
     if (!over || active.id === over.id) return;
 
     const sourceName = findList(active.idOpcao);
@@ -87,7 +88,7 @@ export default function DualSortableFieldArray({
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
     >
-      <HStack align="start" spacing={8} p={4} w="100%">
+      <HStack align="start"  p={4} w="100%">
         <SortableFieldArray
           title="Linhas"
           name="opcoes"
@@ -134,10 +135,10 @@ function SortableFieldArray({
         {title}
       </Text>
       <SortableContext
-        items={fields.map((item) => item.id)}
+        items={fields.map((item) => item.idOpcao)}
         strategy={verticalListSortingStrategy}
       >
-        <VStack spacing={2} align="stretch">
+        <VStack  align="stretch">
           {fields.map((field, index) => (
             <SortableItem
               leftLabel={

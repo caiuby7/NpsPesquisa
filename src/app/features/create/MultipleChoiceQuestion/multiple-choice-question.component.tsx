@@ -23,7 +23,7 @@ import {
 } from '@chakra-ui/react';
 import { Control, useFieldArray, UseFormRegister } from 'react-hook-form';
 import { FiTrash } from 'react-icons/fi';
-import { FormSchemaType } from '@/app/features/create-question/useCreateQuestionForm';
+import { FormSchemaType } from '@/app/widgets/create-question/useCreateQuestionForm';
 
 
 export default function MultipleChoiceQuestion({ register, control, isMultipleChoice }: {

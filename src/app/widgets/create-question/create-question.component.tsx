@@ -23,7 +23,7 @@ export default function CreateQuestion() {
         console.log("error");
     };
 
-    const { mutate: questionPost, isPending } = useQuestionPostMutate(
+    const { mutate: questionPost } = useQuestionPostMutate(
         handleMutationSuccess,
         handleMutationError
     );
