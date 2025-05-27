@@ -8,7 +8,8 @@ import MultipleChoiceQuestion from "../MultipleChoiceQuestion/multiple-choice-qu
 import SortableFieldArray from "../ArrayQuestion/array-question.component";
 import RatingLabelsEditorForm from "../LinearScale/linear-scale.component";
 import { QuestionType, QuestionTypeEnum } from "@/app/services/form";
-import { FormSchemaType } from "@/app/features/create-question/useCreateQuestionForm";
+import { FormSchemaType } from "@/app/widgets/create-question/useCreateQuestionForm";
+
 
 interface Props {
   type: QuestionType;

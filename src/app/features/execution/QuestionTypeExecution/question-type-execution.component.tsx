@@ -13,7 +13,8 @@ import {
   QuestionType,
   QuestionTypeEnum,
 } from "@/app/services/form";
-import { FormSchemaType } from "@/app/features/create-question/useCreateQuestionForm";
+import { FormSchemaType } from "@/app/widgets/execution-question/useCreateQuestionForm";
+import MenuExecution from "../Menu/menu.component";
 
 interface Props {
   type: QuestionType;
@@ -24,7 +25,7 @@ interface Props {
   question: QuestionResponse;
 }
 
-export function QuestionTypeForm({
+export function QuestionTypeExecution({
   type,
   register,
   control,
@@ -33,11 +34,22 @@ export function QuestionTypeForm({
   question,
 }: Props) {
   if (
-    type === QuestionTypeEnum.MULTIPLE_CHOICE ||
-    type === QuestionTypeEnum.MENU
+    type === QuestionTypeEnum.MULTIPLE_CHOICE
   ) {
     return (
       <MultipleChoiceQuestion
+        register={register}
+        control={control}
+        question={question}
+      />
+    );
+  }
+
+  if (
+    type === QuestionTypeEnum.MENU
+  ) {
+    return (
+      <MenuExecution
         register={register}
         control={control}
         question={question}

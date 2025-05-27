@@ -1,7 +1,8 @@
+import { CustomSelect } from "@/app/components/Select/select.component";
+import { FormSchemaType } from "@/app/widgets/create-question/useCreateQuestionForm";
 import { Box, Flex, HStack, Input, Text, VStack } from "@chakra-ui/react";
 import { useWatch, UseFormRegister, Control } from "react-hook-form";
-import { CustomSelect } from "../Select/select.component";
-import { FormSchemaType } from "@/app/features/create-question/useCreateQuestionForm";
+
 
 export default function RatingLabelsEditorForm({
   control,

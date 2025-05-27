@@ -10,6 +10,7 @@ export interface OptionItem {
   idOpcao: string;
   ordem: number;
   peso: number;
+  valor?: number;
 }
 
 export const QUESTIONS_TYPES = [

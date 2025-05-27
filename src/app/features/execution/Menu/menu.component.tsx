@@ -1,8 +1,8 @@
 import { Box, Text } from "@chakra-ui/react";
 import { UseFormRegister, Control } from "react-hook-form";
-import { CustomSelect } from "../Select/select.component";
-import { FormSchemaType } from "@/app/features/create-question/useCreateQuestionForm";
 import { QuestionResponse } from "@/app/services/form";
+import { FormSchemaType } from "@/app/widgets/execution-question/useCreateQuestionForm";
+import { CustomSelect } from "@/app/components/Select/select.component";
 
 export default function MenuExecution({
   control,

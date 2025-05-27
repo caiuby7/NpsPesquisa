@@ -1,5 +1,4 @@
-import { Box, Button, Flex, Input, Stack } from "@chakra-ui/react";
-import { QuestionTypeForm } from "@/app/components/create/QuestionTypeForm/question-type-form.component";
+import { Box, Button, Flex, Heading, Input, Stack } from "@chakra-ui/react";
 import { useQuestionPostMutate } from "@/app/services/question";
 import {
     QuestionPostParams,
@@ -8,7 +7,9 @@ import {
     QuestionTypeEnum,
 } from "@/app/services/question";
 import { FormSchemaType, useCreateQuestionForm } from "./useCreateQuestionForm";
-import { CustomSelect } from "@/app/components/create/Select/select.component";
+import { CustomSelect } from "@/app/components/Select/select.component";
+import { QuestionTypeForm } from "@/app/features/create/QuestionTypeForm/question-type-form.component";
+
 
 export default function CreateQuestion() {
     const { control, register, handleSubmit, setValue, getValues, watch } =
@@ -28,9 +29,7 @@ export default function CreateQuestion() {
     );
 
     const type = watch("tipo");
-
-    console.log(type)
-
+    
     const onSubmit = (data: FormSchemaType) => {
         if (data.tipo === QuestionTypeEnum.LINEAR_SCALE) {
             questionPost({
@@ -40,13 +39,15 @@ export default function CreateQuestion() {
                         texto: data.ratingLabels.minLabel,
                         idOpcao: crypto.randomUUID(),
                         peso: 1,
-                        ordem: data.ratingLabels.min,
+                        ordem: 1,
+                        valor: data.ratingLabels.min
                     },
                     {
                         texto: data.ratingLabels.maxLabel,
                         idOpcao: crypto.randomUUID(),
                         peso: 1,
-                        ordem: data.ratingLabels.max,
+                        valor: data.ratingLabels.max,
+                        ordem: 2
                     },
                 ],
             });
@@ -57,7 +58,8 @@ export default function CreateQuestion() {
 
     return (
         <form onSubmit={handleSubmit(onSubmit)}>
-            <Stack>
+            <Stack maxW="720px" m="auto" display="flex" flexDirection="column">
+                <Heading>Criar Questão</Heading>
                 <Box borderWidth="1px" p={4} borderRadius="md">
                     <Stack>
                         <Flex d="row" gap={8}>
@@ -90,11 +92,12 @@ export default function CreateQuestion() {
 
                     </Stack>
                 </Box>
+                <Button mt={8} colorScheme="blue" type="submit">
+                    Salvar questão
+                </Button>
             </Stack>
 
-            <Button mt={8} colorScheme="blue" type="submit">
-                Salvar questão
-            </Button>
+
         </form>
     );
 }

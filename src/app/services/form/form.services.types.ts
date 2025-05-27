@@ -9,6 +9,7 @@ export interface FormResponse {
 }
 
 export interface QuestionResponse {
+  id: string;
   texto: string;
   tipo: QuestionType;
   opcoes?: OptionItem[];
