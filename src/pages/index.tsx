@@ -1,15 +1,5 @@
-// pages/form-builder.tsx
-import CreateQuestion from "@/app/widgets/create-question/create-question.component";
-import ExecutionQuestion from "@/app/widgets/execution-question/execution-question.component";
-import { Box, Heading } from "@chakra-ui/react";
-
-
 export default function FormBuilderPage() {
   return (
-    <Box p={8}>
-      <Heading mb={6}>Criar Questão</Heading>
-      <CreateQuestion />
-      <ExecutionQuestion />
-    </Box>
+    <></>
   );
 }
