@@ -1,5 +1,8 @@
+import { withAuth } from '@/lib/withAuth';
 import { Box, Button, Heading, Text, VStack } from '@chakra-ui/react'
 import { useRouter } from 'next/router'
+
+export const getServerSideProps = withAuth();
 
 export default function HomePage() {
   const router = useRouter()

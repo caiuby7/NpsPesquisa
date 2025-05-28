@@ -1,31 +1,41 @@
 // pages/login.tsx
-import { useForm } from 'react-hook-form'
-import { useRouter } from 'next/router'
+import { useForm } from "react-hook-form";
+import { useRouter } from "next/router";
+import nookies from "nookies";
+import { Box, Button, Input, Heading, Text, Stack } from "@chakra-ui/react";
 import {
-  Box, Button, Input, Heading, Text,
-  Stack
-} from '@chakra-ui/react'
-
-type LoginData = {
-  email: string
-  password: string
-}
+  LoginParams,
+  LoginResponse,
+  useLoginMutate,
+} from "@/app/services/login";
 
 export default function LoginPage() {
-  const { register, handleSubmit } = useForm<LoginData>()
-  const router = useRouter()
+  const handleMutationSuccess = (data: LoginResponse) => {
+    nookies.set(null, "token", data.token, {
+      path: "/",
+      maxAge: 60 * 60 * 24, // 1 dia
+    });
 
-  const onSubmit = async (data: LoginData) => {
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    })
+    router.push("/home");
+  };
 
-    if (res.ok) {
-      router.push('/dashboard')
-    } 
-  }
+  const handleMutationError = () => {
+    console.log("error");
+  };
+
+  const { mutate: login } = useLoginMutate(
+    handleMutationSuccess,
+    handleMutationError
+  );
+
+  const { register, handleSubmit } = useForm<LoginParams>();
+  const router = useRouter();
+
+  const onSubmit = async (data: LoginParams) => {
+    try {
+      login(data);
+    } catch (err) {}
+  };
 
   return (
     <Box maxW="md" mx="auto" mt={20} p={8} borderWidth={1} borderRadius="lg">
@@ -33,16 +43,16 @@ export default function LoginPage() {
       <form onSubmit={handleSubmit(onSubmit)}>
         <Stack mb={4}>
           <Text>Email</Text>
-          <Input type="email" {...register('email')} required />
+          <Input type="email" {...register("email")} required />
         </Stack>
         <Stack mb={6}>
           <Text>Senha</Text>
-          <Input type="password" {...register('password')} required />
+          <Input type="senha" {...register("senha")} required />
         </Stack>
         <Button colorScheme="purple" type="submit" width="full">
           Entrar
         </Button>
       </form>
     </Box>
-  )
+  );
 }
