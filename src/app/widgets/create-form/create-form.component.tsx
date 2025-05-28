@@ -8,33 +8,66 @@ import {
   Pagination,
   Stack,
 } from "@chakra-ui/react";
-import { useGetForm } from "@/app/services/form/form.service.hooks";
-
+import { useState } from "react";
 import { RiArrowRightLine } from "react-icons/ri";
-import { useForm } from "react-hook-form";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import { QuestionTypeExecution } from "@/app/features/execution/QuestionTypeExecution/question-type-execution.component";
 import { FirstStepForm } from "@/app/features/create/FirstStepForm/first-step-form.component";
-import { useState } from "react";
+import { useGetQuestions } from "@/app/services/question";
+import { FirstStepFormValues } from "@/app/features/create/FirstStepForm/validationSchema";
+import { useCreateForm } from "./useCreateQuestionForm";
+import { useFormPostMutate } from "@/app/services/form";
+import router from "next/router";
 
 export default function ExecutionQuestion() {
-  const { data } = useGetForm({ id: "" });
+  const { data } = useGetQuestions();
   const [toggle, setToggle] = useState(false);
-  const { control, setValue, watch, register, getValues } = useForm({
-    defaultValues: {
-      selectedQuestionIds: [], // seleção múltipla
-    },
-  });
+  const { control, setValue, watch, register, getValues } = useCreateForm();
 
-  const selectedIds: string[] = watch("selectedQuestionIds") || [];
+  const selectedIds: number[] = watch("questoes") || [];
 
-  const toggleSelection = (id: string) => {
+  const toggleSelection = (id: number) => {
     const isSelected = selectedIds.includes(id);
     const updated = isSelected
       ? selectedIds.filter((i) => i !== id)
       : [...selectedIds, id];
+    setValue("questoes", updated as never);
+  };
 
-    setValue("selectedQuestionIds", updated as never);
+  const onFirstStep = (data: FirstStepFormValues) => {
+    setValue("titulo", data.titulo);
+    setValue("descricao", data.descricao);
+    setValue("dataExpiracao", data.dataExpiracao);
+    setToggle(true);
+  };
+
+  const handleMutationSuccess = () => {
+    router.push("/home");
+  };
+
+  const handleMutationError = () => {
+    console.log("error");
+  };
+
+  const { mutate: formPost } = useFormPostMutate(
+    handleMutationSuccess,
+    handleMutationError
+  );
+
+  const onSubmit = () => {
+    const values = getValues();
+    formPost({
+      titulo: values.titulo,
+      descricao: values.descricao,
+      dataExpiracao: values.dataExpiracao,
+      ordemAleatoria: true,
+      questoes: values.questoes.map((item: number, index: number) => {
+        return {
+          questaoId: item,
+          ordem: index + 1,
+        };
+      }),
+    });
   };
 
   if (!data) return;
@@ -56,15 +89,16 @@ export default function ExecutionQuestion() {
                 borderColor={"blue.500"}
                 color={"blue.500"}
                 bg={"blue.50"}
+                onClick={onSubmit}
               >
-                {`Selecionar ${selectedIds.length} questões`}{" "}
+                {`Salvar formulário com ${selectedIds.length} questões`}{" "}
                 <RiArrowRightLine />
               </Button>
             )}
           </Stack>
 
           <Stack>
-            {data?.questoes.map((question) => {
+            {data.map((question, index) => {
               const isSelected = selectedIds.includes(question.id);
 
               return (
@@ -80,12 +114,12 @@ export default function ExecutionQuestion() {
                 >
                   <Stack>
                     <QuestionTypeExecution
+                      disabled
                       type={question.tipo}
                       question={question}
                       control={control as any}
                       register={register as any}
-                      setValue={setValue as any}
-                      getValues={getValues as any}
+                      index={index}
                     />
                   </Stack>
                 </Box>
@@ -125,7 +159,7 @@ export default function ExecutionQuestion() {
           </Stack>
         </>
       ) : (
-        <FirstStepForm onSubmit={() => setToggle(true)} />
+        <FirstStepForm onSubmit={onFirstStep} />
       )}
     </Box>
   );

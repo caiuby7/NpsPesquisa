@@ -17,6 +17,7 @@ import {
 import { FormSchemaType, useCreateQuestionForm } from "./useCreateQuestionForm";
 import { CustomSelect } from "@/app/components/Select/select.component";
 import { QuestionTypeForm } from "@/app/features/create/QuestionTypeForm/question-type-form.component";
+import router from "next/router";
 
 export default function CreateQuestion() {
   const {
@@ -30,7 +31,7 @@ export default function CreateQuestion() {
   } = useCreateQuestionForm();
 
   const handleMutationSuccess = () => {
-    console.log("success");
+    router.push('/home')
   };
 
   const handleMutationError = () => {
@@ -54,13 +55,13 @@ export default function CreateQuestion() {
             idOpcao: crypto.randomUUID(),
             peso: 1,
             ordem: 1,
-            valor: data.ratingLabels.min,
+            valor: String(data.ratingLabels.min),
           },
           {
             texto: data.ratingLabels.maxLabel,
             idOpcao: crypto.randomUUID(),
             peso: 1,
-            valor: data.ratingLabels.max,
+            valor: String(data.ratingLabels.max),
             ordem: 2,
           },
         ],
@@ -70,11 +71,9 @@ export default function CreateQuestion() {
     questionPost(data as QuestionPostParams);
   };
 
-  console.log(type);
-
   return (
     <form onSubmit={handleSubmit(onSubmit, console.log)}>
-      <Stack maxW="720px" m="auto" display="flex" flexDirection="column">
+      <Stack maxW="720px" m="auto" display="flex" flexDirection="column" mt={8}>
         <Heading>Criar Questão</Heading>
         <Box borderWidth="1px" p={4} borderRadius="md">
           <Stack>

@@ -229,7 +229,7 @@ function SortableItem({
     transform: CSS.Transform.toString(transform),
     transition,
   };
-console.log(errors?.opcoes, name)
+
   return (
     <HStack
       ref={setNodeRef}

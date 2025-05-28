@@ -4,25 +4,37 @@ import {
   GetServerSidePropsContext,
   GetServerSidePropsResult,
 } from "next";
-import { parseCookies } from "nookies";
-import { verifyToken } from "./auth";
+import { jwtDecode } from "jwt-decode";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function withAuth<P extends { [key: string]: any; }>(): GetServerSideProps<P> {
+import { parseCookies } from "nookies";
+
+export function isTokenValid(token: string): boolean {
+  try {
+    const decoded = jwtDecode<{ exp: number }>(token);
+    const now = Date.now() / 1000; // em segundos
+    return decoded.exp > now;
+  } catch {
+    return false;
+  }
+}
+
+export function withAuth<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  P extends { [key: string]: any }
+>(): GetServerSideProps<P> {
   return async (
     ctx: GetServerSidePropsContext
   ): Promise<GetServerSidePropsResult<P>> => {
-const { token } = parseCookies(ctx);
+    const { token } = parseCookies(ctx);
 
-    if (!token || !verifyToken(token)) {
+    if (!token || !isTokenValid(token)) {
       return {
         redirect: {
-          destination: '/login',
+          destination: "/login",
           permanent: false,
         },
       };
     }
-
 
     return {
       props: {} as P,

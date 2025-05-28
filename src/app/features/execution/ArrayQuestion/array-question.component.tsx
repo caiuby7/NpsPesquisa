@@ -33,19 +33,6 @@ export const MatrixQuestion: React.FC<MatrixQuestionProps> = ({
   index,
   register
 }) => {
-  //const [setRespostas] = useState<Record<string, string>>({});
-
-  const handleChange = (linhaId: string, colunaId: string) => {
-    console.log(linhaId, colunaId)
-    /*
-        setRespostas((prev) => ({
-      ...prev,
-      [linhaId]: colunaId,
-    }));
-    */
-
-  };
-
   const limparSelecao = () => {
     //setRespostas({});
   };

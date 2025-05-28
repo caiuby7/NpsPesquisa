@@ -78,6 +78,11 @@ const schemaWithPreprocessing: ZodType<FormSchemaType> = z.preprocess((data: any
   return {
     ...data,
     tipo: Array.isArray(data.tipo) ? data.tipo[0] : data.tipo,
+    ratingLabels: data.ratingLabels && {
+      ...data?.ratingLabels,
+      max: Array.isArray(data?.ratingLabels.max) ? data.ratingLabels.max[0] : data.ratingLabels.max,
+      min: Array.isArray(data?.ratingLabels?.min) ? data.ratingLabels.min[0] : data.ratingLabels.min
+    }
   };
 }, formSchema);
 

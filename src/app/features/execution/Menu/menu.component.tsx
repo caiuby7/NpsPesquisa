@@ -21,9 +21,9 @@ export default function MenuExecution({
   })
 
   return (
-    <Box p={4} as="form">
+    <Box as="form">
       <Text mb={4} fontWeight="bold" textAlign="left">
-        Como você avalia os seguintes aspectos?
+        {question.texto}
       </Text>
       <CustomSelect
         control={control}

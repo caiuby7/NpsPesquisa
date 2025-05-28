@@ -133,8 +133,6 @@ function SortableItem({
     transition,
   };
 
-  console.log(errors, )
-
   return (
     <HStack
       ref={setNodeRef}

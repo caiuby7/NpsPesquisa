@@ -20,10 +20,16 @@ export const FirstStepForm = ({ onSubmit }: { onSubmit: (data: FirstStepFormValu
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <VStack align="stretch">
-          <Field.Root invalid={!!errors.nome}>
+          <Field.Root invalid={!!errors.titulo}>
             <Field.Label>Nome do formulário</Field.Label>
-            <Input placeholder="Digite o nome" {...register("nome")} />
-            <Field.ErrorText>{errors.nome?.message}</Field.ErrorText>
+            <Input placeholder="Digite o titulo" {...register("titulo")} />
+            <Field.ErrorText>{errors.titulo?.message}</Field.ErrorText>
+          </Field.Root>
+
+            <Field.Root invalid={!!errors.descricao}>
+            <Field.Label>Descrição do formualário</Field.Label>
+            <Input placeholder="Digite o descrição" {...register("descricao")} />
+            <Field.ErrorText>{errors.descricao?.message}</Field.ErrorText>
           </Field.Root>
 
           <Field.Root invalid={!!errors.dataExpiracao}>

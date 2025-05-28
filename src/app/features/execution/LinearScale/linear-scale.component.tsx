@@ -16,6 +16,8 @@ interface EscalaLinearProps {
   onChange: (value: string) => void;
   register: UseFormRegister<AnswersFormType>;
   index: number
+  disabled?: boolean
+  title: string
 }
 
 export const EscalaLinear: React.FC<EscalaLinearProps> = ({
@@ -24,7 +26,9 @@ export const EscalaLinear: React.FC<EscalaLinearProps> = ({
   minLabel,
   maxLabel,
   register,
-  index
+  index,
+  disabled,
+  title
 }) => {
   const range = Array.from({ length: max - min + 1 }, (_, i) => String(min + i));
 
@@ -36,7 +40,7 @@ export const EscalaLinear: React.FC<EscalaLinearProps> = ({
       w="100%"
     >
       <Text mb={4} fontWeight="bold" textAlign="left">
-        Como você avalia os seguintes aspectos?
+        {title}
       </Text>
       <HStack justify="space-between" mb={2}>
         {range.map((val) => (
@@ -50,7 +54,7 @@ export const EscalaLinear: React.FC<EscalaLinearProps> = ({
       <RadioGroup.Root w="100%" >
         <HStack justify="space-around" w="100%">
           {range.map((val) => (
-            <RadioGroup.Item key={val} value={val} {...register(`${index}.resposta`)}>
+            <RadioGroup.Item key={val} value={val} {...register(`${index}.resposta`)} disabled={disabled}>
               <RadioGroup.ItemHiddenInput />
               <RadioGroup.ItemIndicator />
             </RadioGroup.Item>

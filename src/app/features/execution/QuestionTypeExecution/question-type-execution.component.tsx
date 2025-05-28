@@ -17,6 +17,7 @@ interface Props {
   control: Control<AnswersFormType>;
   question: QuestionResponse;
   index: number;
+  disabled?: boolean;
 }
 
 export function QuestionTypeExecution({
@@ -25,6 +26,7 @@ export function QuestionTypeExecution({
   control,
   question,
   index,
+  disabled
 }: Props) {
   if (type === QuestionTypeEnum.MULTIPLE_CHOICE) {
     return (
@@ -65,13 +67,15 @@ export function QuestionTypeExecution({
   if (type === "EscalaLinear" && question?.opcoes) {
     return (
       <EscalaLinear
-        min={question.opcoes[0].ordem}
-        max={question.opcoes[1].ordem}
-        minLabel={question.opcoes[0].texto}
-        maxLabel={question.opcoes[1].texto}
+        min={Number(question.opcoes[1].valor)}
+        max={Number(question.opcoes[0].valor)}
+        minLabel={question.opcoes[1].texto}
+        maxLabel={question.opcoes[0].texto}
+        title={question.texto}
         onChange={console.log}
         index={index}
         register={register}
+        disabled={disabled}
       />
     );
   }
