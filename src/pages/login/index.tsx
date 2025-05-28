@@ -34,7 +34,7 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginParams) => {
     try {
       login(data);
-    } catch (err) {}
+    } catch (err) {console.log(err)}
   };
 
   return (

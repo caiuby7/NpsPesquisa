@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z, ZodType } from "zod";
+import { z } from "zod";
 
 export const useCreateQuestionForm = () =>
   useForm<FormSchemaType>({
@@ -74,7 +74,8 @@ const formSchema = z.discriminatedUnion("tipo", [
   menuSuspensoSchema,
 ]);
 
-const schemaWithPreprocessing: ZodType<FormSchemaType> = z.preprocess((data: any) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const schemaWithPreprocessing: any = z.preprocess((data: any) => {
   return {
     ...data,
     tipo: Array.isArray(data.tipo) ? data.tipo[0] : data.tipo,

@@ -6,7 +6,7 @@ import { useExecutionAnswer } from "./use-execution-answer";
 
 export default function ExecutionForm() {
   const { data } = useGetForm({ id: "1" });
-  const { control, register, handleSubmit, setValue, getValues } =
+  const { control, register, handleSubmit } =
     useExecutionAnswer();
 
   if (!data) return;
@@ -16,7 +16,7 @@ export default function ExecutionForm() {
       <Heading mb={8}>{data.titulo}</Heading>
       <form onSubmit={handleSubmit(console.log)}>
         <Stack>
-          {data?.questoes.map((question) => (
+          {data?.questoes.map((question, index) => (
             <Box key={question.tipo} borderWidth="1px" p={4} borderRadius="md">
               <Stack>
                 <QuestionTypeExecution
@@ -24,8 +24,7 @@ export default function ExecutionForm() {
                   register={register}
                   question={question}
                   control={control}
-                  setValue={setValue}
-                  getValues={getValues}
+                  index={index}
                 />
               </Stack>
             </Box>

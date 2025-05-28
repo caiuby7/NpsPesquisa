@@ -1,19 +1,11 @@
-import { useColorModeValue } from "@/components/ui/color-mode";
-import { withAuth } from "@/lib/withAuth";
-import {
-  Box,
-  Button,
-  Heading,
-  HStack,
-  Icon,
-  Text,
-  VStack,
-} from "@chakra-ui/react";
 import { useRouter } from "next/router";
-import { AiFillEdit } from "react-icons/ai";
 import { MdFormatAlignJustify } from "react-icons/md";
 import { TbPencilQuestion } from "react-icons/tb";
 import { MdFormatShapes } from "react-icons/md";
+import { Box, Button, Heading, HStack, Text } from "@chakra-ui/react";
+import { useColorModeValue } from "@/components/ui/color-mode";
+import { withAuth } from "@/lib/withAuth";
+
 import { AppHeader } from "@/app/features/header/header.component";
 
 export const getServerSideProps = withAuth();
@@ -52,7 +44,7 @@ export function CardButton({
       gap={4}
       alignItems="start"
     >
-      <Icon as={icon.type} boxSize={6} />
+      {icon}
 
       <Text fontWeight="semibold" fontSize="sm">
         {title}
@@ -79,13 +71,7 @@ export default function HomePage() {
   return (
     <>
       <AppHeader />
-      <Box
-        maxW="xl"
-        mx="auto"
-        p={8}
-        borderRadius="lg"
-        textAlign="center"
-      >
+      <Box maxW="xl" mx="auto" p={8} borderRadius="lg" textAlign="center">
         <Heading mb={4}>Painel Administrativo</Heading>
 
         <HStack mb={4}>
@@ -127,6 +113,5 @@ export default function HomePage() {
         </Button>
       </Box>
     </>
-
   );
 }
