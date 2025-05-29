@@ -11,7 +11,7 @@ export const useCreateQuestionForm = () =>
   });
 
 export const optionSchema = z.object({
-  idOpcao: z.string(),
+  id: z.string(),
   texto: z.string().min(1, "Titulo é obrigatório"),
   ordem: z.number(),
   peso: z.number(),

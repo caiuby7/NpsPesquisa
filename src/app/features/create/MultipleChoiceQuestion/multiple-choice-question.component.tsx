@@ -94,7 +94,7 @@ export default function MultipleChoiceQuestion({
             type="button"
             onClick={() =>
               append({
-                idOpcao: crypto.randomUUID(),
+                id: crypto.randomUUID(),
                 texto: "",
                 ordem: fields.length + 1,
                 peso: 1,

@@ -11,7 +11,7 @@ import {
 import { useState } from "react";
 
 interface Option {
-  idOpcao: string;
+  id: string;
   texto: string;
   ordem: number;
   peso: number;
@@ -54,7 +54,7 @@ export const MatrixQuestion: React.FC<MatrixQuestionProps> = ({
         <HStack pl="10%" w="100%" justifyContent="space-around">
           {colunas.map((coluna) => (
             <Box
-              key={coluna.idOpcao}
+              key={coluna.id}
               w="60px"
               textAlign="center"
               fontWeight="medium"
@@ -65,22 +65,22 @@ export const MatrixQuestion: React.FC<MatrixQuestionProps> = ({
         </HStack>
 
         {opcoes.map((linha) => (
-          <HStack key={linha.idOpcao} borderRadius="md" w="100%">
+          <HStack key={linha.id} borderRadius="md" w="100%">
             <Box w="10%">{linha.texto}</Box>
             <HStack w="100%" justifyContent="space-around">
               {colunas.map((coluna) => (
                 <RadioGroup.Root
-                  value={respostas[linha.idOpcao] || ""}
+                  value={respostas[linha.id] || ""}
                   cursor="pointer"
                   w="60px"
                   ml="42px"
-                  key={coluna.idOpcao}
-                  onChange={() => handleChange(linha.idOpcao, coluna.idOpcao)}
+                  key={coluna.id}
+                  onChange={() => handleChange(linha.id, coluna.id)}
                   
                 >
                   <RadioGroup.Item
-                    value={coluna.idOpcao}
-                    key={coluna.idOpcao}
+                    value={coluna.id}
+                    key={coluna.id}
                     colorScheme="purple"
                   >
                     <RadioGroup.ItemHiddenInput />

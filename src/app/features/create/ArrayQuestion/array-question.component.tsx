@@ -62,8 +62,8 @@ export default function DualSortableFieldArray({
   );
 
   const findList = (id: string) => {
-    if (options.fields.find((f) => f.idOpcao === id)) return "opcoes";
-    if (columns.fields.find((f) => f.idOpcao === id)) return "colunas";
+    if (options.fields.find((f) => f.id === id)) return "opcoes";
+    if (columns.fields.find((f) => f.id === id)) return "colunas";
     return null;
   };
 
@@ -72,17 +72,17 @@ export default function DualSortableFieldArray({
     const { active, over } = event as any;
     if (!over || active.id === over.id) return;
 
-    const sourceName = findList(active.idOpcao);
-    const targetName = findList(over.idOpcao);
+    const sourceName = findList(active.id);
+    const targetName = findList(over.id);
     if (!sourceName || !targetName) return;
 
     const sourceItems = getValues(sourceName);
     const targetItems = getValues(targetName);
 
     const activeIndex = sourceItems.findIndex(
-      (i) => i.idOpcao === active.idOpcao
+      (i) => i.id === active.id
     );
-    const overIndex = targetItems.findIndex((i) => i.idOpcao === over.idOpcao);
+    const overIndex = targetItems.findIndex((i) => i.id === over.id);
 
     const [movedItem] = sourceItems.splice(activeIndex, 1);
     targetItems.splice(overIndex, 0, movedItem);
@@ -103,7 +103,7 @@ export default function DualSortableFieldArray({
           name="opcoes"
           fields={options.fields}
           register={register}
-          remove={options.remove}
+          remove={options.remove} 
           append={options.append}
           control={control}
           errors={errors}
@@ -154,7 +154,7 @@ function SortableFieldArray({
         {title}
       </Text>
       <SortableContext
-        items={fields.map((item) => item.idOpcao)}
+        items={fields.map((item) => item.id)}
         strategy={verticalListSortingStrategy}
       >
         <VStack align="stretch">
@@ -173,8 +173,8 @@ function SortableFieldArray({
                   </Checkbox.Root>
                 )
               }
-              key={field.idOpcao}
-              id={field.idOpcao}
+              key={field.id}
+              id={field.id}
               index={index}
               name={`${name}.${index}.texto`}
               register={register}
@@ -189,10 +189,11 @@ function SortableFieldArray({
         mt={2}
         onClick={() =>
           append({
-            idOpcao: crypto.randomUUID(),
+            id: crypto.randomUUID(),
             texto: "",
             ordem: 0,
             peso: 0,
+            ehColuna: name === "colunas"
           })
         }
         size="sm"

@@ -17,9 +17,9 @@ export default function MenuExecution({
 }) {
 
   const options = question.opcoes?.map(option => {
-    return { value: option.idOpcao, label: option.texto }
+    return { value: option.id, label: option.texto }
   })
-
+  console.log(question)
   return (
     <Box as="form">
       <Text mb={4} fontWeight="bold" textAlign="left">

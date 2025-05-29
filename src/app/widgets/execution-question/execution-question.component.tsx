@@ -16,7 +16,7 @@ export default function ExecutionForm() {
       <Heading mb={8}>{data.titulo}</Heading>
       <form onSubmit={handleSubmit(console.log)}>
         <Stack>
-          {data?.questoes.map((question, index) => (
+          {data?.questoesQuestionarios.map((question, index) => (
             <Box key={question.tipo} borderWidth="1px" p={4} borderRadius="md">
               <Stack>
                 <QuestionTypeExecution

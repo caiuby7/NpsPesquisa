@@ -9,7 +9,7 @@ export const CustomSelect = ({ control, items, label, placeholder, name, invalid
   const frameworks = createListCollection({
     items,
   })
-
+  console.log(frameworks.items)
   return (
     <Controller
       control={control}
@@ -38,8 +38,8 @@ export const CustomSelect = ({ control, items, label, placeholder, name, invalid
             <Select.Positioner>
               <Select.Content>
                 {frameworks.items.map((framework: any) => (
-                  <Select.Item item={framework} key={framework.value}>
-                    {framework.label}
+                  <Select.Item item={framework} key={framework?.value}>
+                    {framework?.label}
                     <Select.ItemIndicator />
                   </Select.Item>
                 ))}
