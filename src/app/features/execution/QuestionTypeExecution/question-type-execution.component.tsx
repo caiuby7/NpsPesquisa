@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Box, Text, Textarea } from "@chakra-ui/react";
 import { UseFormRegister, Control } from "react-hook-form";
 import MultipleChoiceQuestion from "../MultipleChoiceQuestion/multiple-choice-question.component";
@@ -26,7 +27,7 @@ export function QuestionTypeExecution({
   control,
   question,
   index,
-  disabled
+  disabled,
 }: Props) {
   if (type === QuestionTypeEnum.MULTIPLE_CHOICE) {
     return (
@@ -86,8 +87,6 @@ export function QuestionTypeExecution({
         texto={question.texto}
         opcoes={question.opcoes}
         colunas={question.colunas}
-        register={register}
-        index={index}
       />
     );
   }

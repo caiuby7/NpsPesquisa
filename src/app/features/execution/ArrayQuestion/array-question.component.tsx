@@ -1,4 +1,4 @@
-import { AnswersFormType } from "@/app/widgets/execution-question/use-execution-answer";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Box,
   Text,
@@ -8,8 +8,7 @@ import {
   Stack,
   RadioGroup,
 } from "@chakra-ui/react";
-import { UseFormRegister } from "react-hook-form";
-//import { useState } from "react";
+import { useState } from "react";
 
 interface Option {
   idOpcao: string;
@@ -20,21 +19,28 @@ interface Option {
 
 interface MatrixQuestionProps {
   texto: string;
-  opcoes: Option[]; // linhas
-  colunas: Option[]; // colunas
-  register: UseFormRegister<AnswersFormType>;
-  index: number
+  opcoes: Option[];
+  colunas: Option[];
 }
 
 export const MatrixQuestion: React.FC<MatrixQuestionProps> = ({
   texto,
   opcoes,
   colunas,
-  index,
-  register
 }) => {
+  const [respostas, setRespostas] = useState<Record<string, string>>({});
+
+  const handleChange = (linhaId: string, colunaId: string) => {
+        setRespostas((prev) => ({
+      ...prev,
+      [linhaId]: colunaId,
+    }));
+    
+
+  };
+
   const limparSelecao = () => {
-    //setRespostas({});
+    setRespostas({});
   };
 
   return (
@@ -58,30 +64,31 @@ export const MatrixQuestion: React.FC<MatrixQuestionProps> = ({
           ))}
         </HStack>
 
-        {opcoes.map((linha, linhaIndex) => (
-          <HStack
-            key={linha.idOpcao}
-            borderRadius="md"
-            w="100%"
-          >
+        {opcoes.map((linha) => (
+          <HStack key={linha.idOpcao} borderRadius="md" w="100%">
             <Box w="10%">{linha.texto}</Box>
             <HStack w="100%" justifyContent="space-around">
               {colunas.map((coluna) => (
-                <RadioGroup.Root value={""} w="60px" ml="42px" key={coluna.idOpcao} {...register(`${index}.resposta.${linhaIndex}.idLinha`)}>
+                <RadioGroup.Root
+                  value={respostas[linha.idOpcao] || ""}
+                  cursor="pointer"
+                  w="60px"
+                  ml="42px"
+                  key={coluna.idOpcao}
+                  onChange={() => handleChange(linha.idOpcao, coluna.idOpcao)}
+                  
+                >
                   <RadioGroup.Item
                     value={coluna.idOpcao}
                     key={coluna.idOpcao}
                     colorScheme="purple"
-                     {...register(`${index}.resposta.${linhaIndex}.idLinha`)}
                   >
                     <RadioGroup.ItemHiddenInput />
                     <RadioGroup.ItemIndicator />
                   </RadioGroup.Item>
                 </RadioGroup.Root>
               ))}
-
             </HStack>
-
           </HStack>
         ))}
       </VStack>
