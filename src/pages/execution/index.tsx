@@ -3,7 +3,7 @@ import ExecutionQuestion from "@/app/widgets/execution-question/execution-questi
 import { Box } from "@chakra-ui/react";
 
 
-export default function Exeuction() {
+export default function Execution() {
   return (
     <Box p={8}>
       <ExecutionQuestion />

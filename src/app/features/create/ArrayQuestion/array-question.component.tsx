@@ -22,6 +22,7 @@ import {
   VStack,
   Text,
   Checkbox,
+  Field,
 } from "@chakra-ui/react";
 import { TfiAlignJustify } from "react-icons/tfi";
 import {
@@ -30,21 +31,27 @@ import {
   UseFormRegister,
   UseFormGetValues,
   UseFormSetValue,
+  FieldErrors,
 } from "react-hook-form";
 import { FiTrash } from "react-icons/fi";
 import { OptionItem } from "@/app/services/form";
-import { FormSchemaType } from "@/app/widgets/create-question/useCreateQuestionForm";
+import {
+  FormSchemaType,
+  MatrixSchemaType,
+} from "@/app/widgets/create-question/useCreateQuestionForm";
 
 export default function DualSortableFieldArray({
   register,
   control,
   setValue,
   getValues,
+  errors,
 }: {
   register: UseFormRegister<FormSchemaType>;
   control: Control<FormSchemaType>;
   getValues: UseFormGetValues<FormSchemaType>;
   setValue: UseFormSetValue<FormSchemaType>;
+  errors: FieldErrors<MatrixSchemaType>;
 }) {
   const options = useFieldArray({ control, name: "opcoes", keyName: "key" });
   const columns = useFieldArray({ control, name: "colunas", keyName: "key" });
@@ -72,7 +79,9 @@ export default function DualSortableFieldArray({
     const sourceItems = getValues(sourceName);
     const targetItems = getValues(targetName);
 
-    const activeIndex = sourceItems.findIndex((i) => i.idOpcao === active.idOpcao);
+    const activeIndex = sourceItems.findIndex(
+      (i) => i.idOpcao === active.idOpcao
+    );
     const overIndex = targetItems.findIndex((i) => i.idOpcao === over.idOpcao);
 
     const [movedItem] = sourceItems.splice(activeIndex, 1);
@@ -88,7 +97,7 @@ export default function DualSortableFieldArray({
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
     >
-      <HStack align="start"  p={4} w="100%">
+      <HStack align="start" p={4} w="100%">
         <SortableFieldArray
           title="Linhas"
           name="opcoes"
@@ -97,6 +106,7 @@ export default function DualSortableFieldArray({
           remove={options.remove}
           append={options.append}
           control={control}
+          errors={errors}
         />
         <SortableFieldArray
           title="Colunas"
@@ -106,6 +116,7 @@ export default function DualSortableFieldArray({
           remove={columns.remove}
           append={columns.append}
           control={control}
+          errors={errors}
         />
       </HStack>
     </DndContext>
@@ -120,6 +131,7 @@ function SortableFieldArray({
   remove,
   append,
   control,
+  errors,
 }: {
   title: string;
   name: "opcoes" | "colunas";
@@ -128,9 +140,16 @@ function SortableFieldArray({
   control: Control<FormSchemaType>;
   remove: (index: number) => void;
   append: (item: OptionItem) => void;
+  errors: FieldErrors<MatrixSchemaType>;
 }) {
   return (
-    <Box w="100%" p={4} border="1px solid #ccc" borderRadius="md">
+    <Box
+      w="100%"
+      p={4}
+      border="1px solid #ccc"
+      borderRadius="md"
+      borderColor={fields.length === 0 ? "red" : ""}
+    >
       <Text fontWeight="bold" mb={2}>
         {title}
       </Text>
@@ -138,7 +157,7 @@ function SortableFieldArray({
         items={fields.map((item) => item.idOpcao)}
         strategy={verticalListSortingStrategy}
       >
-        <VStack  align="stretch">
+        <VStack align="stretch">
           {fields.map((field, index) => (
             <SortableItem
               leftLabel={
@@ -161,6 +180,7 @@ function SortableFieldArray({
               register={register}
               remove={() => remove(index)}
               control={control}
+              errors={errors}
             />
           ))}
         </VStack>
@@ -191,6 +211,7 @@ function SortableItem({
   register,
   leftLabel,
   remove,
+  errors,
 }: {
   id: string;
   index: number;
@@ -199,6 +220,7 @@ function SortableItem({
   register: UseFormRegister<FormSchemaType>;
   control: Control<FormSchemaType>;
   leftLabel: string | React.JSX.Element;
+  errors: FieldErrors<MatrixSchemaType>;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id });
@@ -222,7 +244,14 @@ function SortableItem({
         <TfiAlignJustify />
       </Box>
       {leftLabel}
-      <Input placeholder={`Opção ${index + 1}`} {...register(name)} />
+      <Field.Root
+        invalid={
+          ((errors?.opcoes && !!errors.opcoes[index]?.texto) || (errors?.colunas && !!errors.colunas[index]?.texto))
+        }
+      >
+        <Input placeholder={`Opção ${index + 1}`} {...register(name)} />
+      </Field.Root>
+
       <Button onClick={remove} size="sm" colorScheme="red" variant="ghost">
         <FiTrash />
       </Button>

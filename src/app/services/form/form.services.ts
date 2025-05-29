@@ -1,20 +1,22 @@
-import { FormGetParams, FormResponse } from ".";
+import { FormGetParams, FormPostParams, FormResponse } from ".";
+import { api } from "../api";
 
 export const FormServices = {
   get: async (payload: FormGetParams): Promise<FormResponse> => {
-    //const BASE_PATH = "api/questionario";
+    //const BASE_PATH = `/Questionario/${payload.id}`;
     console.log(payload)
     return {
       titulo: "Pesquisa de Satisfação",
       dataExpiracao: "2024-12-31T23:59:59Z",
+      descricao: "",
       questoes: [
         {
-          id: "1",
+          id: 1,
           texto: "Como você avalia os seguintes aspectos?",
           tipo: "CaixaTexto",
         },
         {
-          id: "2",
+          id: 2,
           texto: "Como você avalia os seguintes aspectos?",
           tipo: "MultiplaEscolha",
           opcoes: [
@@ -33,7 +35,7 @@ export const FormServices = {
           ],
         },
         {
-          id: "3",
+          id: 3,
           texto: "Como você avalia os seguintes aspectos?",
           tipo: "MenuSuspenso",
           opcoes: [
@@ -52,26 +54,28 @@ export const FormServices = {
           ],
         },
         {
-          id: "4",
+          id: 4,
           texto: "Como você avalia os seguintes aspectos?",
           tipo: "EscalaLinear",
           opcoes: [
+            {
+              texto: "Bom",
+              idOpcao: "2",
+              ordem: 10,
+              valor: "10",
+              peso: 1,
+            },
             {
               texto: "Ruim",
               idOpcao: "1",
               ordem: 0,
               peso: 1,
-            },
-            {
-              texto: "Bom",
-              idOpcao: "2",
-              ordem: 10,
-              peso: 1,
+              valor: "1"
             },
           ],
         },
         {
-          id: "5",
+          id: 5,
           texto: "Como você avalia os seguintes aspectos?",
           tipo: "Matriz",
           opcoes: [
@@ -105,7 +109,10 @@ export const FormServices = {
         },
       ],
     };
+  },
+  post: async (payload: FormPostParams): Promise<void> => {
+    const BASE_PATH = "/Questionario/com-questoes";
 
-    //return (await HTTP.post(BASE_PATH, payload)).data;
+    return await api.post(BASE_PATH, payload);
   },
 };

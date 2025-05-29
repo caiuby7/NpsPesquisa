@@ -1,48 +1,107 @@
-import { Box, Button, Heading, Text, VStack } from '@chakra-ui/react'
-import { useRouter } from 'next/router'
+import { useRouter } from "next/router";
+import { MdFormatAlignJustify } from "react-icons/md";
+import { TbPencilQuestion } from "react-icons/tb";
+import { MdFormatShapes } from "react-icons/md";
+import { Box, Button, Heading, HStack, Text } from "@chakra-ui/react";
+import { useColorModeValue } from "@/components/ui/color-mode";
+import { withAuth } from "@/lib/withAuth";
 
-export default function HomePage() {
-  const router = useRouter()
+import { AppHeader } from "@/app/features/header/header.component";
 
-  const handleLogout = () => {
-    document.cookie = 'token=; Max-Age=0; path=/'
-    router.push('/login')
-  }
+export const getServerSideProps = withAuth();
 
-  const handleNavigate = (path: string) => {
-    router.push(path)
-  }
+type CardButtonProps = {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  onClick: () => void;
+};
+
+export function CardButton({
+  icon,
+  title,
+  description,
+  onClick,
+}: CardButtonProps) {
+  const bg = useColorModeValue("white", "gray.700");
+  const hoverBg = useColorModeValue("gray.50", "gray.600");
 
   return (
-    <Box maxW="lg" mx="auto" mt={20} p={8} borderWidth={1} borderRadius="lg" textAlign="center">
-      <Heading mb={4}>Painel Administrativo</Heading>
-      <Text mb={6}>Escolha uma ação abaixo:</Text>
+    <Box
+      as="button"
+      onClick={onClick}
+      w="full"
+      cursor="pointer"
+      textAlign="left"
+      bg={bg}
+      borderWidth="1px"
+      borderRadius="xl"
+      p={4}
+      _hover={{ bg: hoverBg }}
+      boxShadow="sm"
+      flexDirection="column"
+      display="flex"
+      gap={4}
+      alignItems="start"
+    >
+      {icon}
 
-      <VStack >
-        <Button
-          size="lg"
-          colorScheme="teal"
-          width="100%"
-          onClick={() => handleNavigate('/create-question')}
-        >
-          Criar Questão
-        </Button>
-        <Button
-          size="lg"
-          colorScheme="purple"
-          width="100%"
-          onClick={() => handleNavigate('/create-form')}
-        >
-          Criar Formulário
-        </Button>
-        <Button
-          size="lg"
-          colorScheme="blue"
-          width="100%"
-          onClick={() => handleNavigate('/formularios')}
-        >
-          Ver Formulários
-        </Button>
+      <Text fontWeight="semibold" fontSize="sm">
+        {title}
+      </Text>
+      <Text fontSize="xs" color="gray.500">
+        {description}
+      </Text>
+    </Box>
+  );
+}
+
+export default function HomePage() {
+  const router = useRouter();
+
+  const handleLogout = () => {
+    document.cookie = "token=; Max-Age=0; path=/";
+    router.push("/login");
+  };
+
+  const handleNavigate = (path: string) => {
+    router.push(path);
+  };
+
+  return (
+    <>
+      <AppHeader />
+      <Box maxW="xl" mx="auto" p={8} borderRadius="lg" textAlign="center">
+        <Heading mb={4}>Painel Administrativo</Heading>
+
+        <HStack mb={4}>
+          <CardButton
+            icon={<TbPencilQuestion />}
+            title="Criar Questão"
+            description="Crie uma nova questão"
+            onClick={() => handleNavigate("/create-question")}
+          />
+          <CardButton
+            icon={<MdFormatShapes />}
+            title="Criar Formulário"
+            description="Criar um novo formulário"
+            onClick={() => handleNavigate("/create-form")}
+          />
+        </HStack>
+        <HStack>
+          <CardButton
+            icon={<MdFormatAlignJustify />}
+            title="Formulários"
+            description="Visualize todos os formulários"
+            onClick={() => handleNavigate("/formularios")}
+          />
+          <CardButton
+            icon={<MdFormatAlignJustify />}
+            title="Questões"
+            description="Visualize todas as questões"
+            onClick={() => handleNavigate("/questions")}
+          />
+        </HStack>
         <Button
           size="sm"
           variant="ghost"
@@ -52,7 +111,7 @@ export default function HomePage() {
         >
           Sair
         </Button>
-      </VStack>
-    </Box>
-  )
+      </Box>
+    </>
+  );
 }

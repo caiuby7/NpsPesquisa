@@ -1,7 +1,8 @@
-import { useMutation } from "@tanstack/react-query"
+import { useMutation, useQuery } from "@tanstack/react-query"
 import { QuestionPostParams, QuestionService } from "."
 
 const QUESTION_POST_KEY = "question-post-key"
+const QUESTION_GET_KEY = "question-get-key"
 
 export const useQuestionPostMutate = (
   handleMutationSuccess: () => void,
@@ -18,3 +19,11 @@ export const useQuestionPostMutate = (
       handleMutationSuccess(),
   })
 }
+
+export const useGetQuestions = () => {
+  return useQuery({
+    queryKey: [QUESTION_GET_KEY],
+    queryFn: async () => QuestionService.get(),
+    refetchOnWindowFocus: false,
+  });
+};
