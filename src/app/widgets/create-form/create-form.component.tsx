@@ -49,7 +49,7 @@ export default function ExecutionQuestion() {
     console.log("error");
   };
 
-  const { mutate: formPost } = useFormPostMutate(
+  const { mutate: formPost, isPending } = useFormPostMutate(
     handleMutationSuccess,
     handleMutationError
   );
@@ -90,6 +90,7 @@ export default function ExecutionQuestion() {
                 color={"blue.500"}
                 bg={"blue.50"}
                 onClick={onSubmit}
+                loading={isPending}
               >
                 {`Salvar formulário com ${selectedIds.length} questões`}{" "}
                 <RiArrowRightLine />

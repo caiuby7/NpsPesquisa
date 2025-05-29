@@ -23,7 +23,7 @@ export default function LoginPage() {
     console.log("error");
   };
 
-  const { mutate: login } = useLoginMutate(
+  const { mutate: login, isPending } = useLoginMutate(
     handleMutationSuccess,
     handleMutationError
   );
@@ -47,9 +47,9 @@ export default function LoginPage() {
         </Stack>
         <Stack mb={6}>
           <Text>Senha</Text>
-          <Input type="senha" {...register("senha")} required />
+          <Input type="password" {...register("senha")} required />
         </Stack>
-        <Button colorScheme="purple" type="submit" width="full">
+        <Button colorScheme="purple" type="submit" width="full" loading={isPending}>
           Entrar
         </Button>
       </form>

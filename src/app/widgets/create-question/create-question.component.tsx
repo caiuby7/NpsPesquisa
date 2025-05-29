@@ -38,7 +38,7 @@ export default function CreateQuestion() {
     console.log("error");
   };
 
-  const { mutate: questionPost } = useQuestionPostMutate(
+  const { mutate: questionPost, isPending } = useQuestionPostMutate(
     handleMutationSuccess,
     handleMutationError
   );
@@ -109,7 +109,7 @@ export default function CreateQuestion() {
             )}
           </Stack>
         </Box>
-        <Button mt={8} colorScheme="blue" type="submit">
+        <Button mt={8} colorScheme="blue" type="submit" loading={isPending}>
           Salvar questão
         </Button>
       </Stack>
