@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { useRouter } from "next/router";
 import nookies from "nookies";
 import {
-  Box, Button, Input, Heading, Text,
+  Box, Button, Input, Heading,
   Stack, Image, Flex
 } from '@chakra-ui/react'
 import { MdEmail, MdLock } from 'react-icons/md'
@@ -88,7 +88,7 @@ export default function LoginPage() {
               </Box>
               <Input 
                 type="password" 
-                {...register('password')} 
+                {...register('senha')} 
                 required 
                 placeholder="Digite sua senha"
                 border="none"
@@ -106,7 +106,7 @@ export default function LoginPage() {
             width="full" 
             py={6} 
             fontSize="lg"
-            isLoading={isPending}
+            loading={isPending}
           >
             Entrar
           </Button>
