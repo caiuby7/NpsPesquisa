@@ -1,0 +1,333 @@
+{
+  "info": {
+    "_postman_id": "nps-pesquisa-api-collection",
+    "name": "NpsPesquisa API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Criar Curso",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Engenharia de Software\"\n}" },
+        "url": { "raw": "https://localhost:7247/api/Curso", "protocol": "https", "host": ["localhost"], "port": "7247", "path": ["api", "Curso"] }
+      }
+    },
+    {
+      "name": "Listar Cursos",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "https://localhost:7247/api/Curso", "protocol": "https", "host": ["localhost"], "port": "7247", "path": ["api", "Curso"] }
+      }
+    },
+    {
+      "name": "Buscar Curso por ID",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "https://localhost:7247/api/Curso/1", "protocol": "https", "host": ["localhost"], "port": "7247", "path": ["api", "Curso", "1"] }
+      }
+    },
+    {
+      "name": "Atualizar Curso",
+      "request": {
+        "method": "PUT",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{\n  \"id\": 1,\n  \"nome\": \"Engenharia de Software Atualizado\"\n}" },
+        "url": { "raw": "https://localhost:7247/api/Curso/1", "protocol": "https", "host": ["localhost"], "port": "7247", "path": ["api", "Curso", "1"] }
+      }
+    },
+    {
+      "name": "Criar Aluno",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Maria Teste\",\n  \"email\": \"maria@email.com\",\n  \"aceitaContato\": true,\n  \"cursoId\": 1\n}" },
+        "url": { "raw": "https://localhost:7247/api/Aluno", "protocol": "https", "host": ["localhost"], "port": "7247", "path": ["api", "Aluno"] }
+      }
+    },
+    {
+      "name": "Listar Alunos",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "https://localhost:7247/api/Aluno", "protocol": "https", "host": ["localhost"], "port": "7247", "path": ["api", "Aluno"] }
+      }
+    },
+    {
+      "name": "Buscar Aluno por ID",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "https://localhost:7247/api/Aluno/1", "protocol": "https", "host": ["localhost"], "port": "7247", "path": ["api", "Aluno", "1"] }
+      }
+    },
+    {
+      "name": "Atualizar Aluno",
+      "request": {
+        "method": "PUT",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{\n  \"id\": 1,\n  \"nome\": \"Maria Teste Atualizada\",\n  \"email\": \"maria@email.com\",\n  \"aceitaContato\": false,\n  \"cursoId\": 1\n}" },
+        "url": { "raw": "https://localhost:7247/api/Aluno/1", "protocol": "https", "host": ["localhost"], "port": "7247", "path": ["api", "Aluno", "1"] }
+      }
+    },
+    {
+      "name": "Questionário",
+      "item": [
+        {
+          "name": "Criar Questionário",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Pesquisa de Satisfação\",\n  \"dataExpiracao\": \"2024-12-31T23:59:59Z\"\n}"
+            },
+            "url": {
+              "raw": "https://localhost:7247/api/Questionario",
+              "protocol": "https",
+              "host": ["localhost"],
+              "port": "7247",
+              "path": ["api", "Questionario"]
+            }
+          }
+        },
+        {
+          "name": "Listar Questionários",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "https://localhost:7247/api/Questionario",
+              "protocol": "https",
+              "host": ["localhost"],
+              "port": "7247",
+              "path": ["api", "Questionario"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Questão",
+      "item": [
+        {
+          "name": "Criar Questão - MultiplaEscolha",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"texto\": \"Qual sua cor favorita?\",\n  \"tipo\": \"MultiplaEscolha\",\n  \"opcoes\": [\n    { \"texto\": \"Azul\", \"valor\": \"azul\", \"ordem\": 1, \"peso\": 0 },\n    { \"texto\": \"Verde\", \"valor\": \"verde\", \"ordem\": 2, \"peso\": 0 }\n  ]\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5021/api/questao",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5021",
+              "path": ["api", "questao"]
+            }
+          }
+        },
+        {
+          "name": "Criar Questão - CaixaTexto",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"texto\": \"Deixe seu comentário:\",\n  \"tipo\": \"CaixaTexto\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5021/api/questao",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5021",
+              "path": ["api", "questao"]
+            }
+          }
+        },
+        {
+          "name": "Criar Questão - EscalaLinear",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"texto\": \"De 1 a 5, quanto você recomenda nosso serviço?\",\n  \"tipo\": \"EscalaLinear\",\n  \"opcoes\": [\n    { \"texto\": \"1\", \"valor\": \"1\", \"ordem\": 1, \"peso\": 0 },\n    { \"texto\": \"2\", \"valor\": \"2\", \"ordem\": 2, \"peso\": 0 },\n    { \"texto\": \"3\", \"valor\": \"3\", \"ordem\": 3, \"peso\": 0 },\n    { \"texto\": \"4\", \"valor\": \"4\", \"ordem\": 4, \"peso\": 0 },\n    { \"texto\": \"5\", \"valor\": \"5\", \"ordem\": 5, \"peso\": 0 }\n  ]\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5021/api/questao",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5021",
+              "path": ["api", "questao"]
+            }
+          }
+        },
+        {
+          "name": "Criar Questão - MenuSuspenso",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"texto\": \"Escolha uma opção:\",\n  \"tipo\": \"MenuSuspenso\",\n  \"opcoes\": [\n    { \"texto\": \"Opção 1\", \"valor\": \"1\", \"ordem\": 1, \"peso\": 0 },\n    { \"texto\": \"Opção 2\", \"valor\": \"2\", \"ordem\": 2, \"peso\": 0 }\n  ]\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5021/api/questao",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5021",
+              "path": ["api", "questao"]
+            }
+          }
+        },
+        {
+          "name": "Criar Questão - Matriz",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"texto\": \"Avalie os itens abaixo:\",\n  \"tipo\": \"Matriz\",\n  \"opcoes\": [\n    { \"texto\": \"Qualidade\", \"valor\": \"qualidade\", \"ordem\": 1, \"peso\": 0 },\n    { \"texto\": \"Preço\", \"valor\": \"preco\", \"ordem\": 2, \"peso\": 0 }\n  ],\n  \"colunas\": [\n    { \"texto\": \"Ruim\", \"valor\": \"1\", \"ordem\": 1, \"peso\": 0 },\n    { \"texto\": \"Bom\", \"valor\": \"2\", \"ordem\": 2, \"peso\": 0 },\n    { \"texto\": \"Ótimo\", \"valor\": \"3\", \"ordem\": 3, \"peso\": 0 }\n  ]\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5021/api/questao",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5021",
+              "path": ["api", "questao"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Questão-Questionário",
+      "item": [
+        {
+          "name": "Vincular Questão ao Questionário",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questaoId\": 1,\n  \"questionarioId\": 1,\n  \"ordem\": 1\n}"
+            },
+            "url": {
+              "raw": "https://localhost:7247/api/QuestaoQuestionario",
+              "protocol": "https",
+              "host": ["localhost"],
+              "port": "7247",
+              "path": ["api", "QuestaoQuestionario"]
+            }
+          }
+        },
+        {
+          "name": "Listar Questões do Questionário",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "https://localhost:7247/api/QuestaoQuestionario/questionario/1",
+              "protocol": "https",
+              "host": ["localhost"],
+              "port": "7247",
+              "path": ["api", "QuestaoQuestionario", "questionario", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Opções da Questão",
+      "item": [
+        {
+          "name": "Adicionar Opção",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"texto\": \"Desenvolvimento\",\n  \"valor\": \"dev\",\n  \"ordem\": 1\n}"
+            },
+            "url": {
+              "raw": "https://localhost:7247/api/Questao/1/opcoes",
+              "protocol": "https",
+              "host": ["localhost"],
+              "port": "7247",
+              "path": ["api", "Questao", "1", "opcoes"]
+            }
+          }
+        },
+        {
+          "name": "Listar Opções",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "https://localhost:7247/api/Questao/1/opcoes",
+              "protocol": "https",
+              "host": ["localhost"],
+              "port": "7247",
+              "path": ["api", "Questao", "1", "opcoes"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Enviar Resposta Completa",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{\n  \"questionarioId\": 1,\n  \"alunoId\": 1,\n  \"respostasQuestoes\": [\n    { \"questaoId\": 1, \"valor\": \"E-mail\" },\n    { \"questaoId\": 2, \"valor\": \"{\\\"Infraestrutura\\\":5,\\\"Professores\\\":4,\\\"Atendimento\\\":5}\" },\n    { \"questaoId\": 3, \"valor\": \"Ótimo atendimento!\" }\n  ]\n}" },
+        "url": { "raw": "https://localhost:7247/api/Resposta", "protocol": "https", "host": ["localhost"], "port": "7247", "path": ["api", "Resposta"] }
+      }
+    },
+    {
+      "name": "Listar Respostas",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "https://localhost:7247/api/Resposta", "protocol": "https", "host": ["localhost"], "port": "7247", "path": ["api", "Resposta"] }
+      }
+    },
+    {
+      "name": "Buscar Resposta por ID",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "https://localhost:7247/api/Resposta/1", "protocol": "https", "host": ["localhost"], "port": "7247", "path": ["api", "Resposta", "1"] }
+      }
+    },
+    {
+      "name": "Atualizar Resposta",
+      "request": {
+        "method": "PUT",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{\n  \"id\": 1,\n  \"questionarioId\": 1,\n  \"alunoId\": 1,\n  \"dataResposta\": \"2024-05-20T00:00:00Z\",\n  \"respostasQuestoes\": [\n    { \"id\": 1, \"respostaId\": 1, \"questaoId\": 1, \"valor\": \"WhatsApp\" }\n  ]\n}" },
+        "url": { "raw": "https://localhost:7247/api/Resposta/1", "protocol": "https", "host": ["localhost"], "port": "7247", "path": ["api", "Resposta", "1"] }
+      }
+    }
+  ]
+} 

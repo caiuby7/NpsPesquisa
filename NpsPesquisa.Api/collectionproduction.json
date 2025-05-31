@@ -1,0 +1,1131 @@
+{
+  "info": {
+    "name": "NPS Pesquisa API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@nps.com\",\n  \"senha\": \"Admin@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Novo Usuário\",\n  \"email\": \"novo@email.com\",\n  \"senha\": \"Senha@123\",\n  \"perfilId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Trocar Senha",
+          "request": {
+            "method": "POST",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Auth/trocar-senha",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"senhaAtual\": \"SenhaAtual\",\n  \"novaSenha\": \"NovaSenha@123\",\n  \"confirmacaoNovaSenha\": \"NovaSenha@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Esqueci Senha",
+          "request": {
+            "method": "POST",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Auth/esqueci-senha",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"usuario@email.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Validar Hash Senha",
+          "request": {
+            "method": "POST",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Auth/validar-hash-senha",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"usuario@email.com\",\n  \"hash\": \"hash_de_validacao\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Questionario",
+      "item": [
+        {
+          "name": "Listar Todos",
+          "request": {
+            "method": "GET",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Questionario",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Buscar por ID",
+          "request": {
+            "method": "GET",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Questionario/1",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Criar",
+          "request": {
+            "method": "POST",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Questionario",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Novo Questionário\",\n  \"descricao\": \"Descrição do questionário\",\n  \"dataExpiracao\": \"2024-12-31T23:59:59Z\",\n  \"ordemAleatoria\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Atualizar",
+          "request": {
+            "method": "PUT",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Questionario/1",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"titulo\": \"Questionário Atualizado\",\n  \"dataExpiracao\": \"2024-12-31T23:59:59Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Excluir",
+          "request": {
+            "method": "DELETE",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Questionario/1",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Buscar por Período",
+          "request": {
+            "method": "GET",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Questionario/por-periodo",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "query": [
+              {
+                "key": "dataInicio",
+                "value": "2024-01-01T00:00:00Z"
+              },
+              {
+                "key": "dataFim",
+                "value": "2024-12-31T23:59:59Z"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Buscar Respostas",
+          "request": {
+            "method": "GET",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Questionario/1/respostas",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Buscar Estatísticas",
+          "request": {
+            "method": "GET",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Questionario/1/estatisticas",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Criar com Questões",
+          "request": {
+            "method": "POST",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Questionario/com-questoes",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Novo Questionário\",\n  \"descricao\": \"Descrição do questionário\",\n  \"dataExpiracao\": \"2024-12-31T23:59:59Z\",\n  \"ordemAleatoria\": false,\n  \"questoes\": [\n    {\n      \"questaoId\": 1,\n      \"ordem\": 1\n    },\n    {\n      \"questaoId\": 2,\n      \"ordem\": 2\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Questao",
+      "item": [
+        {
+          "name": "Listar Todas",
+          "request": {
+            "method": "GET",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Questao",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Buscar por ID",
+          "request": {
+            "method": "GET",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Questao/1",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Criar Questão Múltipla Escolha",
+          "request": {
+            "method": "POST",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Questao",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"texto\": \"Qual é sua satisfação com o curso?\",\n  \"tipo\": \"MultiplaEscolha\",\n  \"opcoes\": [\n    {\n      \"texto\": \"Muito Satisfeito\",\n      \"valor\": \"5\",\n      \"ordem\": 1,\n      \"peso\": 5\n    },\n    {\n      \"texto\": \"Satisfeito\",\n      \"valor\": \"4\",\n      \"ordem\": 2,\n      \"peso\": 4\n    },\n    {\n      \"texto\": \"Neutro\",\n      \"valor\": \"3\",\n      \"ordem\": 3,\n      \"peso\": 3\n    },\n    {\n      \"texto\": \"Insatisfeito\",\n      \"valor\": \"2\",\n      \"ordem\": 4,\n      \"peso\": 2\n    },\n    {\n      \"texto\": \"Muito Insatisfeito\",\n      \"valor\": \"1\",\n      \"ordem\": 5,\n      \"peso\": 1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Criar Questão Caixa Texto",
+          "request": {
+            "method": "POST",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Questao",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"texto\": \"Descreva sua experiência com o curso em detalhes.\",\n  \"tipo\": \"CaixaTexto\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Criar Questão Escala Linear",
+          "request": {
+            "method": "POST",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Questao",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"texto\": \"Em uma escala de 0 a 10, quanto você recomendaria este curso?\",\n  \"tipo\": \"EscalaLinear\",\n  \"opcoes\": [\n    {\n      \"texto\": \"0\",\n      \"valor\": \"0\",\n      \"ordem\": 1,\n      \"peso\": 0\n    },\n    {\n      \"texto\": \"1\",\n      \"valor\": \"1\",\n      \"ordem\": 2,\n      \"peso\": 1\n    },\n    {\n      \"texto\": \"2\",\n      \"valor\": \"2\",\n      \"ordem\": 3,\n      \"peso\": 2\n    },\n    {\n      \"texto\": \"3\",\n      \"valor\": \"3\",\n      \"ordem\": 4,\n      \"peso\": 3\n    },\n    {\n      \"texto\": \"4\",\n      \"valor\": \"4\",\n      \"ordem\": 5,\n      \"peso\": 4\n    },\n    {\n      \"texto\": \"5\",\n      \"valor\": \"5\",\n      \"ordem\": 6,\n      \"peso\": 5\n    },\n    {\n      \"texto\": \"6\",\n      \"valor\": \"6\",\n      \"ordem\": 7,\n      \"peso\": 6\n    },\n    {\n      \"texto\": \"7\",\n      \"valor\": \"7\",\n      \"ordem\": 8,\n      \"peso\": 7\n    },\n    {\n      \"texto\": \"8\",\n      \"valor\": \"8\",\n      \"ordem\": 9,\n      \"peso\": 8\n    },\n    {\n      \"texto\": \"9\",\n      \"valor\": \"9\",\n      \"ordem\": 10,\n      \"peso\": 9\n    },\n    {\n      \"texto\": \"10\",\n      \"valor\": \"10\",\n      \"ordem\": 11,\n      \"peso\": 10\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Criar Questão Menu Suspenso",
+          "request": {
+            "method": "POST",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Questao",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"texto\": \"Qual é sua área de atuação?\",\n  \"tipo\": \"MenuSuspenso\",\n  \"opcoes\": [\n    {\n      \"texto\": \"Desenvolvimento\",\n      \"valor\": \"dev\",\n      \"ordem\": 1,\n      \"peso\": 1\n    },\n    {\n      \"texto\": \"Design\",\n      \"valor\": \"design\",\n      \"ordem\": 2,\n      \"peso\": 2\n    },\n    {\n      \"texto\": \"Marketing\",\n      \"valor\": \"marketing\",\n      \"ordem\": 3,\n      \"peso\": 3\n    },\n    {\n      \"texto\": \"Vendas\",\n      \"valor\": \"vendas\",\n      \"ordem\": 4,\n      \"peso\": 4\n    },\n    {\n      \"texto\": \"Outros\",\n      \"valor\": \"outros\",\n      \"ordem\": 5,\n      \"peso\": 5\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Criar Questão Matriz",
+          "request": {
+            "method": "POST",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Questao",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"texto\": \"Avalie os seguintes aspectos do curso:\",\n  \"tipo\": \"Matriz\",\n  \"opcoes\": [\n    {\n      \"texto\": \"Conteúdo\",\n      \"valor\": \"conteudo\",\n      \"ordem\": 1,\n      \"peso\": 1\n    },\n    {\n      \"texto\": \"Instrutores\",\n      \"valor\": \"instrutores\",\n      \"ordem\": 2,\n      \"peso\": 2\n    },\n    {\n      \"texto\": \"Material\",\n      \"valor\": \"material\",\n      \"ordem\": 3,\n      \"peso\": 3\n    },\n    {\n      \"texto\": \"Estrutura\",\n      \"valor\": \"estrutura\",\n      \"ordem\": 4,\n      \"peso\": 4\n    }\n  ],\n  \"colunas\": [\n    {\n      \"texto\": \"Excelente\",\n      \"valor\": \"5\",\n      \"ordem\": 1,\n      \"peso\": 5\n    },\n    {\n      \"texto\": \"Bom\",\n      \"valor\": \"4\",\n      \"ordem\": 2,\n      \"peso\": 4\n    },\n    {\n      \"texto\": \"Regular\",\n      \"valor\": \"3\",\n      \"ordem\": 3,\n      \"peso\": 3\n    },\n    {\n      \"texto\": \"Ruim\",\n      \"valor\": \"2\",\n      \"ordem\": 4,\n      \"peso\": 2\n    },\n    {\n      \"texto\": \"Péssimo\",\n      \"valor\": \"1\",\n      \"ordem\": 5,\n      \"peso\": 1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Listar Tipos",
+          "request": {
+            "method": "GET",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Questao/tipos",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Listar Opções",
+          "request": {
+            "method": "GET",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Questao/1/opcoes",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Adicionar Opção",
+          "request": {
+            "method": "POST",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Questao/1/opcoes",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"texto\": \"Nova Opção\",\n  \"valor\": \"2\",\n  \"ordem\": 2,\n  \"peso\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Remover Opção",
+          "request": {
+            "method": "DELETE",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Questao/opcoes/1",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "QuestaoQuestionario",
+      "item": [
+        {
+          "name": "Adicionar Questão ao Questionário",
+          "request": {
+            "method": "POST",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/QuestaoQuestionario",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questaoId\": 1,\n  \"questionarioId\": 1,\n  \"ordem\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Buscar por ID",
+          "request": {
+            "method": "GET",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/QuestaoQuestionario/1",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Listar Questões do Questionário",
+          "request": {
+            "method": "GET",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/QuestaoQuestionario/questionario/1",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Remover Questão do Questionário",
+          "request": {
+            "method": "DELETE",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/QuestaoQuestionario/1",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Resposta",
+      "item": [
+        {
+          "name": "Listar Todas",
+          "request": {
+            "method": "GET",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Resposta",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Buscar por ID",
+          "request": {
+            "method": "GET",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Resposta/1",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Criar",
+          "request": {
+            "method": "POST",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Resposta",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionarioId\": 1,\n  \"alunoId\": 1,\n  \"respostasQuestoes\": [\n    {\n      \"questaoId\": 1,\n      \"valor\": \"1\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Buscar por Questionário",
+          "request": {
+            "method": "GET",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Resposta/questionario/1",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Buscar por Aluno",
+          "request": {
+            "method": "GET",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Resposta/aluno/1",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Criar Resposta - Múltipla Escolha",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Resposta",
+              "protocol": "http",
+              "host": ["paconlinesearch", "us-east-1", "elasticbeanstalk", "com"],
+              "path": ["api", "Resposta"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"questionarioId\": 1,\n    \"alunoId\": 1,\n    \"respostasQuestoes\": [\n        {\n            \"questaoId\": 1,\n            \"opcaoId\": 5,\n            \"valor\": \"Muito Satisfeito\"\n        }\n    ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Criar Resposta - Caixa Texto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Resposta",
+              "protocol": "http",
+              "host": ["paconlinesearch", "us-east-1", "elasticbeanstalk", "com"],
+              "path": ["api", "Resposta"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"questionarioId\": 1,\n    \"alunoId\": 1,\n    \"respostasQuestoes\": [\n        {\n            \"questaoId\": 2,\n            \"valor\": \"O curso foi excelente, aprendi muito sobre desenvolvimento web e as práticas foram muito úteis para consolidar o conhecimento.\"\n        }\n    ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Criar Resposta - Escala Linear",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Resposta",
+              "protocol": "http",
+              "host": ["paconlinesearch", "us-east-1", "elasticbeanstalk", "com"],
+              "path": ["api", "Resposta"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"questionarioId\": 1,\n    \"alunoId\": 1,\n    \"respostasQuestoes\": [\n        {\n            \"questaoId\": 3,\n            \"opcaoId\": 10,\n            \"valor\": \"10\"\n        }\n    ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Criar Resposta - Menu Suspenso",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Resposta",
+              "protocol": "http",
+              "host": ["paconlinesearch", "us-east-1", "elasticbeanstalk", "com"],
+              "path": ["api", "Resposta"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"questionarioId\": 1,\n    \"alunoId\": 1,\n    \"respostasQuestoes\": [\n        {\n            \"questaoId\": 4,\n            \"opcaoId\": 1,\n            \"valor\": \"Desenvolvimento\"\n        }\n    ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Criar Resposta - Matriz",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Resposta",
+              "protocol": "http",
+              "host": ["paconlinesearch", "us-east-1", "elasticbeanstalk", "com"],
+              "path": ["api", "Resposta"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"questionarioId\": 1,\n    \"alunoId\": 1,\n    \"respostasQuestoes\": [\n        {\n            \"questaoId\": 5,\n            \"opcaoId\": 6,\n            \"valor\": \"Excelente\"\n        },\n        {\n            \"questaoId\": 5,\n            \"opcaoId\": 7,\n            \"valor\": \"Bom\"\n        },\n        {\n            \"questaoId\": 5,\n            \"opcaoId\": 8,\n            \"valor\": \"Regular\"\n        },\n        {\n            \"questaoId\": 5,\n            \"opcaoId\": 9,\n            \"valor\": \"Ruim\"\n        }\n    ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Criar Resposta - Todos os Tipos",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Resposta",
+              "protocol": "http",
+              "host": ["paconlinesearch", "us-east-1", "elasticbeanstalk", "com"],
+              "path": ["api", "Resposta"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"questionarioId\": 1,\n    \"alunoId\": 1,\n    \"respostasQuestoes\": [\n        {\n            \"questaoId\": 1,\n            \"opcaoId\": 5,\n            \"valor\": \"Muito Satisfeito\"\n        },\n        {\n            \"questaoId\": 2,\n            \"valor\": \"O curso foi excelente, aprendi muito sobre desenvolvimento web e as práticas foram muito úteis para consolidar o conhecimento.\"\n        },\n        {\n            \"questaoId\": 3,\n            \"opcaoId\": 10,\n            \"valor\": \"10\"\n        },\n        {\n            \"questaoId\": 4,\n            \"opcaoId\": 1,\n            \"valor\": \"Desenvolvimento\"\n        },\n        {\n            \"questaoId\": 5,\n            \"opcaoId\": 6,\n            \"valor\": \"Excelente\"\n        },\n        {\n            \"questaoId\": 5,\n            \"opcaoId\": 7,\n            \"valor\": \"Bom\"\n        },\n        {\n            \"questaoId\": 5,\n            \"opcaoId\": 8,\n            \"valor\": \"Regular\"\n        },\n        {\n            \"questaoId\": 5,\n            \"opcaoId\": 9,\n            \"valor\": \"Ruim\"\n        }\n    ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "RespostaQuestao",
+      "item": [
+        {
+          "name": "Listar Todas",
+          "request": {
+            "method": "GET",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/RespostaQuestao",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Buscar por ID",
+          "request": {
+            "method": "GET",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/RespostaQuestao/1",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Criar",
+          "request": {
+            "method": "POST",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/RespostaQuestao",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"respostaId\": 1,\n  \"questaoId\": 1,\n  \"valor\": \"1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Atualizar",
+          "request": {
+            "method": "PUT",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/RespostaQuestao/1",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"respostaId\": 1,\n  \"questaoId\": 1,\n  \"valor\": \"2\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Excluir",
+          "request": {
+            "method": "DELETE",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/RespostaQuestao/1",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Curso",
+      "item": [
+        {
+          "name": "Listar Todos",
+          "request": {
+            "method": "GET",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Curso",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Buscar por ID",
+          "request": {
+            "method": "GET",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Curso/1",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Criar",
+          "request": {
+            "method": "POST",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Curso",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Novo Curso\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Atualizar",
+          "request": {
+            "method": "PUT",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Curso/1",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"nome\": \"Curso Atualizado\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Excluir",
+          "request": {
+            "method": "DELETE",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Curso/1",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Aluno",
+      "item": [
+        {
+          "name": "Listar Todos",
+          "request": {
+            "method": "GET",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Aluno",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Buscar por ID",
+          "request": {
+            "method": "GET",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Aluno/1",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Criar",
+          "request": {
+            "method": "POST",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Aluno",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Novo Aluno\",\n  \"email\": \"aluno@email.com\",\n  \"aceitaContato\": true,\n  \"cursoId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Atualizar",
+          "request": {
+            "method": "PUT",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Aluno/1",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"nome\": \"Aluno Atualizado\",\n  \"email\": \"aluno.atualizado@email.com\",\n  \"aceitaContato\": true,\n  \"cursoId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Excluir",
+          "request": {
+            "method": "DELETE",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Aluno/1",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Perfil",
+      "item": [
+        {
+          "name": "Listar Todos",
+          "request": {
+            "method": "GET",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Perfil",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Buscar por ID",
+          "request": {
+            "method": "GET",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Perfil/1",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Criar",
+          "request": {
+            "method": "POST",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Perfil",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Novo Perfil\",\n  \"descricao\": \"Descrição do novo perfil\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Atualizar",
+          "request": {
+            "method": "PUT",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Perfil/1",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"nome\": \"Perfil Atualizado\",\n  \"descricao\": \"Descrição atualizada\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Excluir",
+          "request": {
+            "method": "DELETE",
+            "url": "http://paconlinesearch.us-east-1.elasticbeanstalk.com/api/Perfil/1",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "token",
+      "value": "seu_token_jwt_aqui"
+    }
+  ]
+} 

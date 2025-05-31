@@ -1,0 +1,7 @@
+[user]
+	name = caiuby7
+	email = caiuby7@gmail.com
+[pull]
+	rebase = false
+[safe]
+	directory = C:/Users/Usuario

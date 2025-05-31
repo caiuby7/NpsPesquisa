@@ -1,0 +1,515 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+		"name": "NpsPesquisa API",
+		"description": "Coleção de testes automatizados para a API de Pesquisa NPS",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Autenticação",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has token\", function () {",
+									"    pm.expect(jsonData.token).to.exist;",
+									"});",
+									"",
+									"if (jsonData.token) {",
+									"    pm.environment.set(\"token\", jsonData.token);",
+									"    console.log(\"Token saved: \" + jsonData.token);",
+									"} else {",
+									"    console.error(\"No token in response\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@nps.com\",\n    \"senha\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Auth",
+								"login"
+							]
+						}
+					}
+				},
+				{
+					"name": "Esqueci Senha",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Mensagem de sucesso\", function () {",
+									"    pm.expect(jsonData.message).to.exist;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@nps.com\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Auth/esqueci-senha",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Auth",
+								"esqueci-senha"
+							]
+						}
+					}
+				},
+				{
+					"name": "Validar Hash Senha",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Resposta tem isValid\", function () {",
+									"    pm.expect(jsonData.isValid).to.exist;",
+									"});",
+									"",
+									"if (jsonData.isValid) {",
+									"    pm.environment.set(\"hashValido\", true);",
+									"} else {",
+									"    pm.environment.set(\"hashValido\", false);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"hash\": \"{{hash}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Auth/validar-hash-senha",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Auth",
+								"validar-hash-senha"
+							]
+						}
+					}
+				},
+				{
+					"name": "Redefinir Senha",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Senha redefinida com sucesso\", function () {",
+									"    pm.expect(jsonData.message).to.equal(\"Senha redefinida com sucesso\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"hash\": \"{{hash}}\",\n    \"novaSenha\": \"novaSenha123\",\n    \"confirmacaoNovaSenha\": \"novaSenha123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Auth/redefinir-senha",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Auth",
+								"redefinir-senha"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Questões",
+			"item": [
+				{
+					"name": "Criar Questão Escala",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Questão criada com sucesso\", function () {",
+									"    pm.expect(jsonData.id).to.exist;",
+									"});",
+									"",
+									"if (jsonData.id) {",
+									"    pm.environment.set(\"questaoEscalaId\", jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"texto\": \"Como você avalia a qualidade do ensino?\",\n    \"tipo\": \"Escala\",\n    \"opcoes\": [\n        {\n            \"texto\": \"Excelente\",\n            \"valor\": \"5\"\n        },\n        {\n            \"texto\": \"Muito Bom\",\n            \"valor\": \"4\"\n        },\n        {\n            \"texto\": \"Bom\",\n            \"valor\": \"3\"\n        },\n        {\n            \"texto\": \"Regular\",\n            \"valor\": \"2\"\n        },\n        {\n            \"texto\": \"Ruim\",\n            \"valor\": \"1\"\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Questao",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Questao"
+							]
+						}
+					}
+				},
+				{
+					"name": "Criar Questão Múltipla Escolha",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Questão criada com sucesso\", function () {",
+									"    pm.expect(jsonData.id).to.exist;",
+									"});",
+									"",
+									"if (jsonData.id) {",
+									"    pm.environment.set(\"questaoMultiplaId\", jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"texto\": \"Qual área você tem mais interesse em estudar?\",\n    \"tipo\": \"MultiplaEscolha\",\n    \"opcoes\": [\n        {\n            \"texto\": \"Desenvolvimento Web\",\n            \"valor\": \"web\"\n        },\n        {\n            \"texto\": \"Desenvolvimento Mobile\",\n            \"valor\": \"mobile\"\n        },\n        {\n            \"texto\": \"Ciência de Dados\",\n            \"valor\": \"dados\"\n        },\n        {\n            \"texto\": \"Inteligência Artificial\",\n            \"valor\": \"ia\"\n        },\n        {\n            \"texto\": \"Outra\",\n            \"valor\": \"outra\"\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Questao",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Questao"
+							]
+						}
+					}
+				},
+				{
+					"name": "Criar Questão Texto",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Questão criada com sucesso\", function () {",
+									"    pm.expect(jsonData.id).to.exist;",
+									"});",
+									"",
+									"if (jsonData.id) {",
+									"    pm.environment.set(\"questaoTextoId\", jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"texto\": \"Quais melhorias você sugere para o curso?\",\n    \"tipo\": \"Texto\",\n    \"opcoes\": []\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Questao",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Questao"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Questionário",
+			"item": [
+				{
+					"name": "Criar Questionário com Questões",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Questionário criado com sucesso\", function () {",
+									"    pm.expect(jsonData.id).to.exist;",
+									"});",
+									"",
+									"pm.test(\"Questionário tem as questões corretas\", function () {",
+									"    pm.expect(jsonData.questoesQuestionarios).to.have.lengthOf(3);",
+									"});",
+									"",
+									"if (jsonData.id) {",
+									"    pm.environment.set(\"questionarioId\", jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"titulo\": \"Pesquisa de Satisfação\",\n    \"descricao\": \"Pesquisa para avaliar a satisfação dos alunos com o curso\",\n    \"dataExpiracao\": \"2024-12-31T23:59:59Z\",\n    \"ordemAleatoria\": true,\n    \"questoes\": [\n        {\n            \"questaoId\": \"{{questaoEscalaId}}\",\n            \"ordem\": 1\n        },\n        {\n            \"questaoId\": \"{{questaoMultiplaId}}\",\n            \"ordem\": 2\n        },\n        {\n            \"questaoId\": \"{{questaoTextoId}}\",\n            \"ordem\": 3\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Questionario/com-questoes",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Questionario",
+								"com-questoes"
+							]
+						}
+					}
+				},
+				{
+					"name": "Verificar Questionário para Resposta",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Questionário tem as questões corretas\", function () {",
+									"    pm.expect(jsonData.questoes).to.have.lengthOf(3);",
+									"});",
+									"",
+									"pm.test(\"Ordem aleatória está ativa\", function () {",
+									"    pm.expect(jsonData.ordemAleatoria).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Questões têm tipos diferentes\", function () {",
+									"    const tipos = jsonData.questoes.map(q => q.tipo);",
+									"    pm.expect(tipos).to.include('Escala');",
+									"    pm.expect(tipos).to.include('MultiplaEscolha');",
+									"    pm.expect(tipos).to.include('Texto');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/Questionario/{{questionarioId}}/para-resposta",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Questionario",
+								"{{questionarioId}}",
+								"para-resposta"
+							]
+						}
+					}
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:5021",
+			"type": "string"
+		}
+	]
+} 

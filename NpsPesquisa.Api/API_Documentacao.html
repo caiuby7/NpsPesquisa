@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Documentação da API NPS</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f9f9f9; }
+        h1, h2, h3 { color: #2c3e50; }
+        code, pre { background: #f4f4f4; padding: 2px 6px; border-radius: 4px; }
+        .endpoint { margin-bottom: 30px; }
+        .method { font-weight: bold; color: #2980b9; }
+        .url { font-family: monospace; color: #16a085; }
+        .section { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #0001; padding: 24px; margin-bottom: 32px; }
+        .json { background: #f4f4f4; border-radius: 4px; padding: 10px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>Documentação da API NPS</h1>
+    <p>API para gestão de pesquisas NPS, questionários, questões, respostas, alunos e cursos.</p>
+
+    <div class="section">
+        <h2>1. Questionário</h2>
+        <div class="endpoint">
+            <span class="method">GET</span> <span class="url">/api/Questionario</span><br>
+            <small>Lista todos os questionários.</small>
+        </div>
+        <div class="endpoint">
+            <span class="method">GET</span> <span class="url">/api/Questionario/{id}</span><br>
+            <small>Busca um questionário pelo ID.</small>
+        </div>
+        <div class="endpoint">
+            <span class="method">POST</span> <span class="url">/api/Questionario</span><br>
+            <small>Cria um novo questionário.</small>
+            <pre class="json">{
+  "titulo": "Formulário Completo de Tipos de Questão",
+  "dataCriacao": "2024-05-19T00:00:00Z",
+  "dataExpiracao": "2024-05-26T00:00:00Z"
+}</pre>
+        </div>
+        <div class="endpoint">
+            <span class="method">PUT</span> <span class="url">/api/Questionario/{id}</span><br>
+            <small>Atualiza um questionário existente.</small>
+        </div>
+        <div class="endpoint">
+            <span class="method">DELETE</span> <span class="url">/api/Questionario/{id}</span><br>
+            <small>Remove um questionário.</small>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>2. Questão</h2>
+        <div class="endpoint">
+            <span class="method">GET</span> <span class="url">/api/Questao</span><br>
+            <small>Lista todas as questões.</small>
+        </div>
+        <div class="endpoint">
+            <span class="method">GET</span> <span class="url">/api/Questao/{id}</span><br>
+            <small>Busca uma questão pelo ID.</small>
+        </div>
+        <div class="endpoint">
+            <span class="method">POST</span> <span class="url">/api/Questao</span><br>
+            <small>Cria uma nova questão.</small>
+            <pre class="json">{
+  "texto": "Qual seu turno de estudo?",
+  "tipo": "RespostaUnica",
+  "ordem": 3,
+  "questionarioId": 1
+}</pre>
+        </div>
+        <div class="endpoint">
+            <span class="method">PUT</span> <span class="url">/api/Questao/{id}</span><br>
+            <small>Atualiza uma questão.</small>
+        </div>
+        <div class="endpoint">
+            <span class="method">DELETE</span> <span class="url">/api/Questao/{id}</span><br>
+            <small>Remove uma questão.</small>
+        </div>
+        <div class="endpoint">
+            <span class="method">GET</span> <span class="url">/api/Questao/tipos</span><br>
+            <small>Lista todos os tipos de questão disponíveis (enum).</small>
+        </div>
+        <div class="endpoint">
+            <span class="method">GET</span> <span class="url">/api/Questao/{questaoId}/opcoes</span><br>
+            <small>Lista as opções de uma questão fechada.</small>
+        </div>
+        <div class="endpoint">
+            <span class="method">POST</span> <span class="url">/api/Questao/{questaoId}/opcoes</span><br>
+            <small>Adiciona uma opção a uma questão fechada.</small>
+            <pre class="json">{ "texto": "Matutino", "ordem": 1 }</pre>
+        </div>
+        <div class="endpoint">
+            <span class="method">DELETE</span> <span class="url">/api/Questao/opcoes/{opcaoId}</span><br>
+            <small>Remove uma opção de questão.</small>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>3. Resposta</h2>
+        <div class="endpoint">
+            <span class="method">GET</span> <span class="url">/api/Resposta</span><br>
+            <small>Lista todas as respostas.</small>
+        </div>
+        <div class="endpoint">
+            <span class="method">GET</span> <span class="url">/api/Resposta/{id}</span><br>
+            <small>Busca uma resposta pelo ID.</small>
+        </div>
+        <div class="endpoint">
+            <span class="method">POST</span> <span class="url">/api/Resposta</span><br>
+            <small>Envia as respostas de um aluno para um questionário.</small>
+            <pre class="json">{
+  "questionarioId": 1,
+  "alunoId": 123,
+  "respostasQuestoes": [
+    { "questaoId": 1, "valor": "E-mail" },
+    { "questaoId": 2, "valor": "Sim" },
+    { "questaoId": 3, "valor": "Matutino" }
+  ]
+}</pre>
+        </div>
+        <div class="endpoint">
+            <span class="method">PUT</span> <span class="url">/api/Resposta/{id}</span><br>
+            <small>Atualiza uma resposta.</small>
+        </div>
+        <div class="endpoint">
+            <span class="method">DELETE</span> <span class="url">/api/Resposta/{id}</span><br>
+            <small>Remove uma resposta.</small>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>4. RespostaQuestao</h2>
+        <div class="endpoint">
+            <span class="method">GET</span> <span class="url">/api/RespostaQuestao</span><br>
+            <small>Lista todas as respostas de questões.</small>
+        </div>
+        <div class="endpoint">
+            <span class="method">GET</span> <span class="url">/api/RespostaQuestao/{id}</span><br>
+            <small>Busca uma resposta de questão pelo ID.</small>
+        </div>
+        <div class="endpoint">
+            <span class="method">POST</span> <span class="url">/api/RespostaQuestao</span><br>
+            <small>Cria uma resposta de questão isolada.</small>
+        </div>
+        <div class="endpoint">
+            <span class="method">PUT</span> <span class="url">/api/RespostaQuestao/{id}</span><br>
+            <small>Atualiza uma resposta de questão.</small>
+        </div>
+        <div class="endpoint">
+            <span class="method">DELETE</span> <span class="url">/api/RespostaQuestao/{id}</span><br>
+            <small>Remove uma resposta de questão.</small>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>5. Curso</h2>
+        <div class="endpoint">
+            <span class="method">GET</span> <span class="url">/api/Curso</span><br>
+            <small>Lista todos os cursos.</small>
+        </div>
+        <div class="endpoint">
+            <span class="method">GET</span> <span class="url">/api/Curso/{id}</span><br>
+            <small>Busca um curso pelo ID.</small>
+        </div>
+        <div class="endpoint">
+            <span class="method">POST</span> <span class="url">/api/Curso</span><br>
+            <small>Cria um novo curso.</small>
+            <pre class="json">{ "nome": "Administração" }</pre>
+        </div>
+        <div class="endpoint">
+            <span class="method">PUT</span> <span class="url">/api/Curso/{id}</span><br>
+            <small>Atualiza um curso.</small>
+        </div>
+        <div class="endpoint">
+            <span class="method">DELETE</span> <span class="url">/api/Curso/{id}</span><br>
+            <small>Remove um curso.</small>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>6. Aluno</h2>
+        <div class="endpoint">
+            <span class="method">GET</span> <span class="url">/api/Aluno</span><br>
+            <small>Lista todos os alunos.</small>
+        </div>
+        <div class="endpoint">
+            <span class="method">GET</span> <span class="url">/api/Aluno/{id}</span><br>
+            <small>Busca um aluno pelo ID.</small>
+        </div>
+        <div class="endpoint">
+            <span class="method">POST</span> <span class="url">/api/Aluno</span><br>
+            <small>Cria um novo aluno.</small>
+            <pre class="json">{
+  "nome": "João da Silva",
+  "email": "joao@email.com",
+  "aceitaContato": true,
+  "cursoId": 1
+}</pre>
+        </div>
+        <div class="endpoint">
+            <span class="method">PUT</span> <span class="url">/api/Aluno/{id}</span><br>
+            <small>Atualiza um aluno.</small>
+        </div>
+        <div class="endpoint">
+            <span class="method">DELETE</span> <span class="url">/api/Aluno/{id}</span><br>
+            <small>Remove um aluno.</small>
+        </div>
+    </div>
+
+    <footer style="margin-top:40px; color:#888; font-size:14px;">Documentação gerada automaticamente - Projeto NPS Pesquisa</footer>
+</body>
+</html> 

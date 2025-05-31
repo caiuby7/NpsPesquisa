@@ -1,0 +1,718 @@
+{
+	"info": {
+		"_postman_id": "nps-pesquisa-collection",
+		"name": "NPS Pesquisa API",
+		"description": "API para gerenciamento de pesquisas NPS",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"token\", jsonData.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@nps.com\",\n    \"senha\": \"admin123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Auth", "login"]
+						}
+					}
+				},
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nome\": \"Novo Usuário\",\n    \"email\": \"novo@nps.com\",\n    \"senha\": \"senha123\",\n    \"perfilId\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Auth/register",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Auth", "register"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Questionario",
+			"item": [
+				{
+					"name": "Get All",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Questionario",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Questionario"]
+						}
+					}
+				},
+				{
+					"name": "Get By Id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Questionario/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Questionario", "1"]
+						}
+					}
+				},
+				{
+					"name": "Get Ativos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Questionario/ativos",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Questionario", "ativos"]
+						}
+					}
+				},
+				{
+					"name": "Get Por Periodo",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Questionario/por-periodo?dataInicio=2024-01-01&dataFim=2024-12-31",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Questionario", "por-periodo"],
+							"query": [
+								{
+									"key": "dataInicio",
+									"value": "2024-01-01"
+								},
+								{
+									"key": "dataFim",
+									"value": "2024-12-31"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Respostas",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Questionario/1/respostas",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Questionario", "1", "respostas"]
+						}
+					}
+				},
+				{
+					"name": "Get Estatisticas",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Questionario/1/estatisticas",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Questionario", "1", "estatisticas"]
+						}
+					}
+				},
+				{
+					"name": "Create",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"titulo\": \"Nova Pesquisa\",\n    \"descricao\": \"Descrição da pesquisa\",\n    \"ativo\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Questionario",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Questionario"]
+						}
+					}
+				},
+				{
+					"name": "Update",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": 1,\n    \"titulo\": \"Pesquisa Atualizada\",\n    \"descricao\": \"Nova descrição\",\n    \"ativo\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Questionario/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Questionario", "1"]
+						}
+					}
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Questionario/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Questionario", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Questao",
+			"item": [
+				{
+					"name": "Get All",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Questao",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Questao"]
+						}
+					}
+				},
+				{
+					"name": "Get By Id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Questao/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Questao", "1"]
+						}
+					}
+				},
+				{
+					"name": "Get Tipos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Questao/tipos",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Questao", "tipos"]
+						}
+					}
+				},
+				{
+					"name": "Get Opcoes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Questao/1/opcoes",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Questao", "1", "opcoes"]
+						}
+					}
+				},
+				{
+					"name": "Create",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"texto\": \"Nova questão\",\n    \"tipo\": 1,\n    \"opcoes\": [\n        {\n            \"texto\": \"Opção 1\",\n            \"valor\": 1,\n            \"ordem\": 1,\n            \"peso\": 1\n        }\n    ],\n    \"colunas\": [\n        {\n            \"texto\": \"Coluna 1\",\n            \"valor\": 1,\n            \"ordem\": 1,\n            \"peso\": 1\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Questao",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Questao"]
+						}
+					}
+				},
+				{
+					"name": "Update",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"texto\": \"Questão atualizada\",\n    \"tipo\": 1,\n    \"opcoes\": [\n        {\n            \"texto\": \"Opção 1 atualizada\",\n            \"valor\": 1,\n            \"ordem\": 1,\n            \"peso\": 1\n        }\n    ],\n    \"colunas\": [\n        {\n            \"texto\": \"Coluna 1 atualizada\",\n            \"valor\": 1,\n            \"ordem\": 1,\n            \"peso\": 1\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Questao/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Questao", "1"]
+						}
+					}
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Questao/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Questao", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Resposta",
+			"item": [
+				{
+					"name": "Get All",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Resposta",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Resposta"]
+						}
+					}
+				},
+				{
+					"name": "Get By Id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Resposta/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Resposta", "1"]
+						}
+					}
+				},
+				{
+					"name": "Get Por Questionario",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Resposta/questionario/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Resposta", "questionario", "1"]
+						}
+					}
+				},
+				{
+					"name": "Get Por Aluno",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Resposta/aluno/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Resposta", "aluno", "1"]
+						}
+					}
+				},
+				{
+					"name": "Create",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"questionarioId\": 1,\n    \"alunoId\": 1,\n    \"respostasQuestoes\": [\n        {\n            \"questaoId\": 1,\n            \"valor\": 5\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Resposta",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Resposta"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Aluno",
+			"item": [
+				{
+					"name": "Get All",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Aluno",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Aluno"]
+						}
+					}
+				},
+				{
+					"name": "Get By Id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Aluno/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Aluno", "1"]
+						}
+					}
+				},
+				{
+					"name": "Create",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nome\": \"Novo Aluno\",\n    \"email\": \"aluno@email.com\",\n    \"cursoId\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Aluno",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Aluno"]
+						}
+					}
+				},
+				{
+					"name": "Update",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": 1,\n    \"nome\": \"Aluno Atualizado\",\n    \"email\": \"aluno.atualizado@email.com\",\n    \"cursoId\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Aluno/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Aluno", "1"]
+						}
+					}
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Aluno/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Aluno", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Curso",
+			"item": [
+				{
+					"name": "Get All",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Curso",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Curso"]
+						}
+					}
+				},
+				{
+					"name": "Get By Id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Curso/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Curso", "1"]
+						}
+					}
+				},
+				{
+					"name": "Create",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nome\": \"Novo Curso\",\n    \"descricao\": \"Descrição do curso\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Curso",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Curso"]
+						}
+					}
+				},
+				{
+					"name": "Update",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": 1,\n    \"nome\": \"Curso Atualizado\",\n    \"descricao\": \"Nova descrição\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Curso/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Curso", "1"]
+						}
+					}
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Curso/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Curso", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Perfil",
+			"item": [
+				{
+					"name": "Get All",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Perfil",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Perfil"]
+						}
+					}
+				},
+				{
+					"name": "Get By Id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Perfil/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Perfil", "1"]
+						}
+					}
+				},
+				{
+					"name": "Create",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nome\": \"Novo Perfil\",\n    \"descricao\": \"Descrição do perfil\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Perfil",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Perfil"]
+						}
+					}
+				},
+				{
+					"name": "Update",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": 1,\n    \"nome\": \"Perfil Atualizado\",\n    \"descricao\": \"Nova descrição\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/Perfil/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Perfil", "1"]
+						}
+					}
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Perfil/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "Perfil", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "ConviteQuestionario",
+			"item": [
+				{
+					"name": "Gerar Convite",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"questionarioId\": 1,\n    \"alunoId\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/ConviteQuestionario/gerar",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "ConviteQuestionario", "gerar"]
+						}
+					}
+				},
+				{
+					"name": "Validar Chave",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/ConviteQuestionario/validar/abc123",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "ConviteQuestionario", "validar", "abc123"]
+						}
+					}
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [""]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [""]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:5021",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "your-jwt-token-here",
+			"type": "string"
+		}
+	]
+} 
