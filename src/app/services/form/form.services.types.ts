@@ -14,7 +14,7 @@ export interface FormResponse {
   titulo: string;
   dataExpiracao: string;
   descricao: string;
-  questoes: QuestionResponse[];
+  questoesQuestionarios: QuestionResponse[];
 }
 
 export interface QuestionResponse {
@@ -26,10 +26,11 @@ export interface QuestionResponse {
 }
 export interface OptionItem {
   texto: string;
-  idOpcao: string;
+  id: string;
   ordem: number;
   peso: number;
   valor?: string;
+  ehColuna?: boolean
 }
 
 export const QUESTIONS_TYPES = [

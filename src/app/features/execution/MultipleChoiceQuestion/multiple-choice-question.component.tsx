@@ -19,7 +19,7 @@ export default function MultipleChoiceQuestion({
       <VStack align="stretch">
         {question?.opcoes?.map((field) => (
           <Checkbox.Root
-            key={field.idOpcao}
+            key={field.id}
             {...register(`${index}.resposta`)}
           >
             <Checkbox.HiddenInput />
