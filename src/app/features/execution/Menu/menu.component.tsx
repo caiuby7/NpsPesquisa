@@ -1,36 +1,21 @@
-import { Box, Text } from "@chakra-ui/react";
-import { UseFormRegister, Control } from "react-hook-form";
+import { Box } from "@chakra-ui/react";
 import { QuestionResponse } from "@/app/services/form";
-import { AnswersFormType } from "@/app/widgets/execution-question/use-execution-answer";
 import { CustomSelect } from "@/app/components/Select/select.component";
+import { useFormContext } from "react-hook-form";
 
-export default function MenuExecution({
-  control,
-  register,
-  question,
-  index
-}: {
-  register: UseFormRegister<AnswersFormType>;
-  control: Control<AnswersFormType>;
-  question: QuestionResponse
-  index: number
-}) {
-
+export const Menu = ({ question }: { question: QuestionResponse }) => {
+  const { control } = useFormContext();
   const options = question.opcoes?.map(option => {
     return { value: option.id, label: option.texto }
-  })
-  console.log(question)
+  }) || [];
+
   return (
-    <Box as="form">
-      <Text mb={4} fontWeight="bold" textAlign="left">
-        {question.texto}
-      </Text>
+    <Box>
       <CustomSelect
         control={control}
-        register={register}
         items={options}
-        name={`${index}.resposta`}
+        name={String(question.id)}
       />
     </Box>
   );
-}
+};

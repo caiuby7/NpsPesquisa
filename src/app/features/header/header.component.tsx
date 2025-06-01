@@ -4,13 +4,13 @@ import {
     Flex,
     HStack,
     Avatar,
-    Text,
     Button,
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
+import NextLink from 'next/link';
 
 const pages = [
-        { label: "Home", path: "/home" },
+    { label: "Home", path: "/home" },
     { label: "Criar Questão", path: "/create-question" },
     { label: "Criar Formulário", path: "/create-form" },
     { label: "Formulários", path: "/forms" },
@@ -18,18 +18,17 @@ const pages = [
 ];
 
 export function AppHeader() {
-    const bg = useColorModeValue("gray.800", "gray.900");
+    const bg = useColorModeValue("brand.500", "brand.600");
     const color = useColorModeValue("white", "white");
     const router = useRouter();
-
 
     return (
         <Box bg={bg} color={color} px={6} py={3} boxShadow="sm">
             <Flex align="center" justify="space-between">
                 {/* Logo */}
-                <Text fontSize="lg" fontWeight="bold">
-                    🐵 Logo
-                </Text>
+                <NextLink href="/home">
+                    <img src="/logo.png" alt="Logo" style={{ height: 40, marginRight: 8, cursor: 'pointer' }} />
+                </NextLink>
 
                 {/* Navigation Tabs */}
                 <HStack>
@@ -39,11 +38,12 @@ export function AppHeader() {
                             <Button
                                 key={page.path}
                                 variant="ghost"
-                                color={isActive ? "white" : "gray.400"}
+                                color={isActive ? "white" : "#9d2235"}
+                                bg={isActive ? "#9d2235" : "transparent"}
                                 fontWeight={isActive ? "bold" : "normal"}
                                 borderBottom={isActive ? "2px solid white" : "none"}
                                 borderRadius="0"
-                                _hover={{ color: "white", bg: "transparent" }}
+                                _hover={{ color: "white", bg: "#9d2235" }}
                                 onClick={() => router.push(page.path)}
                             >
                                 {page.label}
@@ -52,12 +52,9 @@ export function AppHeader() {
                     })}
                 </HStack>
                 {/* Avatar */}
-                <HStack>
-                    <Avatar.Root>
-                        <Avatar.Fallback name="Segun Adebayo" />
-                        <Avatar.Image src="https://bit.ly/sage-adebayo" />
-                    </Avatar.Root>
-                </HStack>
+                <Avatar.Root>
+                    <Avatar.Fallback name="User" />
+                </Avatar.Root>
             </Flex>
         </Box>
     );

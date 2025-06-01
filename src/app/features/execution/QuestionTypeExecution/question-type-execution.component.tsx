@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Box, Text, Textarea } from "@chakra-ui/react";
-import { UseFormRegister, Control } from "react-hook-form";
+import { UseFormRegister } from "react-hook-form";
 import MultipleChoiceQuestion from "../MultipleChoiceQuestion/multiple-choice-question.component";
 import { MatrixQuestion } from "../ArrayQuestion/array-question.component";
 import { EscalaLinear } from "../LinearScale/linear-scale.component";
@@ -10,12 +10,11 @@ import {
   QuestionTypeEnum,
 } from "@/app/services/form";
 import { AnswersFormType } from "@/app/widgets/execution-question/use-execution-answer";
-import MenuExecution from "../Menu/menu.component";
+import { Menu as MenuExecution } from "../Menu/menu.component";
 
 interface Props {
   type: QuestionType;
   register: UseFormRegister<AnswersFormType>;
-  control: Control<AnswersFormType>;
   question: QuestionResponse;
   index: number;
   disabled?: boolean;
@@ -24,7 +23,6 @@ interface Props {
 export function QuestionTypeExecution({
   type,
   register,
-  control,
   question,
   index,
   disabled,
@@ -42,10 +40,7 @@ export function QuestionTypeExecution({
   if (type === QuestionTypeEnum.MENU && question?.opcoes) {
     return (
       <MenuExecution
-        register={register}
-        control={control}
         question={question}
-        index={index}
       />
     );
   }
@@ -81,12 +76,17 @@ export function QuestionTypeExecution({
     );
   }
 
-  if (type === "Matriz" && question?.opcoes && question?.colunas) {
+  if (type === "Matriz") {
+    const opcoes = question.opcoes || [];
+    const colunas = question.colunas || [];
+    
+    console.log('QuestionTypeExecution - Matrix data:', { question, opcoes, colunas });
+    
     return (
       <MatrixQuestion
         texto={question.texto}
-        opcoes={question.opcoes}
-        colunas={question.colunas}
+        opcoes={opcoes}
+        colunas={colunas}
       />
     );
   }

@@ -6,7 +6,7 @@ import { useExecutionAnswer } from "./use-execution-answer";
 
 export default function ExecutionForm() {
   const { data } = useGetForm({ id: "1" });
-  const { control, register, handleSubmit } =
+  const { register, handleSubmit } =
     useExecutionAnswer();
 
   if (!data) return;
@@ -23,7 +23,6 @@ export default function ExecutionForm() {
                   type={question.tipo}
                   register={register}
                   question={question}
-                  control={control}
                   index={index}
                 />
               </Stack>
