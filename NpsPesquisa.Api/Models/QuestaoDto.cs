@@ -21,12 +21,13 @@ namespace NpsPesquisa.Api.Models
         [Required]
         public string Texto { get; set; } = string.Empty;
 
-        //[Required]
-        public string? Valor { get; set; }
+        public string Valor { get; set; } = string.Empty;
 
         public int Ordem { get; set; }
 
         public int Peso { get; set; }
+
+        public bool EhColuna { get; set; } = false;
     }
 
     public class QuestaoResponseDto
@@ -42,7 +43,7 @@ namespace NpsPesquisa.Api.Models
     {
         public int Id { get; set; }
         public string Texto { get; set; } = string.Empty;
-        public string? Valor { get; set; }
+        public string Valor { get; set; } = string.Empty;
         public int Ordem { get; set; }
         public int Peso { get; set; }
         public bool EhColuna { get; set; }

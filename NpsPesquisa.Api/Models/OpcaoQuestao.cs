@@ -24,7 +24,7 @@ namespace NpsPesquisa.Api.Models
         //[Required]
         public int Peso { get; set; }
 
-        public bool EhColuna { get; set; }
+        public bool EhColuna { get; set; } = false;
 
         [JsonIgnore]
         [ForeignKey("QuestaoId")]

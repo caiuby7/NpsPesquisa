@@ -8,7 +8,7 @@ namespace NpsPesquisa.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+
     public class QuestaoQuestionarioController : ControllerBase
     {
         private readonly NpsDbContext _context;

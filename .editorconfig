@@ -2,3 +2,6 @@
 
 # Default severity for all analyzer diagnostics
 dotnet_analyzer_diagnostic.severity = none
+
+# CS8619: A anulabilidade de tipos de referência no valor não corresponde ao tipo de destino.
+dotnet_diagnostic.CS8619.severity = none

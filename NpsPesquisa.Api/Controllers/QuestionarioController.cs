@@ -13,7 +13,7 @@ namespace NpsPesquisa.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+
     public class QuestionarioController : ControllerBase
     {
         private readonly NpsDbContext _context;
@@ -511,7 +511,7 @@ namespace NpsPesquisa.Api.Controllers
                     Id = qq.Questao.Id,
                     Texto = qq.Questao.Texto,
                     Tipo = qq.Questao.Tipo,
-                    Opcoes = qq.Questao.Opcoes.Where(o => !o.EhColuna).Select(o => new OpcaoQuestaoResponseDto
+                    Opcoes = qq.Questao.Opcoes.Where(o => o.EhColuna == false).Select(o => new OpcaoQuestaoResponseDto
                     {
                         Id = o.Id,
                         Texto = o.Texto,
@@ -520,7 +520,7 @@ namespace NpsPesquisa.Api.Controllers
                         Peso = o.Peso,
                         EhColuna = o.EhColuna
                     }).ToList(),
-                    Colunas = qq.Questao.Opcoes.Where(o => o.EhColuna).Select(o => new OpcaoQuestaoResponseDto
+                    Colunas = qq.Questao.Opcoes.Where(o => o.EhColuna == true).Select(o => new OpcaoQuestaoResponseDto
                     {
                         Id = o.Id,
                         Texto = o.Texto,

@@ -11,7 +11,7 @@ namespace NpsPesquisa.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+
     public class QuestaoController : ControllerBase
     {
         private readonly NpsDbContext _context;
@@ -25,6 +25,24 @@ namespace NpsPesquisa.Api.Controllers
         [Authorize(Roles = "Administrador,Coordenacao")]
         public async Task<ActionResult<QuestaoResponseDto>> CreateQuestao(QuestaoPostDto questaoDto)
         {
+            // Validação do tipo de questão
+            if (questaoDto.Tipo != TipoQuestao.CaixaTexto && (questaoDto.Opcoes == null || !questaoDto.Opcoes.Any()))
+            {
+                return BadRequest(new { message = "Questões do tipo " + questaoDto.Tipo + " devem ter opções" });
+            }
+
+            // Validação específica para questões do tipo Matriz
+            if (questaoDto.Tipo == TipoQuestao.Matriz)
+            {
+                var temOpcoes = questaoDto.Opcoes?.Any(o => o.EhColuna == false) ?? false;
+                var temColunas = questaoDto.Opcoes?.Any(o => o.EhColuna == true) ?? false;
+
+                if (!temOpcoes || !temColunas)
+                {
+                    return BadRequest(new { message = "Questões do tipo Matriz devem ter tanto opções quanto colunas" });
+                }
+            }
+
             var questao = new Questao
             {
                 Texto = questaoDto.Texto,
@@ -45,26 +63,9 @@ namespace NpsPesquisa.Api.Controllers
                         Valor = opcaoDto.Valor,
                         Ordem = opcaoDto.Ordem,
                         Peso = opcaoDto.Peso,
-                        EhColuna = false
+                        EhColuna = questaoDto.Tipo == TipoQuestao.Matriz ? opcaoDto.EhColuna : false
                     };
                     _context.OpcoesQuestao.Add(opcao);
-                }
-            }
-
-            if (questaoDto.Colunas != null)
-            {
-                foreach (var colunaDto in questaoDto.Colunas)
-                {
-                    var coluna = new OpcaoQuestao
-                    {
-                        QuestaoId = questao.Id,
-                        Texto = colunaDto.Texto,
-                        Valor = colunaDto.Valor,
-                        Ordem = colunaDto.Ordem,
-                        Peso = colunaDto.Peso,
-                        EhColuna = true
-                    };
-                    _context.OpcoesQuestao.Add(coluna);
                 }
             }
 
@@ -84,24 +85,26 @@ namespace NpsPesquisa.Api.Controllers
                     Id = q.Id,
                     Texto = q.Texto,
                     Tipo = q.Tipo,
-                    Opcoes = q.Opcoes.Where(o => !o.EhColuna).Select(o => new OpcaoQuestaoResponseDto
-                    {
-                        Id = o.Id,
-                        Texto = o.Texto,
-                        Valor = o.Valor,
-                        Ordem = o.Ordem,
-                        Peso = o.Peso,
-                        EhColuna = o.EhColuna
-                    }).ToList(),
-                    Colunas = q.Opcoes.Where(o => o.EhColuna).Select(o => new OpcaoQuestaoResponseDto
-                    {
-                        Id = o.Id,
-                        Texto = o.Texto,
-                        Valor = o.Valor,
-                        Ordem = o.Ordem,
-                        Peso = o.Peso,
-                        EhColuna = o.EhColuna
-                    }).ToList()
+                    Opcoes = q.Tipo == TipoQuestao.CaixaTexto ? new List<OpcaoQuestaoResponseDto>() : 
+                        q.Opcoes.Where(o => o.EhColuna == false).Select(o => new OpcaoQuestaoResponseDto
+                        {
+                            Id = o.Id,
+                            Texto = o.Texto,
+                            Valor = o.Valor,
+                            Ordem = o.Ordem,
+                            Peso = o.Peso,
+                            EhColuna = o.EhColuna
+                        }).ToList(),
+                    Colunas = q.Tipo == TipoQuestao.Matriz ? 
+                        q.Opcoes.Where(o => o.EhColuna == true).Select(o => new OpcaoQuestaoResponseDto
+                        {
+                            Id = o.Id,
+                            Texto = o.Texto,
+                            Valor = o.Valor,
+                            Ordem = o.Ordem,
+                            Peso = o.Peso,
+                            EhColuna = o.EhColuna
+                        }).ToList() : new List<OpcaoQuestaoResponseDto>()
                 })
                 .FirstOrDefaultAsync();
 
@@ -123,24 +126,26 @@ namespace NpsPesquisa.Api.Controllers
                     Id = q.Id,
                     Texto = q.Texto,
                     Tipo = q.Tipo,
-                    Opcoes = q.Opcoes.Where(o => !o.EhColuna).Select(o => new OpcaoQuestaoResponseDto
-                    {
-                        Id = o.Id,
-                        Texto = o.Texto,
-                        Valor = o.Valor,
-                        Ordem = o.Ordem,
-                        Peso = o.Peso,
-                        EhColuna = o.EhColuna
-                    }).ToList(),
-                    Colunas = q.Opcoes.Where(o => o.EhColuna).Select(o => new OpcaoQuestaoResponseDto
-                    {
-                        Id = o.Id,
-                        Texto = o.Texto,
-                        Valor = o.Valor,
-                        Ordem = o.Ordem,
-                        Peso = o.Peso,
-                        EhColuna = o.EhColuna
-                    }).ToList()
+                    Opcoes = q.Tipo == TipoQuestao.CaixaTexto ? new List<OpcaoQuestaoResponseDto>() : 
+                        q.Opcoes.Where(o => o.EhColuna == false).Select(o => new OpcaoQuestaoResponseDto
+                        {
+                            Id = o.Id,
+                            Texto = o.Texto,
+                            Valor = o.Valor,
+                            Ordem = o.Ordem,
+                            Peso = o.Peso,
+                            EhColuna = o.EhColuna
+                        }).ToList(),
+                    Colunas = q.Tipo == TipoQuestao.Matriz ? 
+                        q.Opcoes.Where(o => o.EhColuna == true).Select(o => new OpcaoQuestaoResponseDto
+                        {
+                            Id = o.Id,
+                            Texto = o.Texto,
+                            Valor = o.Valor,
+                            Ordem = o.Ordem,
+                            Peso = o.Peso,
+                            EhColuna = o.EhColuna
+                        }).ToList() : new List<OpcaoQuestaoResponseDto>()
                 })
                 .ToListAsync();
 
@@ -178,27 +183,9 @@ namespace NpsPesquisa.Api.Controllers
                         Valor = opcaoDto.Valor,
                         Ordem = opcaoDto.Ordem,
                         Peso = opcaoDto.Peso,
-                        EhColuna = false
+                        EhColuna = questaoDto.Tipo == TipoQuestao.Matriz ? opcaoDto.EhColuna : false
                     };
                     _context.OpcoesQuestao.Add(opcao);
-                }
-            }
-
-            // Adiciona novas colunas
-            if (questaoDto.Colunas != null)
-            {
-                foreach (var colunaDto in questaoDto.Colunas)
-                {
-                    var coluna = new OpcaoQuestao
-                    {
-                        QuestaoId = questao.Id,
-                        Texto = colunaDto.Texto,
-                        Valor = colunaDto.Valor,
-                        Ordem = colunaDto.Ordem,
-                        Peso = colunaDto.Peso,
-                        EhColuna = true
-                    };
-                    _context.OpcoesQuestao.Add(coluna);
                 }
             }
 
@@ -273,10 +260,16 @@ namespace NpsPesquisa.Api.Controllers
         public async Task<ActionResult<OpcaoQuestao>> AddOpcao(int questaoId, OpcaoQuestao opcao)
         {
             // Verifica se a questão existe
-            var questaoExists = await _context.Questoes.AnyAsync(q => q.Id == questaoId);
-            if (!questaoExists)
+            var questao = await _context.Questoes.FindAsync(questaoId);
+            if (questao == null)
             {
                 return BadRequest(new { message = "Questão não encontrada" });
+            }
+
+            // Se for questão do tipo Matriz, valida se EhColuna está definido
+            if (questao.Tipo == TipoQuestao.Matriz && !opcao.EhColuna)
+            {
+                return BadRequest(new { message = "Para questões do tipo Matriz, o campo EhColuna é obrigatório" });
             }
 
             opcao.QuestaoId = questaoId;
