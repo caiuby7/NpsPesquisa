@@ -3,7 +3,7 @@ import { api } from "../api";
 
 export const FormServices = {
   get: async (payload: FormGetParams): Promise<FormResponse> => {
-      const BASE_PATH = `/Questionario`;
+      const BASE_PATH = `/Questionario/${payload.id}`;
   
       return (await api.get(BASE_PATH)).data;
     },

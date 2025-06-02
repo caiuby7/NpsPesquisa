@@ -5,6 +5,7 @@ import {
     HStack,
     Avatar,
     Button,
+    Image
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import NextLink from 'next/link';
@@ -27,7 +28,7 @@ export function AppHeader() {
             <Flex align="center" justify="space-between">
                 {/* Logo */}
                 <NextLink href="/home">
-                    <img src="/logo.png" alt="Logo" style={{ height: 40, marginRight: 8, cursor: 'pointer' }} />
+                    <Image src="/logo.png" alt="Logo" style={{ height: 40, marginRight: 8, cursor: 'pointer' }} />
                 </NextLink>
 
                 {/* Navigation Tabs */}

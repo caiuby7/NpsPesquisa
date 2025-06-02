@@ -19,10 +19,11 @@ import { useCreateForm } from "./useCreateQuestionForm";
 import { useFormPostMutate } from "@/app/services/form";
 import router from "next/router";
 
+
 export default function ExecutionQuestion() {
   const { data } = useGetQuestions();
   const [toggle, setToggle] = useState(false);
-  const { setValue, watch, register, getValues } = useCreateForm();
+  const { setValue, watch, register, getValues, control } = useCreateForm();
 
   const selectedIds: number[] = watch("questoes") || [];
 
@@ -119,7 +120,7 @@ export default function ExecutionQuestion() {
                       type={question.tipo}
                       question={question}
                       register={register as any}
-                      index={index} watch={watch} />
+                      index={index} watch={watch} control={control as any} />
                   </Stack>
                 </Box>
               );
