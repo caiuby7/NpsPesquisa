@@ -85,6 +85,7 @@ export default function DualSortableFieldArray({
     const overIndex = targetItems.findIndex((i) => i.id === over.id);
 
     const [movedItem] = sourceItems.splice(activeIndex, 1);
+    movedItem.ehColuna = targetName === "colunas";
     targetItems.splice(overIndex, 0, movedItem);
 
     setValue(sourceName, sourceItems);
@@ -191,7 +192,7 @@ function SortableFieldArray({
           append({
             id: crypto.randomUUID(),
             texto: "",
-            ordem: 0,
+            ordem: fields.length + 1,
             peso: 0,
             ehColuna: name === "colunas"
           })

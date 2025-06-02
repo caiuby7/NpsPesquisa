@@ -25,11 +25,11 @@ interface Props {
 export function QuestionTypeExecution({
   type,
   register,
-  control,
   question,
   index,
   disabled,
-  watch
+  watch,
+  control
 }: Props) {
   if (type === QuestionTypeEnum.MULTIPLE_CHOICE) {
     return (
@@ -44,11 +44,7 @@ export function QuestionTypeExecution({
   if (type === QuestionTypeEnum.MENU && question?.opcoes) {
     return (
       <MenuExecution
-        register={register}
-        control={control}
-        question={question}
-        index={index}
-      />
+        question={question} control={control} index={index} />
     );
   }
 
@@ -64,7 +60,6 @@ export function QuestionTypeExecution({
         />
       </Box>
     );
-    return;
   }
 
   if (type === "EscalaLinear" && question?.opcoes) {
@@ -83,7 +78,8 @@ export function QuestionTypeExecution({
     );
   }
 
-  if (type === "Matriz" && question?.opcoes && question?.colunas) {
+  if (type === "Matriz" && question.opcoes && question.colunas) {
+
     return (
       <MatrixQuestion
         texto={question.texto}

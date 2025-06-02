@@ -4,8 +4,16 @@
 import { Portal, Select, createListCollection } from "@chakra-ui/react"
 import { Controller } from "react-hook-form"
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const CustomSelect = ({ control, items, label, placeholder, name, invalid }: any) => {
+interface CustomSelectProps {
+  control: any;
+  items: { value: string | number; label: string }[];
+  label?: string;
+  placeholder?: string;
+  name: string;
+  invalid?: boolean;
+}
+
+export const CustomSelect = ({ control, items, label, placeholder, name, invalid }: CustomSelectProps) => {
   const frameworks = createListCollection({
     items,
   })
@@ -18,8 +26,8 @@ export const CustomSelect = ({ control, items, label, placeholder, name, invalid
         <Select.Root
           invalid={invalid}
           name={field.name}
-          value={field.value}
-          onValueChange={({ value }) => field.onChange(value)}
+          value={field.value ? [field.value] : []}
+          onValueChange={({ value }) => field.onChange(value[0])}
           onInteractOutside={() => field.onBlur()}
           collection={frameworks}
         >
@@ -37,9 +45,9 @@ export const CustomSelect = ({ control, items, label, placeholder, name, invalid
           <Portal>
             <Select.Positioner>
               <Select.Content>
-                {frameworks.items.map((framework: any) => (
-                  <Select.Item item={framework} key={framework?.value}>
-                    {framework?.label}
+                {frameworks.items.map((framework) => (
+                  <Select.Item key={framework.value} item={framework}>
+                    {framework.label}
                     <Select.ItemIndicator />
                   </Select.Item>
                 ))}

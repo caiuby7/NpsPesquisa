@@ -7,9 +7,8 @@ import { Answer, useAnswerMutate } from "@/app/services/answer";
 
 export default function ExecutionForm() {
   const { data } = useGetForm({ id: "1" });
-  const { mutate } = useAnswerMutate(console.log, console.log)
-  const { control, register, handleSubmit, watch } =
-    useExecutionAnswer();
+  const { mutate } = useAnswerMutate(console.log, console.log);
+  const { control, register, handleSubmit, watch } = useExecutionAnswer();
 
   if (!data) return;
 
@@ -35,17 +34,14 @@ export default function ExecutionForm() {
   }
 
   const onSubmit = (data: RespostaMap) => {
-    console.log(data)
-    const respostasQuestoes = transformarRespostas(data)
-        console.log(respostasQuestoes)
-    /*
+    const respostasQuestoes = transformarRespostas(data);
+
     mutate({
       questionarioId: 0,
       alunoId: 0,
       respostasQuestoes,
-    })
-      */
-  }
+    });
+  };
 
   return (
     <Box maxW="720px" m="auto" display="flex" flexDirection="column">
@@ -60,7 +56,9 @@ export default function ExecutionForm() {
                   register={register}
                   question={question}
                   control={control}
-                  index={index} watch={watch} />
+                  index={index}
+                  watch={watch}
+                />
               </Stack>
             </Box>
           ))}

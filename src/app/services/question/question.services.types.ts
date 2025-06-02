@@ -1,8 +1,18 @@
+export enum QuestionTypeEnum {
+  MULTIPLE_CHOICE = "MultiplaEscolha",
+  TEXT_BOX = "CaixaTexto",
+  LINEAR_SCALE = "EscalaLinear",
+  MENU = "MenuSuspenso",
+  MATRIX = "Matriz",
+}
+
+export type QuestionType = QuestionTypeEnum;
+
 export interface QuestionPostParams {
   texto: string;
-  tipo: QuestionType;
+  tipo: QuestionTypeEnum;
   opcoes?: OptionItem[];
-  coluna?: OptionItem[];
+  colunas?: OptionItem[];
 }
 
 export interface OptionItem {
@@ -11,27 +21,13 @@ export interface OptionItem {
   ordem: number;
   peso: number;
   valor?: string;
+  ehColuna?: boolean;
 }
 
 export const QUESTIONS_TYPES = [
-  { value: "MultiplaEscolha", label: "Múltipla Escolha" },
-  { value: "CaixaTexto", label: "Caixa de texto" },
-  { value: "MenuSuspenso", label: "Menu suspenso" },
-  { value: "EscalaLinear", label: "Pior Melhor" },
-  { value: "Matriz", label: "Matriz" },
+  { value: QuestionTypeEnum.MULTIPLE_CHOICE, label: "Múltipla Escolha" },
+  { value: QuestionTypeEnum.TEXT_BOX, label: "Caixa de texto" },
+  { value: QuestionTypeEnum.MENU, label: "Menu suspenso" },
+  { value: QuestionTypeEnum.LINEAR_SCALE, label: "Pior Melhor" },
+  { value: QuestionTypeEnum.MATRIX, label: "Matriz" },
 ];
-
-export type QuestionType =
-  | "MultiplaEscolha"
-  | "CaixaTexto"
-  | "MenuSuspenso"
-  | "EscalaLinear"
-  | "Matriz";
-
-export enum QuestionTypeEnum {
-  MULTIPLE_CHOICE = "MultiplaEscolha",
-  TEXT_BOX = "CaixaTexto",
-  LINEAR_SCALE = "EscalaLinear",
-  MENU = "MenuSuspenso",
-  MATRIX = "Matriz",
-}
