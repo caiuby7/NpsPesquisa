@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import {
   Box,
@@ -5,7 +6,6 @@ import {
   RadioGroup,
   Text,
 } from '@chakra-ui/react';
-import { AnswersFormType } from '@/app/widgets/execution-question/use-execution-answer';
 import { UseFormRegister } from 'react-hook-form';
 
 interface EscalaLinearProps {
@@ -14,7 +14,7 @@ interface EscalaLinearProps {
   minLabel: string;
   maxLabel: string;
   onChange: (value: string) => void;
-  register: UseFormRegister<AnswersFormType>;
+  register: UseFormRegister<any>;
   index: number
   disabled?: boolean
   title: string
@@ -51,21 +51,24 @@ export const EscalaLinear: React.FC<EscalaLinearProps> = ({
       </HStack>
 
 
-      <RadioGroup.Root w="100%" >
-        <HStack justify="space-around" w="100%">
-          {range.map((val) => (
-            <RadioGroup.Item key={val} value={val} {...register(`${index}.resposta`)} disabled={disabled}>
-              <RadioGroup.ItemHiddenInput />
-              <RadioGroup.ItemIndicator />
-            </RadioGroup.Item>
-          ))}
-        </HStack>
-      </RadioGroup.Root>
+
+      <HStack justify="space-around" w="100%" >
+        {range.map((val) => (
+          <RadioGroup.Root key={val} w="100%" {...register(`${index}.resposta`)}>            
+          <RadioGroup.Item disabled={disabled} value={val}>
+            <RadioGroup.ItemHiddenInput />
+            <RadioGroup.ItemIndicator />
+          </RadioGroup.Item>
+          </RadioGroup.Root>
+
+        ))}
+      </HStack>
+
 
       <HStack justify="space-between" mt={2}>
         <Text fontSize="sm">{minLabel}</Text>
         <Text fontSize="sm">{maxLabel}</Text>
       </HStack>
-    </Box>
+    </Box >
   );
 };

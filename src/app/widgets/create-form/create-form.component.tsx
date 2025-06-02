@@ -120,8 +120,7 @@ export default function ExecutionQuestion() {
                       question={question}
                       control={control as any}
                       register={register as any}
-                      index={index}
-                    />
+                      index={index} watch={watch} />
                   </Stack>
                 </Box>
               );

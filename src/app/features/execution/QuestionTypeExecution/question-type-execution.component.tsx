@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Box, Text, Textarea } from "@chakra-ui/react";
-import { UseFormRegister, Control } from "react-hook-form";
+import { UseFormRegister, Control, UseFormWatch } from "react-hook-form";
 import MultipleChoiceQuestion from "../MultipleChoiceQuestion/multiple-choice-question.component";
 import { MatrixQuestion } from "../ArrayQuestion/array-question.component";
 import { EscalaLinear } from "../LinearScale/linear-scale.component";
@@ -9,16 +9,17 @@ import {
   QuestionType,
   QuestionTypeEnum,
 } from "@/app/services/form";
-import { AnswersFormType } from "@/app/widgets/execution-question/use-execution-answer";
 import MenuExecution from "../Menu/menu.component";
 
 interface Props {
   type: QuestionType;
-  register: UseFormRegister<AnswersFormType>;
-  control: Control<AnswersFormType>;
+  register: UseFormRegister<any>;
+  control: Control;
   question: QuestionResponse;
   index: number;
   disabled?: boolean;
+  watch: UseFormWatch<any>
+
 }
 
 export function QuestionTypeExecution({
@@ -28,6 +29,7 @@ export function QuestionTypeExecution({
   question,
   index,
   disabled,
+  watch
 }: Props) {
   if (type === QuestionTypeEnum.MULTIPLE_CHOICE) {
     return (
@@ -87,7 +89,8 @@ export function QuestionTypeExecution({
         texto={question.texto}
         opcoes={question.opcoes}
         colunas={question.colunas}
-      />
+        watch={watch}
+        register={register} index={index} />
     );
   }
 

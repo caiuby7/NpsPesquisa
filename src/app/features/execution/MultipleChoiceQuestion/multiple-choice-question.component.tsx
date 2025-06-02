@@ -1,15 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Box, Checkbox, VStack, Text } from "@chakra-ui/react";
 import { UseFormRegister } from "react-hook-form";
 
 import { QuestionResponse } from "@/app/services/form";
-import { AnswersFormType } from "@/app/widgets/execution-question/use-execution-answer";
 
 export default function MultipleChoiceQuestion({
   register,
   question,
   index
 }: {
-  register: UseFormRegister<AnswersFormType>;
+  register: UseFormRegister<any>;
   question: QuestionResponse;
   index: number;
 }) {
@@ -19,6 +19,7 @@ export default function MultipleChoiceQuestion({
       <VStack align="stretch">
         {question?.opcoes?.map((field) => (
           <Checkbox.Root
+            value={field.id}
             key={field.id}
             {...register(`${index}.resposta`)}
           >

@@ -1,7 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Box, Text } from "@chakra-ui/react";
 import { UseFormRegister, Control } from "react-hook-form";
 import { QuestionResponse } from "@/app/services/form";
-import { AnswersFormType } from "@/app/widgets/execution-question/use-execution-answer";
 import { CustomSelect } from "@/app/components/Select/select.component";
 
 export default function MenuExecution({
@@ -10,8 +10,8 @@ export default function MenuExecution({
   question,
   index
 }: {
-  register: UseFormRegister<AnswersFormType>;
-  control: Control<AnswersFormType>;
+  register: UseFormRegister<any>;
+  control: Control;
   question: QuestionResponse
   index: number
 }) {
@@ -19,7 +19,7 @@ export default function MenuExecution({
   const options = question.opcoes?.map(option => {
     return { value: option.id, label: option.texto }
   })
-  console.log(question)
+
   return (
     <Box as="form">
       <Text mb={4} fontWeight="bold" textAlign="left">

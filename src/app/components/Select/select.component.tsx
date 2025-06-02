@@ -9,7 +9,7 @@ export const CustomSelect = ({ control, items, label, placeholder, name, invalid
   const frameworks = createListCollection({
     items,
   })
-  console.log(frameworks.items)
+
   return (
     <Controller
       control={control}

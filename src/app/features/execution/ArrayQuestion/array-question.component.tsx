@@ -4,11 +4,9 @@ import {
   Text,
   HStack,
   VStack,
-  Button,
-  Stack,
   RadioGroup,
 } from "@chakra-ui/react";
-import { useState } from "react";
+import { UseFormRegister, UseFormWatch } from "react-hook-form";
 
 interface Option {
   id: string;
@@ -21,28 +19,19 @@ interface MatrixQuestionProps {
   texto: string;
   opcoes: Option[];
   colunas: Option[];
+  index: number;
+  register: UseFormRegister<any>;
+  watch: UseFormWatch<any>
 }
 
 export const MatrixQuestion: React.FC<MatrixQuestionProps> = ({
   texto,
   opcoes,
   colunas,
+  index,
+  register,
+  watch
 }) => {
-  const [respostas, setRespostas] = useState<Record<string, string>>({});
-
-  const handleChange = (linhaId: string, colunaId: string) => {
-        setRespostas((prev) => ({
-      ...prev,
-      [linhaId]: colunaId,
-    }));
-    
-
-  };
-
-  const limparSelecao = () => {
-    setRespostas({});
-  };
-
   return (
     <Box borderRadius="md" p={4} w="100%">
       <Text mb={4} fontWeight="bold" textAlign="left">
@@ -70,13 +59,13 @@ export const MatrixQuestion: React.FC<MatrixQuestionProps> = ({
             <HStack w="100%" justifyContent="space-around">
               {colunas.map((coluna) => (
                 <RadioGroup.Root
-                  value={respostas[linha.id] || ""}
+                  value={watch(`${index}.resposta.${linha.id}`) || ""}
                   cursor="pointer"
                   w="60px"
                   ml="42px"
                   key={coluna.id}
-                  onChange={() => handleChange(linha.id, coluna.id)}
-                  
+                  {...register(`${index}.resposta.${linha.id}`)}
+
                 >
                   <RadioGroup.Item
                     value={coluna.id}
@@ -92,12 +81,6 @@ export const MatrixQuestion: React.FC<MatrixQuestionProps> = ({
           </HStack>
         ))}
       </VStack>
-
-      <Stack mt={4} direction="row" justify="flex-end">
-        <Button variant="ghost" color="gray.600" onClick={limparSelecao}>
-          Limpar seleção
-        </Button>
-      </Stack>
     </Box>
   );
 };

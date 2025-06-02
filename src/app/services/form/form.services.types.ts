@@ -55,3 +55,4 @@ export enum QuestionTypeEnum {
   MENU = "MenuSuspenso",
   MATRIX = "Matriz",
 }
+

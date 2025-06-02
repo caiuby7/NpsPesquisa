@@ -6,6 +6,11 @@ export interface AnswerPostParams {
 
 export interface Answer {
   questaoId: number;
-  opcaoId: number;
+  opcaoId?: number |  string;
+  valor?: string;
+}
+
+export interface RespostaQuestao {
+  questaoId: number;
   valor: string;
 }

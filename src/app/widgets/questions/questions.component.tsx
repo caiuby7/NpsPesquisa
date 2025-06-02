@@ -15,7 +15,7 @@ import { useForm } from "react-hook-form";
 
 export default function QuestionsWidget() {
   const { data } = useGetQuestions();
-  const { register, control } = useForm();
+  const { register, control, watch } = useForm();
 
   if (!data) return;
 
@@ -46,8 +46,7 @@ export default function QuestionsWidget() {
                 question={question}
                 control={control as any}
                 register={register as any}
-                index={index}
-              />
+                index={index} watch={watch}              />
             </Stack>
           </Box>
         ))}
