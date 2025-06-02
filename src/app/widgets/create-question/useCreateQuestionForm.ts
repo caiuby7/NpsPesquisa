@@ -4,57 +4,67 @@ import { z } from "zod";
 
 export const useCreateQuestionForm = () =>
   useForm<FormSchemaType>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(schemaWithPreprocessing),
     mode: "onTouched",
     shouldFocusError: false,
     defaultValues: {},
   });
 
 export const optionSchema = z.object({
-  idOpcao: z.string(),
-  texto: z.string(),
+  id: z.string(),
+  texto: z.string().min(1, "Titulo é obrigatório"),
   ordem: z.number(),
   peso: z.number(),
 });
 
-const matrixSchema = z.object({
-  tipo: z.literal("Matriz"),
-  texto: z.string().min(1, "Título é obrigatório"),
-  opcoes: z.array(optionSchema).min(1, "Adicione pelo menos uma linha"),
-  colunas: z.array(optionSchema).min(1, "Adicione pelo menos uma coluna"),
+const tipoBase = z.object({
+  tipo: z.array(z.string()).transform((val) => val[0]),
 });
 
-const escalaLinearSchema = z.object({
-  tipo: z.literal("EscalaLinear"),
-  texto: z.string().min(1, "Título é obrigatório"),
-  ratingLabels: z
-    .object({
-      min: z.number().min(0).max(10),
-      max: z.number().min(0).max(10),
-      maxLabel: z.string().min(1),
-      minLabel: z.string().min(1),
-    })
-    .refine((data) => data.min < data.max, {
-      message: "O valor mínimo deve ser menor que o máximo",
-      path: ["max"],
+const matrixSchema = tipoBase.merge(
+  z.object({
+    tipo: z.literal("Matriz"),
+    texto: z.string().min(1, "Titulo é obrigatório"),
+    opcoes: z.array(optionSchema),
+    colunas: z.array(optionSchema),
+  })
+);
+
+const escalaLinearSchema = tipoBase.merge(
+  z.object({
+    tipo: z.literal("EscalaLinear"),
+    texto: z.string().min(1, "Titulo é obrigatório"),
+    ratingLabels: z.object({
+      min: z.number(),
+      max: z.number(),
+      minLabel: z.string().min(1, "Descrição é obrigatório"),
+      maxLabel: z.string().min(1, "Descrição é obrigatório"),
     }),
-});
+  })
+);
 
-const caixaTextoSchema = z.object({
-  tipo: z.literal("CaixaTexto"),
-  texto: z.string().min(1, "Título é obrigatório"),
-});
+const caixaTextoSchema = tipoBase.merge(
+  z.object({
+    tipo: z.literal("CaixaTexto"),
+    texto: z.string().min(1, "Titulo é obrigatório"),
+  })
+);
 
-const multiplaEscolhaSchema = z.object({
-  tipo: z.literal("MultiplaEscolha"),
-  texto: z.string().min(1, "Título é obrigatório"),
-  options: z.array(optionSchema).min(1, "Adicione pelo menos uma opção"),
-});
+const multiplaEscolhaSchema = tipoBase.merge(
+  z.object({
+    tipo: z.literal("MultiplaEscolha"),
+    texto: z.string().min(1, "Titulo é obrigatório"),
+    opcoes: z.array(optionSchema),
+  })
+);
 
-const menuSuspensoSchema = z.object({
-  tipo: z.literal("MenuSuspenso"),
-  texto: z.string().min(1, "Título é obrigatório"),
-});
+const menuSuspensoSchema = tipoBase.merge(
+  z.object({
+    tipo: z.literal("MenuSuspenso"),
+    texto: z.string().min(1, "Titulo é obrigatório"),
+    opcoes: z.array(optionSchema),
+  })
+);
 
 const formSchema = z.discriminatedUnion("tipo", [
   matrixSchema,
@@ -64,4 +74,20 @@ const formSchema = z.discriminatedUnion("tipo", [
   menuSuspensoSchema,
 ]);
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const schemaWithPreprocessing: any = z.preprocess((data: any) => {
+  return {
+    ...data,
+    tipo: Array.isArray(data.tipo) ? data.tipo[0] : data.tipo,
+    ratingLabels: data.ratingLabels && {
+      ...data?.ratingLabels,
+      max: Array.isArray(data?.ratingLabels.max) ? data.ratingLabels.max[0] : data.ratingLabels.max,
+      min: Array.isArray(data?.ratingLabels?.min) ? data.ratingLabels.min[0] : data.ratingLabels.min
+    }
+  };
+}, formSchema);
+
 export type FormSchemaType = z.infer<typeof formSchema>;
+export type MultipleChoiceSchemaType = z.infer<typeof multiplaEscolhaSchema>;
+export type EscalaLinearSchema = z.infer<typeof escalaLinearSchema>;
+export type MatrixSchemaType = z.infer<typeof matrixSchema>;

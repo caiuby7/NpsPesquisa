@@ -2,14 +2,23 @@ export interface FormGetParams {
   id: string;
 }
 
+export interface FormPostParams {
+  titulo: string;
+  dataExpiracao: string;
+  descricao: string;
+  ordemAleatoria: boolean;
+  questoes: { questaoId: number; ordem: number }[];
+}
+
 export interface FormResponse {
   titulo: string;
   dataExpiracao: string;
-  questoes: QuestionResponse[]
+  descricao: string;
+  questoesQuestionarios: QuestionResponse[];
 }
 
 export interface QuestionResponse {
-  id: string;
+  id: number;
   texto: string;
   tipo: QuestionType;
   opcoes?: OptionItem[];
@@ -17,9 +26,11 @@ export interface QuestionResponse {
 }
 export interface OptionItem {
   texto: string;
-  idOpcao: string;
+  id: string;
   ordem: number;
   peso: number;
+  valor?: string;
+  ehColuna?: boolean
 }
 
 export const QUESTIONS_TYPES = [
@@ -44,3 +55,4 @@ export enum QuestionTypeEnum {
   MENU = "MenuSuspenso",
   MATRIX = "Matriz",
 }
+

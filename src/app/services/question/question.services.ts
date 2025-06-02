@@ -1,10 +1,16 @@
-import { QuestionPostParams } from "."
+import { QuestionPostParams } from ".";
+import { api } from "../api";
+import { QuestionResponse } from "../form";
 
 export const QuestionService = {
   post: async (payload: QuestionPostParams): Promise<void> => {
-    const BASE_PATH = 'api/Questao'
-    console.log(payload, BASE_PATH)
-    return 
-    //return (await HTTP.post(BASE_PATH, payload)).data
+    const BASE_PATH = "/Questao";
+
+    return await api.post(BASE_PATH, payload);
   },
-}
+  get: async (): Promise<QuestionResponse[]> => {
+    const BASE_PATH = "/Questao";
+
+    return (await api.get(BASE_PATH)).data;
+  },
+};

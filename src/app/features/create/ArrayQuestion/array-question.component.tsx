@@ -22,6 +22,7 @@ import {
   VStack,
   Text,
   Checkbox,
+  Field,
 } from "@chakra-ui/react";
 import { TfiAlignJustify } from "react-icons/tfi";
 import {
@@ -30,21 +31,27 @@ import {
   UseFormRegister,
   UseFormGetValues,
   UseFormSetValue,
+  FieldErrors,
 } from "react-hook-form";
 import { FiTrash } from "react-icons/fi";
 import { OptionItem } from "@/app/services/form";
-import { FormSchemaType } from "@/app/widgets/create-question/useCreateQuestionForm";
+import {
+  FormSchemaType,
+  MatrixSchemaType,
+} from "@/app/widgets/create-question/useCreateQuestionForm";
 
 export default function DualSortableFieldArray({
   register,
   control,
   setValue,
   getValues,
+  errors,
 }: {
   register: UseFormRegister<FormSchemaType>;
   control: Control<FormSchemaType>;
   getValues: UseFormGetValues<FormSchemaType>;
   setValue: UseFormSetValue<FormSchemaType>;
+  errors: FieldErrors<MatrixSchemaType>;
 }) {
   const options = useFieldArray({ control, name: "opcoes", keyName: "key" });
   const columns = useFieldArray({ control, name: "colunas", keyName: "key" });
@@ -55,8 +62,8 @@ export default function DualSortableFieldArray({
   );
 
   const findList = (id: string) => {
-    if (options.fields.find((f) => f.idOpcao === id)) return "opcoes";
-    if (columns.fields.find((f) => f.idOpcao === id)) return "colunas";
+    if (options.fields.find((f) => f.id === id)) return "opcoes";
+    if (columns.fields.find((f) => f.id === id)) return "colunas";
     return null;
   };
 
@@ -65,15 +72,17 @@ export default function DualSortableFieldArray({
     const { active, over } = event as any;
     if (!over || active.id === over.id) return;
 
-    const sourceName = findList(active.idOpcao);
-    const targetName = findList(over.idOpcao);
+    const sourceName = findList(active.id);
+    const targetName = findList(over.id);
     if (!sourceName || !targetName) return;
 
     const sourceItems = getValues(sourceName);
     const targetItems = getValues(targetName);
 
-    const activeIndex = sourceItems.findIndex((i) => i.idOpcao === active.idOpcao);
-    const overIndex = targetItems.findIndex((i) => i.idOpcao === over.idOpcao);
+    const activeIndex = sourceItems.findIndex(
+      (i) => i.id === active.id
+    );
+    const overIndex = targetItems.findIndex((i) => i.id === over.id);
 
     const [movedItem] = sourceItems.splice(activeIndex, 1);
     targetItems.splice(overIndex, 0, movedItem);
@@ -88,15 +97,16 @@ export default function DualSortableFieldArray({
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
     >
-      <HStack align="start"  p={4} w="100%">
+      <HStack align="start" p={4} w="100%">
         <SortableFieldArray
           title="Linhas"
           name="opcoes"
           fields={options.fields}
           register={register}
-          remove={options.remove}
+          remove={options.remove} 
           append={options.append}
           control={control}
+          errors={errors}
         />
         <SortableFieldArray
           title="Colunas"
@@ -106,6 +116,7 @@ export default function DualSortableFieldArray({
           remove={columns.remove}
           append={columns.append}
           control={control}
+          errors={errors}
         />
       </HStack>
     </DndContext>
@@ -120,6 +131,7 @@ function SortableFieldArray({
   remove,
   append,
   control,
+  errors,
 }: {
   title: string;
   name: "opcoes" | "colunas";
@@ -128,17 +140,24 @@ function SortableFieldArray({
   control: Control<FormSchemaType>;
   remove: (index: number) => void;
   append: (item: OptionItem) => void;
+  errors: FieldErrors<MatrixSchemaType>;
 }) {
   return (
-    <Box w="100%" p={4} border="1px solid #ccc" borderRadius="md">
+    <Box
+      w="100%"
+      p={4}
+      border="1px solid #ccc"
+      borderRadius="md"
+      borderColor={fields.length === 0 ? "red" : ""}
+    >
       <Text fontWeight="bold" mb={2}>
         {title}
       </Text>
       <SortableContext
-        items={fields.map((item) => item.idOpcao)}
+        items={fields.map((item) => item.id)}
         strategy={verticalListSortingStrategy}
       >
-        <VStack  align="stretch">
+        <VStack align="stretch">
           {fields.map((field, index) => (
             <SortableItem
               leftLabel={
@@ -154,13 +173,14 @@ function SortableFieldArray({
                   </Checkbox.Root>
                 )
               }
-              key={field.idOpcao}
-              id={field.idOpcao}
+              key={field.id}
+              id={field.id}
               index={index}
               name={`${name}.${index}.texto`}
               register={register}
               remove={() => remove(index)}
               control={control}
+              errors={errors}
             />
           ))}
         </VStack>
@@ -169,10 +189,11 @@ function SortableFieldArray({
         mt={2}
         onClick={() =>
           append({
-            idOpcao: crypto.randomUUID(),
+            id: crypto.randomUUID(),
             texto: "",
             ordem: 0,
             peso: 0,
+            ehColuna: name === "colunas"
           })
         }
         size="sm"
@@ -191,6 +212,7 @@ function SortableItem({
   register,
   leftLabel,
   remove,
+  errors,
 }: {
   id: string;
   index: number;
@@ -199,6 +221,7 @@ function SortableItem({
   register: UseFormRegister<FormSchemaType>;
   control: Control<FormSchemaType>;
   leftLabel: string | React.JSX.Element;
+  errors: FieldErrors<MatrixSchemaType>;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id });
@@ -222,7 +245,14 @@ function SortableItem({
         <TfiAlignJustify />
       </Box>
       {leftLabel}
-      <Input placeholder={`Opção ${index + 1}`} {...register(name)} />
+      <Field.Root
+        invalid={
+          ((errors?.opcoes && !!errors.opcoes[index]?.texto) || (errors?.colunas && !!errors.colunas[index]?.texto))
+        }
+      >
+        <Input placeholder={`Opção ${index + 1}`} {...register(name)} />
+      </Field.Root>
+
       <Button onClick={remove} size="sm" colorScheme="red" variant="ghost">
         <FiTrash />
       </Button>

@@ -1,16 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Box,
   Text,
   HStack,
   VStack,
-  Button,
-  Stack,
   RadioGroup,
 } from "@chakra-ui/react";
-//import { useState } from "react";
+import { UseFormRegister, UseFormWatch } from "react-hook-form";
 
 interface Option {
-  idOpcao: string;
+  id: string;
   texto: string;
   ordem: number;
   peso: number;
@@ -18,32 +17,21 @@ interface Option {
 
 interface MatrixQuestionProps {
   texto: string;
-  opcoes: Option[]; // linhas
-  colunas: Option[]; // colunas
+  opcoes: Option[];
+  colunas: Option[];
+  index: number;
+  register: UseFormRegister<any>;
+  watch: UseFormWatch<any>
 }
 
 export const MatrixQuestion: React.FC<MatrixQuestionProps> = ({
   texto,
   opcoes,
   colunas,
+  index,
+  register,
+  watch
 }) => {
-  //const [setRespostas] = useState<Record<string, string>>({});
-
-  const handleChange = (linhaId: string, colunaId: string) => {
-    console.log(linhaId, colunaId)
-    /*
-        setRespostas((prev) => ({
-      ...prev,
-      [linhaId]: colunaId,
-    }));
-    */
-
-  };
-
-  const limparSelecao = () => {
-    //setRespostas({});
-  };
-
   return (
     <Box borderRadius="md" p={4} w="100%">
       <Text mb={4} fontWeight="bold" textAlign="left">
@@ -55,7 +43,7 @@ export const MatrixQuestion: React.FC<MatrixQuestionProps> = ({
         <HStack pl="10%" w="100%" justifyContent="space-around">
           {colunas.map((coluna) => (
             <Box
-              key={coluna.idOpcao}
+              key={coluna.id}
               w="60px"
               textAlign="center"
               fontWeight="medium"
@@ -66,19 +54,22 @@ export const MatrixQuestion: React.FC<MatrixQuestionProps> = ({
         </HStack>
 
         {opcoes.map((linha) => (
-          <HStack
-            key={linha.idOpcao}
-            borderRadius="md"
-            w="100%"
-          >
+          <HStack key={linha.id} borderRadius="md" w="100%">
             <Box w="10%">{linha.texto}</Box>
             <HStack w="100%" justifyContent="space-around">
               {colunas.map((coluna) => (
-                <RadioGroup.Root value={""} w="60px" ml="42px" key={coluna.idOpcao}>
+                <RadioGroup.Root
+                  value={watch(`${index}.resposta.${linha.id}`) || ""}
+                  cursor="pointer"
+                  w="60px"
+                  ml="42px"
+                  key={coluna.id}
+                  {...register(`${index}.resposta.${linha.id}`)}
+
+                >
                   <RadioGroup.Item
-                    key={coluna.idOpcao}
-                    value=""
-                    onChange={() => handleChange(linha.idOpcao, coluna.idOpcao)}
+                    value={coluna.id}
+                    key={coluna.id}
                     colorScheme="purple"
                   >
                     <RadioGroup.ItemHiddenInput />
@@ -86,18 +77,10 @@ export const MatrixQuestion: React.FC<MatrixQuestionProps> = ({
                   </RadioGroup.Item>
                 </RadioGroup.Root>
               ))}
-
             </HStack>
-
           </HStack>
         ))}
       </VStack>
-
-      <Stack mt={4} direction="row" justify="flex-end">
-        <Button variant="ghost" color="gray.600" onClick={limparSelecao}>
-          Limpar seleção
-        </Button>
-      </Stack>
     </Box>
   );
 };

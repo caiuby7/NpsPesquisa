@@ -5,7 +5,7 @@ import { Portal, Select, createListCollection } from "@chakra-ui/react"
 import { Controller } from "react-hook-form"
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const CustomSelect = ({ control, items, label, placeholder, name }: any) => {
+export const CustomSelect = ({ control, items, label, placeholder, name, invalid }: any) => {
   const frameworks = createListCollection({
     items,
   })
@@ -16,6 +16,7 @@ export const CustomSelect = ({ control, items, label, placeholder, name }: any) 
       name={name}
       render={({ field }) => (
         <Select.Root
+          invalid={invalid}
           name={field.name}
           value={field.value}
           onValueChange={({ value }) => field.onChange(value)}
@@ -37,8 +38,8 @@ export const CustomSelect = ({ control, items, label, placeholder, name }: any) 
             <Select.Positioner>
               <Select.Content>
                 {frameworks.items.map((framework: any) => (
-                  <Select.Item item={framework} key={framework.value}>
-                    {framework.label}
+                  <Select.Item item={framework} key={framework?.value}>
+                    {framework?.label}
                     <Select.ItemIndicator />
                   </Select.Item>
                 ))}
