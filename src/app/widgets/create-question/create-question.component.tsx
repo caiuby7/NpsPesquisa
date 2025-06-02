@@ -90,11 +90,10 @@ export default function CreateQuestion() {
               <CustomSelect
                 invalid={!!errors.tipo?.message}
                 control={control}
-                register={register}
                 label="Tipo da questão"
                 items={QUESTIONS_TYPES}
                 placeholder="Selecione o Tipo da Questão"
-                name={`tipo`}
+                name="tipo"
               />
             </Flex>
             {type && (

@@ -7,12 +7,11 @@ import { UseFormRegister, Control, UseFormGetValues, UseFormSetValue, FieldError
 import MultipleChoiceQuestion from "../MultipleChoiceQuestion/multiple-choice-question.component";
 import SortableFieldArray from "../ArrayQuestion/array-question.component";
 import RatingLabelsEditorForm from "../LinearScale/linear-scale.component";
-import { QuestionType, QuestionTypeEnum } from "@/app/services/form";
+import { QuestionTypeEnum } from "@/app/services/question";
 import { FormSchemaType } from "@/app/widgets/create-question/useCreateQuestionForm";
 
-
 interface Props {
-  type: QuestionType;
+  type: QuestionTypeEnum;
   register: UseFormRegister<FormSchemaType>;
   control: Control<FormSchemaType>;
   getValues: UseFormGetValues<FormSchemaType>;
@@ -30,17 +29,17 @@ export function QuestionTypeForm({ type, register, control, getValues, setValue,
     );
   }
 
-  if (type === "CaixaTexto") {
+  if (type === QuestionTypeEnum.TEXT_BOX) {
     return <Textarea placeholder="Resposta do usuário" disabled/>;
   }
 
-  if (type === "EscalaLinear") {
+  if (type === QuestionTypeEnum.LINEAR_SCALE) {
     return (
       <RatingLabelsEditorForm control={control} register={register} errors={errors}/>
     );
   }
 
-  if (type === "Matriz") {
+  if (type === QuestionTypeEnum.MATRIX) {
     return (
       <SortableFieldArray register={register} control={control} setValue={setValue} getValues={getValues} errors={errors} />
     );

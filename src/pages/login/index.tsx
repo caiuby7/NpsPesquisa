@@ -95,7 +95,16 @@ export default function LoginPage() {
               />
             </Flex>
           </Stack>
-          <Button bg="#9d2235" _hover={{ bg: "#7a1a29" }} color="white" type="submit" width="full" py={6} fontSize="lg" loading={isPending}>
+          <Button 
+            bg="#9d2235" 
+            _hover={{ bg: "#7a1a29" }} 
+            color="white" 
+            type="submit" 
+            width="full" 
+            py={6} 
+            fontSize="lg"
+            loading={isPending}
+          >
             Entrar
           </Button>
         </form>
