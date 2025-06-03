@@ -44,7 +44,7 @@ export default function ExecutionForm() {
   };
 
   return (
-    <Box maxW="720px" m="auto" display="flex" flexDirection="column">
+    <Box maxW={{ base: "100%", md: "80%" }} m="auto" display="flex" flexDirection="column">
       <Heading mb={8}>{data.titulo}</Heading>
       <form onSubmit={handleSubmit(onSubmit, console.log)}>
         <Stack>

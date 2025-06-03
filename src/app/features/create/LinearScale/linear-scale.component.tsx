@@ -2,8 +2,6 @@ import { CustomSelect } from "@/app/components/Select/select.component";
 import { EscalaLinearSchema, FormSchemaType } from "@/app/widgets/create-question/useCreateQuestionForm";
 import { Box, Field, Flex, HStack, Input, Text, VStack } from "@chakra-ui/react";
 import { useWatch, UseFormRegister, Control, FieldErrors } from "react-hook-form";
-import { QuestionTypeEnum } from "@/app/services/form";
-
 
 export default function RatingLabelsEditorForm({
   control,
@@ -17,11 +15,11 @@ export default function RatingLabelsEditorForm({
   const minValue = useWatch({ control, name: `ratingLabels.min` });
   const maxValue = useWatch({ control, name: `ratingLabels.max` });
   const options = Array.from({ length: 11 }, (_, i) => {
-    return { label: String(i), value: QuestionTypeEnum.LINEAR_SCALE };
+    return { label: String(i), value: String(i) };
   });
 
   return (
-    <Box p={4} as="form">
+    <Box p={4}>
       <HStack mb={4}>
         <CustomSelect
           control={control}

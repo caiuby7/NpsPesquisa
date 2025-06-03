@@ -18,7 +18,7 @@ export const useCreateQuestionForm = (question?: QuestionResponse) =>
   });
 
 export const optionSchema = z.object({
-  idOpcao: z.union([z.string(), z.number()]),
+  id: z.union([z.string(), z.number()]),
   texto: z.string().min(1, "Titulo é obrigatório"),
   ordem: z.number(),
   peso: z.number(),
@@ -43,8 +43,8 @@ const escalaLinearSchema = tipoBase.merge(
   z.object({
     tipo: z.literal(QuestionTypeEnum.LINEAR_SCALE),
     ratingLabels: z.object({
-      min: z.number(),
-      max: z.number(),
+      min: z.string(),
+      max: z.string(),
       minLabel: z.string().min(1, "Descrição é obrigatório"),
       maxLabel: z.string().min(1, "Descrição é obrigatório"),
     }),

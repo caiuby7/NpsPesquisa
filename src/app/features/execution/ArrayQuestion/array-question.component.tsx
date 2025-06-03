@@ -40,12 +40,13 @@ export const MatrixQuestion: React.FC<MatrixQuestionProps> = ({
 
       <VStack w="100%">
         {/* Cabeçalho */}
-        <HStack pl="10%" w="100%" justifyContent="space-around">
+        <HStack pl="15%" w="100%" justifyContent="space-around">
           {colunas.map((coluna) => (
             <Box
               key={coluna.id}
               w="60px"
               textAlign="center"
+              wordWrap="initial"
               fontWeight="medium"
             >
               {coluna.texto}
@@ -55,7 +56,7 @@ export const MatrixQuestion: React.FC<MatrixQuestionProps> = ({
 
         {opcoes.map((linha) => (
           <HStack key={linha.id} borderRadius="md" w="100%">
-            <Box w="10%">{linha.texto}</Box>
+            <Box w="15%">{linha.texto}</Box>
             <HStack w="100%" justifyContent="space-around">
               {colunas.map((coluna) => (
                 <RadioGroup.Root

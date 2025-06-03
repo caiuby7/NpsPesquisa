@@ -62,8 +62,8 @@ export default function DualSortableFieldArray({
   );
 
   const findList = (id: string) => {
-    if (options.fields.find((f) => f.idOpcao === id)) return "opcoes";
-    if (columns.fields.find((f) => f.idOpcao === id)) return "colunas";
+    if (options.fields.find((f) => f.id === id)) return "opcoes";
+    if (columns.fields.find((f) => f.id === id)) return "colunas";
     return null;
   };
 
@@ -155,7 +155,7 @@ function SortableFieldArray({
         {title}
       </Text>
       <SortableContext
-        items={fields.map((item) => item.idOpcao)}
+        items={fields.map((item) => item.id)}
         strategy={verticalListSortingStrategy}
       >
         <VStack align="stretch">
@@ -174,8 +174,8 @@ function SortableFieldArray({
                   </Checkbox.Root>
                 )
               }
-              key={field.idOpcao}
-              id={field.idOpcao}
+              key={field.id}
+              id={field.id}
               index={index}
               name={`${name}.${index}.texto`}
               register={register}
@@ -190,7 +190,7 @@ function SortableFieldArray({
         mt={2}
         onClick={() =>
           append({
-            idOpcao: crypto.randomUUID(),
+            id: crypto.randomUUID(),
             texto: "",
             ordem: fields.length + 1,
             peso: 0,

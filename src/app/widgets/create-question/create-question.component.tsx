@@ -46,9 +46,14 @@ export default function CreateQuestion() {
       reset(question);
       setValue("tipo", question.tipo);
 
-      if (question.tipo === QuestionTypeEnum.LINEAR_SCALE && question.opcoes) {
-        setValue("ratingLabels.min", Number(question.opcoes[0].valor));
-        setValue("ratingLabels.max", Number(question.opcoes[1].valor));
+      if (
+        question.tipo === QuestionTypeEnum.LINEAR_SCALE &&
+        question.opcoes &&
+        question.opcoes[0].valor &&
+        question.opcoes[1].valor
+      ) {
+        setValue("ratingLabels.min", question.opcoes[0].valor);
+        setValue("ratingLabels.max", question.opcoes[1].valor);
         setValue("ratingLabels.minLabel", question.opcoes[0].texto);
         setValue("ratingLabels.maxLabel", question.opcoes[1].texto);
       }
@@ -103,9 +108,27 @@ export default function CreateQuestion() {
       questionPost(payloadLinearScale);
       return;
     }
+    if (data.tipo === QuestionTypeEnum.MATRIX) {
+      const payloadArray = {
+        ...data,
+        opcoes: data.opcoes.concat(
+          data.colunas.map((item) => {
+            return { ...item, ehColuna: true };
+          })
+        ),
+      };
+      delete payloadArray.colunas;
+      if (question && id) {
+        questionPut({ id: id as string, payload: payloadArray });
+        return;
+      }
+      questionPost(payloadArray);
+      return;
+    }
+
     if (data && id) {
       questionPut({ id: id as string, payload: data });
-      return
+      return;
     }
 
     questionPost(data as QuestionPostParams);

@@ -38,7 +38,7 @@ export interface QuestionResponse {
 
 export interface OptionItem {
   texto: string;
-  idOpcao: string | number;
+  id: string | number;
   ordem: number;
   peso: number;
   valor?: string;

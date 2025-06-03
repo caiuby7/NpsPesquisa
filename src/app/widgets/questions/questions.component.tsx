@@ -41,7 +41,7 @@ export default function QuestionsWidget() {
     <Box
       p={8}
       w="100%"
-      maxW={{ base: "100%", md: "720px" }}
+      maxW={{ base: "100%", md: "80%" }}
       mx="auto"
       display="flex"
       flexDirection="column"
@@ -56,7 +56,7 @@ export default function QuestionsWidget() {
       </Stack>
 
       <Stack>
-        {data.map((question, index) => (
+        {data?.map((question, index) => (
           <Box
             key={question.id}
             borderWidth="1px"
