@@ -1,22 +1,24 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { QuestionTypeEnum } from "@/app/services/question";
 import { ZodType } from "zod";
+import { QuestionResponse } from "@/app/services/form";
 
-export const useCreateQuestionForm = () =>
+export const useCreateQuestionForm = (question?: QuestionResponse) =>
   useForm<FormSchemaType>({
     resolver: zodResolver(schemaWithPreprocessing as unknown as ZodType<FormSchemaType>),
     mode: "onTouched",
     shouldFocusError: false,
     defaultValues: {
-      tipo: QuestionTypeEnum.TEXT_BOX,
-      texto: "",
+      texto: question?.texto,
+      tipo: question?.tipo
     },
   });
 
 export const optionSchema = z.object({
-  id: z.string(),
+  idOpcao: z.union([z.string(), z.number()]),
   texto: z.string().min(1, "Titulo é obrigatório"),
   ordem: z.number(),
   peso: z.number(),
@@ -77,20 +79,15 @@ const formSchema = z.discriminatedUnion("tipo", [
   menuSuspensoSchema,
 ]);
 
-const schemaWithPreprocessing = z.preprocess((data: unknown) => {
-  const d = data as Record<string, unknown>;
+export const schemaWithPreprocessing: any = z.preprocess((data: any) => {
   return {
-    ...d,
-    tipo: Array.isArray(d.tipo) ? d.tipo[0] : d.tipo,
-    ratingLabels: d.ratingLabels && typeof d.ratingLabels === 'object' ? {
-      ...(d.ratingLabels as Record<string, unknown>),
-      max: Array.isArray((d.ratingLabels as Record<string, unknown>).max)
-        ? ((d.ratingLabels as Record<string, unknown>).max as unknown[])[0]
-        : (d.ratingLabels as Record<string, unknown>).max,
-      min: Array.isArray((d.ratingLabels as Record<string, unknown>).min)
-        ? ((d.ratingLabels as Record<string, unknown>).min as unknown[])[0]
-        : (d.ratingLabels as Record<string, unknown>).min
-    } : undefined
+    ...data,
+    tipo: Array.isArray(data.tipo) ? data.tipo[0] : data.tipo,
+    ratingLabels: data.ratingLabels && {
+      ...data?.ratingLabels,
+      max: Array.isArray(data?.ratingLabels.max) ? data.ratingLabels.max[0] : data.ratingLabels.max,
+      min: Array.isArray(data?.ratingLabels?.min) ? data.ratingLabels.min[0] : data.ratingLabels.min
+    }
   };
 }, formSchema);
 

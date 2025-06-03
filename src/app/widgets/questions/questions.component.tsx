@@ -25,13 +25,12 @@ export default function QuestionsWidget() {
   if (!data) return;
 
   const handleEdit = (id: string) => {
-    router.push(`/create-question?id=${id}`);
+    router.push(`/create-question/${id}`);
   };
 
   const handleDelete = async (id: string) => {
     try {
       await QuestionService.delete(id);
-      console.log("Questão excluída com sucesso");
       refetch();
     } catch (error) {
       console.error("Erro ao excluir questão:", error);

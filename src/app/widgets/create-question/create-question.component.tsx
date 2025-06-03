@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Box,
   Button,
@@ -7,7 +8,11 @@ import {
   Input,
   Stack,
 } from "@chakra-ui/react";
-import { useQuestionPostMutate } from "@/app/services/question";
+import {
+  useGetQuestionById,
+  useQuestionPostMutate,
+  useQuestionPutMutate,
+} from "@/app/services/question";
 import {
   QuestionPostParams,
   QUESTIONS_TYPES,
@@ -18,8 +23,13 @@ import { FormSchemaType, useCreateQuestionForm } from "./useCreateQuestionForm";
 import { CustomSelect } from "@/app/components/Select/select.component";
 import { QuestionTypeForm } from "@/app/features/create/QuestionTypeForm/question-type-form.component";
 import router from "next/router";
+import { useParams } from "next/navigation";
+import { useEffect } from "react";
 
 export default function CreateQuestion() {
+  const params = useParams();
+  const id = params?.id;
+  const { data: question } = useGetQuestionById(id as string);
   const {
     control,
     register,
@@ -27,11 +37,26 @@ export default function CreateQuestion() {
     setValue,
     getValues,
     watch,
+    reset,
     formState: { errors },
-  } = useCreateQuestionForm();
+  } = useCreateQuestionForm(question);
+
+  useEffect(() => {
+    if (question) {
+      reset(question);
+      setValue("tipo", question.tipo);
+
+      if (question.tipo === QuestionTypeEnum.LINEAR_SCALE && question.opcoes) {
+        setValue("ratingLabels.min", Number(question.opcoes[0].valor));
+        setValue("ratingLabels.max", Number(question.opcoes[1].valor));
+        setValue("ratingLabels.minLabel", question.opcoes[0].texto);
+        setValue("ratingLabels.maxLabel", question.opcoes[1].texto);
+      }
+    }
+  }, [question]);
 
   const handleMutationSuccess = () => {
-    router.push('/home')
+    router.push("/home");
   };
 
   const handleMutationError = () => {
@@ -43,11 +68,16 @@ export default function CreateQuestion() {
     handleMutationError
   );
 
+  const { mutate: questionPut } = useQuestionPutMutate(
+    handleMutationSuccess,
+    handleMutationError
+  );
+
   const type = watch("tipo");
 
   const onSubmit = (data: FormSchemaType) => {
     if (data.tipo === QuestionTypeEnum.LINEAR_SCALE) {
-      questionPost({
+      const payloadLinearScale = {
         ...data,
         opcoes: [
           {
@@ -65,9 +95,19 @@ export default function CreateQuestion() {
             ordem: 2,
           },
         ],
-      });
+      };
+      if (question && id) {
+        questionPut({ id: id as string, payload: payloadLinearScale });
+        return;
+      }
+      questionPost(payloadLinearScale);
       return;
     }
+    if (data && id) {
+      questionPut({ id: id as string, payload: data });
+      return
+    }
+
     questionPost(data as QuestionPostParams);
   };
 
@@ -96,10 +136,10 @@ export default function CreateQuestion() {
                 name="tipo"
               />
             </Flex>
-            {type && (
+            {(type || question?.tipo) && (
               <QuestionTypeForm
                 errors={errors}
-                type={type[0] as QuestionType}
+                type={question?.tipo || (type[0] as QuestionType)}
                 register={register}
                 setValue={setValue}
                 getValues={getValues}
