@@ -12,7 +12,6 @@ namespace NpsPesquisa.Api.Models
         [Required]
         public int Ordem { get; set; }
 
-        [JsonIgnore]
         public virtual Questao? Questao { get; set; }
         [JsonIgnore]
         public virtual Questionario? Questionario { get; set; }

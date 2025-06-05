@@ -26,8 +26,8 @@ namespace NpsPesquisa.Api.Models
         [Required]
         public bool OrdemAleatoria { get; set; }
 
-        public DateTime DataInicio { get; set; }
-        public DateTime DataFim { get; set; }
+        public DateTime? DataInicio { get; set; }
+        public DateTime? DataFim { get; set; }
 
         [JsonIgnore]
         public virtual ICollection<ParticipanteQuestionario>? Participantes { get; set; }
