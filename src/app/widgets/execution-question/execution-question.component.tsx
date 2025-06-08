@@ -18,7 +18,6 @@ export default function ExecutionForm() {
     for (const key in input) {
       const questaoId = Number(key);
       const resposta = input[key].resposta;
-      console.log(resposta,typeof resposta === "string" )
       if (typeof resposta === "string") {
         respostasQuestoes.push({ questaoId, valor: resposta });
       } else if (Array.isArray(resposta)) {
@@ -33,11 +32,11 @@ export default function ExecutionForm() {
     return respostasQuestoes;
   }
 
-  const onSubmit = (data: RespostaMap) => {
-    const respostasQuestoes = transformarRespostas(data);
+  const onSubmit = (payload: RespostaMap) => {
+    const respostasQuestoes = transformarRespostas(payload);
 
     mutate({
-      questionarioId: 0,
+      questionarioId: data.id,
       alunoId: 0,
       respostasQuestoes,
     });
