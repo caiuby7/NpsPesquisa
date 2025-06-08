@@ -52,17 +52,19 @@ export const EscalaLinear: React.FC<EscalaLinearProps> = ({
 
 
 
-      <HStack justify="space-around" w="100%" >
-        {range.map((val) => (
-          <RadioGroup.Root key={val} w="100%" {...register(`${index}.resposta`)}>            
-          <RadioGroup.Item disabled={disabled} value={val}>
-            <RadioGroup.ItemHiddenInput />
-            <RadioGroup.ItemIndicator />
-          </RadioGroup.Item>
-          </RadioGroup.Root>
 
-        ))}
-      </HStack>
+      <RadioGroup.Root >
+        <HStack justify="space-around" w="100%" >
+          {range.map((val) => (
+            <RadioGroup.Item disabled={disabled} value={val} m="auto" {...register(`${index}.resposta`)}>
+              <RadioGroup.ItemHiddenInput />
+              <RadioGroup.ItemIndicator />
+            </RadioGroup.Item>
+
+          ))}
+        </HStack>
+      </RadioGroup.Root>
+
 
 
       <HStack justify="space-between" mt={2}>

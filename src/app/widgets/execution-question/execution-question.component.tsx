@@ -18,7 +18,7 @@ export default function ExecutionForm() {
     for (const key in input) {
       const questaoId = Number(key);
       const resposta = input[key].resposta;
-
+      console.log(resposta,typeof resposta === "string" )
       if (typeof resposta === "string") {
         respostasQuestoes.push({ questaoId, valor: resposta });
       } else if (Array.isArray(resposta)) {
@@ -49,7 +49,7 @@ export default function ExecutionForm() {
       <form onSubmit={handleSubmit(onSubmit, console.log)}>
         <Stack>
           {data?.questoesQuestionarios.map((question, index) => (
-            <Box key={question.tipo} borderWidth="1px" p={4} borderRadius="md">
+            <Box key={question.id} borderWidth="1px" p={4} borderRadius="md">
               <Stack>
                 <QuestionTypeExecution
                   type={question.tipo}

@@ -1,12 +1,27 @@
 import { FormGetParams, FormPostParams, FormResponse } from ".";
 import { api } from "../api";
+import { QuestionTypeEnum } from "../question";
 
 export const FormServices = {
   get: async (payload: FormGetParams): Promise<FormResponse> => {
-      const BASE_PATH = `/Questionario/${payload.id}`;
-  
-      return (await api.get(BASE_PATH)).data;
-    },
+    const BASE_PATH = `/Questionario/${payload.id}`;
+    const result = (await api.get(BASE_PATH)).data
+
+    return {
+      ...result,
+      questoesQuestionarios: result.questoesQuestionarios.map((item) => {
+        const { questao } = item
+        if(questao.tipo === QuestionTypeEnum.MATRIX) {
+          return {
+            ...questao,
+            opcoes: questao.opcoes.filter((item) => !item.ehColuna),
+            colunas: questao.opcoes.filter((item) => item.ehColuna),
+          }
+        }
+        return questao
+      })
+    };
+  },
   post: async (payload: FormPostParams): Promise<void> => {
     const BASE_PATH = "/Questionario/com-questoes";
 

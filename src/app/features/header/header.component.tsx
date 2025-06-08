@@ -42,7 +42,6 @@ export function AppHeader() {
                                 color={isActive ? "white" : "#9d2235"}
                                 bg={isActive ? "#9d2235" : "transparent"}
                                 fontWeight={isActive ? "bold" : "normal"}
-                                borderBottom={isActive ? "2px solid white" : "none"}
                                 borderRadius="0"
                                 _hover={{ color: "white", bg: "#9d2235" }}
                                 onClick={() => router.push(page.path)}

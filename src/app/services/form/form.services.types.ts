@@ -21,10 +21,17 @@ export interface FormPostParams {
 }
 
 export interface FormResponse {
+  id: number;
   titulo: string;
-  dataExpiracao: string;
   descricao: string;
-  questoesQuestionarios: QuestionResponse[];
+  dataCriacao: string; // ISO Date string
+  dataExpiracao: string; // ISO Date string
+  ordemAleatoria: boolean;
+  dataInicio: string | null;
+  dataFim: string | null;
+  questoesQuestionarios: QuestoesQuestionario[];
+  questoes: any; 
+  respostas: any; 
 }
 
 export interface QuestionResponse {
@@ -52,4 +59,15 @@ export const QUESTIONS_TYPES = [
   { value: QuestionTypeEnum.LINEAR_SCALE, label: "Pior Melhor" },
   { value: QuestionTypeEnum.MATRIX, label: "Matriz" },
 ];
+
+
+export interface QuestoesQuestionario {
+  id: number;
+  questaoId: number;
+  questionarioId: number;
+  ordem: number;
+  questao: QuestionResponse;
+  tipo: QuestionTypeEnum
+}
+
 

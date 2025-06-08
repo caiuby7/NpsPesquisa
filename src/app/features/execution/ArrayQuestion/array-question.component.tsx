@@ -9,7 +9,7 @@ import {
 import { UseFormRegister, UseFormWatch } from "react-hook-form";
 
 interface Option {
-  id: string;
+  id: string | number;
   texto: string;
   ordem: number;
   peso: number;
@@ -46,7 +46,6 @@ export const MatrixQuestion: React.FC<MatrixQuestionProps> = ({
               key={coluna.id}
               w="60px"
               textAlign="center"
-              wordWrap="initial"
               fontWeight="medium"
             >
               {coluna.texto}
@@ -69,7 +68,7 @@ export const MatrixQuestion: React.FC<MatrixQuestionProps> = ({
 
                 >
                   <RadioGroup.Item
-                    value={coluna.id}
+                    value={String(coluna.id)}
                     key={coluna.id}
                     colorScheme="purple"
                   >

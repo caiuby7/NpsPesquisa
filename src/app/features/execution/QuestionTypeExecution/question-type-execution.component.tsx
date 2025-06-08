@@ -65,10 +65,10 @@ export function QuestionTypeExecution({
   if (type === "EscalaLinear" && question?.opcoes) {
     return (
       <EscalaLinear
-        min={Number(question.opcoes[0].valor)}
-        max={Number(question.opcoes[1].valor)}
-        minLabel={question.opcoes[0].texto}
-        maxLabel={question.opcoes[1].texto}
+        min={Number(question.opcoes[1].valor)}
+        max={Number(question.opcoes[0].valor)}
+        minLabel={question.opcoes[1].texto}
+        maxLabel={question.opcoes[0].texto}
         title={question.texto}
         onChange={console.log}
         index={index}
