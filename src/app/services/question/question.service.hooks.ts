@@ -41,7 +41,10 @@ export const useQuestionPutMutate = (
 export const useGetQuestions = () => {
   return useQuery({
     queryKey: [QUESTION_GET_KEY],
-    queryFn: async () => QuestionService.get(),
+    queryFn: async () => {
+      const response = await QuestionService.get();
+      return Array.isArray(response) ? response : [];
+    },
     refetchOnWindowFocus: false,
   });
 };

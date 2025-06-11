@@ -16,13 +16,26 @@ import { useGetQuestions } from "@/app/services/question";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/router";
 import { QuestionService } from "@/app/services/question/question.services";
+import { useState } from "react";
 
 export default function QuestionsWidget() {
   const { register, control, watch } = useForm();
   const { data, refetch } = useGetQuestions();
   const router = useRouter();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
-  if (!data) return;
+  if (!data) return null;
+
+  const questions = Array.isArray(data) ? data : [];
+  const totalPages = Math.ceil(questions.length / itemsPerPage);
+  
+  // Calcular o índice inicial e final para a página atual
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  
+  // Obter apenas as questões da página atual
+  const currentQuestions = questions.slice(startIndex, endIndex);
 
   const handleEdit = (id: string) => {
     router.push(`/create-question/${id}`);
@@ -35,6 +48,10 @@ export default function QuestionsWidget() {
     } catch (error) {
       console.error("Erro ao excluir questão:", error);
     }
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
   return (
@@ -56,7 +73,7 @@ export default function QuestionsWidget() {
       </Stack>
 
       <Stack>
-        {data?.map((question, index) => (
+        {currentQuestions.map((question, index) => (
           <Box
             key={question.id}
             borderWidth="1px"
@@ -99,35 +116,41 @@ export default function QuestionsWidget() {
             </Stack>
           </Box>
         ))}
-        <Pagination.Root
-          count={20}
-          pageSize={2}
-          defaultPage={1}
-          w="100%"
-          m="auto"
-        >
-          <ButtonGroup variant="ghost" size="sm">
-            <Pagination.PrevTrigger asChild>
-              <IconButton>
-                <LuChevronLeft />
-              </IconButton>
-            </Pagination.PrevTrigger>
-
-            <Pagination.Items
-              render={(page) => (
-                <IconButton variant={{ base: "ghost", _selected: "outline" }}>
-                  {String(page.value)}
+        {totalPages > 1 && (
+          <Pagination.Root
+            count={totalPages}
+            pageSize={1}
+            defaultPage={currentPage}
+            w="100%"
+            m="auto"
+            onChange={handlePageChange}
+          >
+            <ButtonGroup variant="ghost" size="sm">
+              <Pagination.PrevTrigger asChild>
+                <IconButton isDisabled={currentPage === 1}>
+                  <LuChevronLeft />
                 </IconButton>
-              )}
-            />
+              </Pagination.PrevTrigger>
 
-            <Pagination.NextTrigger asChild>
-              <IconButton>
-                <LuChevronRight />
-              </IconButton>
-            </Pagination.NextTrigger>
-          </ButtonGroup>
-        </Pagination.Root>
+              <Pagination.Items
+                render={(page) => (
+                  <IconButton
+                    variant={page.value === currentPage ? "outline" : "ghost"}
+                    onClick={() => handlePageChange(page.value)}
+                  >
+                    {String(page.value)}
+                  </IconButton>
+                )}
+              />
+
+              <Pagination.NextTrigger asChild>
+                <IconButton isDisabled={currentPage === totalPages}>
+                  <LuChevronRight />
+                </IconButton>
+              </Pagination.NextTrigger>
+            </ButtonGroup>
+          </Pagination.Root>
+        )}
       </Stack>
     </Box>
   );

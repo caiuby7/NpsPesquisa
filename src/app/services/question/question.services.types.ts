@@ -28,6 +28,6 @@ export const QUESTIONS_TYPES = [
   { value: QuestionTypeEnum.MULTIPLE_CHOICE, label: "Múltipla Escolha" },
   { value: QuestionTypeEnum.TEXT_BOX, label: "Caixa de texto" },
   { value: QuestionTypeEnum.MENU, label: "Menu suspenso" },
-  { value: QuestionTypeEnum.LINEAR_SCALE, label: "Pior Melhor" },
+  { value: QuestionTypeEnum.LINEAR_SCALE, label: "Escala linear" },
   { value: QuestionTypeEnum.MATRIX, label: "Matriz" },
 ];

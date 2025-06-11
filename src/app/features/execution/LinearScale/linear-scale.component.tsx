@@ -42,35 +42,37 @@ export const EscalaLinear: React.FC<EscalaLinearProps> = ({
       <Text mb={4} fontWeight="bold" textAlign="left">
         {title}
       </Text>
-      <HStack justify="space-between" mb={2}>
-        {range.map((val) => (
-          <Text key={val} fontSize="sm" w="100%" textAlign="center">
-            {val}
-          </Text>
-        ))}
-      </HStack>
-
-
-
-
-      <RadioGroup.Root >
-        <HStack justify="space-around" w="100%" >
-          {range.map((val) => (
-            <RadioGroup.Item disabled={disabled} value={val} m="auto" {...register(`${index}.resposta`)}>
-              <RadioGroup.ItemHiddenInput />
-              <RadioGroup.ItemIndicator />
-            </RadioGroup.Item>
-
-          ))}
+      <Box w="100%">
+        <HStack w="100%" alignItems="center" spacing={0}>
+          <Box minW="0" pr={2} textAlign="right" display="flex" alignItems="center" justifyContent="flex-end">
+            <Text fontSize="sm" whiteSpace="nowrap">{minLabel}</Text>
+          </Box>
+          <Box w="100%">
+            <HStack w="100%" spacing={0} justify="center">
+              {range.map((val) => (
+                <Box key={val} w="32px" textAlign="center">
+                  <Text fontSize="sm">{val}</Text>
+                </Box>
+              ))}
+            </HStack>
+            <HStack w="100%" spacing={0} justify="center" mt={1}>
+              {range.map((val) => (
+                <Box key={val} w="32px" textAlign="center" display="flex" alignItems="center" justifyContent="center">
+                  <RadioGroup.Root>
+                    <RadioGroup.Item disabled={disabled} value={val} m="auto" {...register(`${index}.resposta`)}>
+                      <RadioGroup.ItemHiddenInput />
+                      <RadioGroup.ItemIndicator />
+                    </RadioGroup.Item>
+                  </RadioGroup.Root>
+                </Box>
+              ))}
+            </HStack>
+          </Box>
+          <Box minW="0" pl={2} textAlign="left" display="flex" alignItems="center" justifyContent="flex-start">
+            <Text fontSize="sm" whiteSpace="nowrap">{maxLabel}</Text>
+          </Box>
         </HStack>
-      </RadioGroup.Root>
-
-
-
-      <HStack justify="space-between" mt={2}>
-        <Text fontSize="sm">{minLabel}</Text>
-        <Text fontSize="sm">{maxLabel}</Text>
-      </HStack>
+      </Box>
     </Box >
   );
 };

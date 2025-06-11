@@ -38,34 +38,39 @@ export const MatrixQuestion: React.FC<MatrixQuestionProps> = ({
         {texto}
       </Text>
 
-      <VStack w="100%">
+      <VStack w="100%" spacing={0}>
         {/* Cabeçalho */}
-        <HStack pl="15%" w="100%" justifyContent="space-around">
+        <HStack w="100%" alignItems="flex-end" spacing={0}>
+          <Box minW="220px" maxW="300px" w="25%" />
           {colunas.map((coluna) => (
             <Box
               key={coluna.id}
-              w="60px"
+              flex={1}
+              minW="80px"
               textAlign="center"
               fontWeight="medium"
+              wordBreak="break-word"
+              display="flex"
+              flexDirection="column"
+              justifyContent="flex-end"
+              px={2}
             >
-              {coluna.texto}
+              <Text fontSize="xs" wordBreak="break-word">{coluna.texto}</Text>
             </Box>
           ))}
         </HStack>
 
-        {opcoes.map((linha) => (
-          <HStack key={linha.id} borderRadius="md" w="100%">
-            <Box w="15%">{linha.texto}</Box>
-            <HStack w="100%" justifyContent="space-around">
-              {colunas.map((coluna) => (
+        {opcoes.map((linha, rowIdx) => (
+          <HStack key={linha.id} borderRadius="md" w="100%" bg={rowIdx % 2 === 0 ? "gray.50" : "white"} spacing={0}>
+            <Box minW="220px" maxW="300px" w="25%" textAlign="left" px={2} py={3} fontSize="sm">{linha.texto}</Box>
+            {colunas.map((coluna) => (
+              <Box key={coluna.id} flex={1} minW="80px" textAlign="center" px={2} py={3}>
                 <RadioGroup.Root
                   value={watch(`${index}.resposta.${linha.id}`) || ""}
                   cursor="pointer"
-                  w="60px"
-                  ml="42px"
-                  key={coluna.id}
+                  w="100%"
+                  ml="0"
                   {...register(`${index}.resposta.${linha.id}`)}
-
                 >
                   <RadioGroup.Item
                     value={String(coluna.id)}
@@ -76,8 +81,8 @@ export const MatrixQuestion: React.FC<MatrixQuestionProps> = ({
                     <RadioGroup.ItemIndicator />
                   </RadioGroup.Item>
                 </RadioGroup.Root>
-              ))}
-            </HStack>
+              </Box>
+            ))}
           </HStack>
         ))}
       </VStack>

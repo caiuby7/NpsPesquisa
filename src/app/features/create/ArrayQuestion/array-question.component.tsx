@@ -188,15 +188,16 @@ function SortableFieldArray({
       </SortableContext>
       <Button
         mt={2}
-        onClick={() =>
-          append({
+        onClick={() => {
+          const newItem = {
             id: crypto.randomUUID(),
             texto: "",
             ordem: fields.length + 1,
             peso: 0,
             ehColuna: name === "colunas"
-          })
-        }
+          };
+          append(newItem);
+        }}
         size="sm"
         colorScheme="teal"
       >
@@ -213,6 +214,7 @@ function SortableItem({
   register,
   leftLabel,
   remove,
+  control,
   errors,
 }: {
   id: string | number;

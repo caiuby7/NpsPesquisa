@@ -63,12 +63,17 @@ export function QuestionTypeExecution({
   }
 
   if (type === "EscalaLinear" && question?.opcoes) {
+    const [opcaoA, opcaoB] = question.opcoes;
+    const min = Math.min(Number(opcaoA.valor), Number(opcaoB.valor));
+    const max = Math.max(Number(opcaoA.valor), Number(opcaoB.valor));
+    const minLabel = Number(opcaoA.valor) < Number(opcaoB.valor) ? opcaoA.texto : opcaoB.texto;
+    const maxLabel = Number(opcaoA.valor) > Number(opcaoB.valor) ? opcaoA.texto : opcaoB.texto;
     return (
       <EscalaLinear
-        min={Number(question.opcoes[1].valor)}
-        max={Number(question.opcoes[0].valor)}
-        minLabel={question.opcoes[1].texto}
-        maxLabel={question.opcoes[0].texto}
+        min={min}
+        max={max}
+        minLabel={minLabel}
+        maxLabel={maxLabel}
         title={question.texto}
         onChange={console.log}
         index={index}

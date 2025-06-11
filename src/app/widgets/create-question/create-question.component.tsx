@@ -162,7 +162,7 @@ export default function CreateQuestion() {
             {(type || question?.tipo) && (
               <QuestionTypeForm
                 errors={errors}
-                type={question?.tipo || (type[0] as QuestionType)}
+                type={question?.tipo || (Array.isArray(type) ? type[0] : type) as QuestionType}
                 register={register}
                 setValue={setValue}
                 getValues={getValues}
