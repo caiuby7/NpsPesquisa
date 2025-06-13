@@ -15,8 +15,10 @@ export const useCreateForm = () =>
 const createFormSchema = z.object({
   titulo: z.string().min(1, "Título é obrigatório" ),
   descricao: z.string().min(1, "Descrição é obrigatório"),
-  dataExpiracao: z.string().min(1, "Data de expiração é obrigatório"),
-  questoes: z.array(z.number()).min(1, "Adicione pelo menos uma questão"),
+  dataInicio: z.string().min(1, "Data de início é obrigatório"),
+  dataFim: z.string().min(1, "Data de fim é obrigatório"),
+  ordemAleatoria: z.boolean().optional(),
+  questoes: z.array(z.number()).optional(),
 });
 
 export type CreateFormSchema = z.infer<typeof createFormSchema>;

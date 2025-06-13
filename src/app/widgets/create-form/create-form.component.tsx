@@ -23,7 +23,9 @@ import router from "next/router";
 export default function ExecutionQuestion() {
   const { data } = useGetQuestions();
   const [toggle, setToggle] = useState(false);
-  const { setValue, watch, register, getValues, control } = useCreateForm();
+  const { setValue, watch, register, getValues, control, handleSubmit, formState } = useCreateForm();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 2; // Número de questões por página
 
   const selectedIds: number[] = watch("questoes") || [];
 
@@ -38,7 +40,9 @@ export default function ExecutionQuestion() {
   const onFirstStep = (data: FirstStepFormValues) => {
     setValue("titulo", data.titulo);
     setValue("descricao", data.descricao);
-    setValue("dataExpiracao", data.dataExpiracao);
+    setValue("dataInicio", data.dataInicio);
+    setValue("dataFim", data.dataFim);
+    setValue("ordemAleatoria", data.ordemAleatoria ?? false);
     setToggle(true);
   };
 
@@ -57,12 +61,13 @@ export default function ExecutionQuestion() {
 
   const onSubmit = () => {
     const values = getValues();
+    const now = new Date().toISOString();
     formPost({
       titulo: values.titulo,
       descricao: values.descricao,
-      dataExpiracao: values.dataExpiracao,
+      dataExpiracao: values.dataFim,
       ordemAleatoria: true,
-      questoes: values.questoes.map((item: number, index: number) => {
+      questoes: (values.questoes ?? []).map((item: number, index: number) => {
         return {
           questaoId: item,
           ordem: index + 1,
@@ -72,6 +77,11 @@ export default function ExecutionQuestion() {
   };
 
   if (!data) return;
+
+  const totalPages = Math.ceil(data.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentQuestions = data.slice(startIndex, endIndex);
 
   return (
     <Box p={8} maxW="720px" m="auto" display="flex" flexDirection="column">
@@ -93,14 +103,14 @@ export default function ExecutionQuestion() {
                 onClick={onSubmit}
                 loading={isPending}
               >
-                {`Salvar formulário com ${selectedIds.length} questões`}{" "}
+                {`Salvar formulário com ${selectedIds.length} questões`} {" "}
                 <RiArrowRightLine />
               </Button>
             )}
           </Stack>
 
           <Stack>
-            {data.map((question, index) => {
+            {currentQuestions.map((question: any, index: number) => {
               const isSelected = selectedIds.includes(question.id);
 
               return (
@@ -120,21 +130,21 @@ export default function ExecutionQuestion() {
                       type={question.tipo}
                       question={question}
                       register={register as any}
-                      index={index} watch={watch} control={control as any} />
+                      index={startIndex + index} watch={watch} control={control as any} />
                   </Stack>
                 </Box>
               );
             })}
             <Pagination.Root
-              count={20}
-              pageSize={2}
-              defaultPage={1}
+              count={totalPages}
+              pageSize={1}
+              defaultPage={currentPage}
               w="100%"
               m="auto"
             >
               <ButtonGroup variant="ghost" size="sm">
                 <Pagination.PrevTrigger asChild>
-                  <IconButton>
+                  <IconButton disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)}>
                     <LuChevronLeft />
                   </IconButton>
                 </Pagination.PrevTrigger>
@@ -142,15 +152,16 @@ export default function ExecutionQuestion() {
                 <Pagination.Items
                   render={(page) => (
                     <IconButton
-                      variant={{ base: "ghost", _selected: "outline" }}
+                      variant={page.value === currentPage ? "outline" : "ghost"}
+                      onClick={() => setCurrentPage(page.value)}
                     >
-                      {page.value}
+                      {String(page.value)}
                     </IconButton>
                   )}
                 />
 
                 <Pagination.NextTrigger asChild>
-                  <IconButton>
+                  <IconButton disabled={currentPage === totalPages} onClick={() => setCurrentPage(currentPage + 1)}>
                     <LuChevronRight />
                   </IconButton>
                 </Pagination.NextTrigger>
@@ -159,7 +170,12 @@ export default function ExecutionQuestion() {
           </Stack>
         </>
       ) : (
-        <FirstStepForm onSubmit={onFirstStep} />
+        <FirstStepForm 
+          onSubmit={onFirstStep}
+          register={register}
+          handleSubmit={handleSubmit}
+          errors={formState.errors}
+        />
       )}
     </Box>
   );

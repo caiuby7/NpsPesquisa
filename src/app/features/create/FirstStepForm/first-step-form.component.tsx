@@ -1,42 +1,68 @@
-import { Box, Button, Field, Heading, Input, VStack } from "@chakra-ui/react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { firstStepFormSchema, FirstStepFormValues } from "./validationSchema";
+import { Box, Button, Heading, Input, VStack, Checkbox } from "@chakra-ui/react";
+import { FirstStepFormValues } from "./validationSchema";
 
-export const FirstStepForm = ({ onSubmit }: { onSubmit: (data: FirstStepFormValues) => void }) => {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<FirstStepFormValues>({
-    resolver: zodResolver(firstStepFormSchema),
-  });
-
+export const FirstStepForm = ({
+  onSubmit,
+  register,
+  handleSubmit,
+  errors
+}: {
+  onSubmit: (data: FirstStepFormValues) => void,
+  register: any,
+  handleSubmit: any,
+  errors: any
+}) => {
   return (
     <Box>
       <Heading as="h2" size="lg" mb={6}>
         Criar novo formulário
       </Heading>
 
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit((data: FirstStepFormValues) => {
+        onSubmit(data);
+      })}>
         <VStack align="stretch">
-          <Field.Root invalid={!!errors.titulo}>
-            <Field.Label>Nome do formulário</Field.Label>
-            <Input placeholder="Digite o titulo" {...register("titulo")} />
-            <Field.ErrorText>{errors.titulo?.message}</Field.ErrorText>
-          </Field.Root>
+          <Box mb={2}>
+            <label htmlFor="titulo">Nome do formulário</label>
+            <Input id="titulo" placeholder="Digite o titulo" {...register("titulo")}/>
+            {errors.titulo && (
+              <Box color="red.500" fontSize="sm">{errors.titulo.message}</Box>
+            )}
+          </Box>
 
-            <Field.Root invalid={!!errors.descricao}>
-            <Field.Label>Descrição do formualário</Field.Label>
-            <Input placeholder="Digite o descrição" {...register("descricao")} />
-            <Field.ErrorText>{errors.descricao?.message}</Field.ErrorText>
-          </Field.Root>
+          <Box mb={2}>
+            <label htmlFor="descricao">Descrição do formulário</label>
+            <Input id="descricao" placeholder="Digite a descrição" {...register("descricao")}/>
+            {errors.descricao && (
+              <Box color="red.500" fontSize="sm">{errors.descricao.message}</Box>
+            )}
+          </Box>
 
-          <Field.Root invalid={!!errors.dataExpiracao}>
-            <Field.Label>Data de expiração</Field.Label>
-            <Input type="date" {...register("dataExpiracao")} />
-            <Field.ErrorText>{errors.dataExpiracao?.message}</Field.ErrorText>
-          </Field.Root>
+          <Box mb={2}>
+            <label htmlFor="dataInicio">Data de início</label>
+            <Input id="dataInicio" type="date" {...register("dataInicio", { required: true })}/>
+            {errors.dataInicio && (
+              <Box color="red.500" fontSize="sm">{errors.dataInicio.message}</Box>
+            )}
+          </Box>
+
+          <Box mb={2}>
+            <label htmlFor="dataFim">Data de fim</label>
+            <Input id="dataFim" type="date" {...register("dataFim", { required: true })}/>
+            {errors.dataFim && (
+              <Box color="red.500" fontSize="sm">{errors.dataFim.message}</Box>
+            )}
+          </Box>
+
+          <Box mb={4}>
+            <Checkbox.Root {...register("ordemAleatoria")}> 
+              <Checkbox.HiddenInput />
+              <Checkbox.Control>
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Label>Ordem Aleatória</Checkbox.Label>
+            </Checkbox.Root>
+          </Box>
 
           <Button
             type="submit"

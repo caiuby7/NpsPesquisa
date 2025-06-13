@@ -1,16 +1,23 @@
 import { Box, Button, Heading, Stack } from "@chakra-ui/react";
 import { useGetForm } from "@/app/services/form/form.service.hooks";
-
 import { QuestionTypeExecution } from "@/app/features/execution/QuestionTypeExecution/question-type-execution.component";
 import { RespostaMap, useExecutionAnswer } from "./use-execution-answer";
-import { Answer, useAnswerMutate } from "@/app/services/answer";
+import { Answer } from "@/app/services/answer";
+import { useRouter } from "next/router";
+import { api } from "@/app/services/api";
 
-export default function ExecutionForm() {
-  const { data } = useGetForm({ id: "1" });
-  const { mutate } = useAnswerMutate(console.log, console.log);
+interface ExecutionFormProps {
+  questionarioId?: number;
+  alunoId?: number;
+  chave?: string;
+}
+
+export default function ExecutionForm({ questionarioId, alunoId, chave }: ExecutionFormProps) {
+  const router = useRouter();
+  const { data } = useGetForm({ id: questionarioId?.toString() || "" });
   const { control, register, handleSubmit, watch } = useExecutionAnswer();
 
-  if (!data) return;
+  if (!data) return null;
 
   function transformarRespostas(input: RespostaMap): Answer[] {
     const respostasQuestoes: Answer[] = [];
@@ -32,41 +39,51 @@ export default function ExecutionForm() {
     return respostasQuestoes;
   }
 
-  const onSubmit = (payload: RespostaMap) => {
+  const onSubmit = async (payload: RespostaMap) => {
     const respostasQuestoes = transformarRespostas(payload);
 
-    mutate({
-      questionarioId: data.id,
-      alunoId: 0,
-      respostasQuestoes,
-    });
+    try {
+      if (chave) {
+        await api.post(`/Questionario/responder/${chave}`, {
+          questionarioId: data.id,
+          alunoId: alunoId || 0,
+          respostasQuestoes,
+        });
+      } else {
+        await api.post("/Resposta", {
+          questionarioId: data.id,
+          alunoId: alunoId || 0,
+          respostasQuestoes,
+        });
+      }
+
+      alert("Respostas enviadas com sucesso!");
+      router.push("/formularios");
+    } catch (error) {
+      alert("Erro ao enviar respostas. Tente novamente mais tarde.");
+    }
   };
 
   return (
-    <Box maxW={{ base: "100%", md: "80%" }} m="auto" display="flex" flexDirection="column">
-      <Heading mb={8}>{data.titulo}</Heading>
-      <form onSubmit={handleSubmit(onSubmit, console.log)}>
-        <Stack>
-          {data?.questoesQuestionarios.map((question, index) => (
-            <Box key={question.id} borderWidth="1px" p={4} borderRadius="md">
-              <Stack>
-                <QuestionTypeExecution
-                  type={question.tipo}
-                  register={register}
-                  question={question}
-                  control={control}
-                  index={index}
-                  watch={watch}
-                />
-              </Stack>
-            </Box>
-          ))}
-        </Stack>
-
-        <Button mt={8} colorScheme="blue" type="submit">
-          Enviar formulário
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <Stack gap={8}>
+        <Heading size="md">{data.titulo}</Heading>
+        <Box>{data.descricao}</Box>
+        {data.questoesQuestionarios.map((questao) => (
+          <QuestionTypeExecution
+            key={questao.id}
+            type={questao.questao.tipo}
+            question={questao.questao}
+            register={register}
+            control={control}
+            index={questao.id}
+            watch={watch}
+          />
+        ))}
+        <Button type="submit" colorScheme="blue">
+          Enviar Respostas
         </Button>
-      </form>
-    </Box>
+      </Stack>
+    </form>
   );
 }

@@ -19,7 +19,7 @@ export default function MultipleChoiceQuestion({
       <VStack align="stretch">
         {question?.opcoes?.map((field) => (
           <Checkbox.Root
-            value={field.id}
+            value={String(field.id)}
             key={field.id}
             {...register(`${index}.resposta`)}
           >

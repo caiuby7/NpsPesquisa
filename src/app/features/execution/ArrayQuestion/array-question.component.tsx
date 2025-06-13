@@ -38,9 +38,9 @@ export const MatrixQuestion: React.FC<MatrixQuestionProps> = ({
         {texto}
       </Text>
 
-      <VStack w="100%" spacing={0}>
+      <VStack w="100%" gap={0}>
         {/* Cabeçalho */}
-        <HStack w="100%" alignItems="flex-end" spacing={0}>
+        <HStack w="100%" alignItems="flex-end" gap={0}>
           <Box minW="220px" maxW="300px" w="25%" />
           {colunas.map((coluna) => (
             <Box
@@ -61,8 +61,8 @@ export const MatrixQuestion: React.FC<MatrixQuestionProps> = ({
         </HStack>
 
         {opcoes.map((linha, rowIdx) => (
-          <HStack key={linha.id} borderRadius="md" w="100%" bg={rowIdx % 2 === 0 ? "gray.50" : "white"} spacing={0}>
-            <Box minW="220px" maxW="300px" w="25%" textAlign="left" px={2} py={3} fontSize="sm">{linha.texto}</Box>
+          <HStack key={linha.id} borderRadius="md" w="100%" bg={rowIdx % 2 === 0 ? "gray.50" : "white"} gap={0}>
+            <Box minW="220px" maxW="300px" w="25%" textAlign="left" px={4} py={3} fontSize="sm">{linha.texto}</Box>
             {colunas.map((coluna) => (
               <Box key={coluna.id} flex={1} minW="80px" textAlign="center" px={2} py={3}>
                 <RadioGroup.Root

@@ -18,6 +18,7 @@ import {
   QUESTIONS_TYPES,
   QuestionType,
   QuestionTypeEnum,
+  OptionItem as QuestionOptionItem,
 } from "@/app/services/question";
 import { FormSchemaType, useCreateQuestionForm } from "./useCreateQuestionForm";
 import { CustomSelect } from "@/app/components/Select/select.component";
@@ -25,6 +26,17 @@ import { QuestionTypeForm } from "@/app/features/create/QuestionTypeForm/questio
 import router from "next/router";
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
+import { OptionItem as FormOptionItem } from "@/app/services/form";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const convertOptionItem = (opt: FormOptionItem | { [key: string]: any }): any => ({
+  texto: opt.texto,
+  id: (opt as any).id ?? (opt as any).idOpcao,
+  ordem: opt.ordem,
+  peso: opt.peso,
+  valor: opt.valor,
+  ehColuna: opt.ehColuna
+});
 
 export default function CreateQuestion() {
   const params = useParams();
@@ -43,22 +55,44 @@ export default function CreateQuestion() {
 
   useEffect(() => {
     if (question) {
-      reset(question);
-      setValue("tipo", question.tipo);
-
-      if (
-        question.tipo === QuestionTypeEnum.LINEAR_SCALE &&
-        question.opcoes &&
-        question.opcoes[0].valor &&
-        question.opcoes[1].valor
-      ) {
-        setValue("ratingLabels.min", question.opcoes[0].valor);
-        setValue("ratingLabels.max", question.opcoes[1].valor);
-        setValue("ratingLabels.minLabel", question.opcoes[0].texto);
-        setValue("ratingLabels.maxLabel", question.opcoes[1].texto);
+      let formData: any = {
+        texto: question.texto,
+        tipo: question.tipo,
+      };
+      if (question.tipo === QuestionTypeEnum.MATRIX) {
+        formData = {
+          texto: question.texto,
+          tipo: question.tipo,
+          opcoes: question.opcoes?.filter(opt => !opt.ehColuna).map(convertOptionItem) || [],
+          colunas: question.opcoes?.filter(opt => opt.ehColuna).map(convertOptionItem) || [],
+        };
+      } else if (question.tipo === QuestionTypeEnum.LINEAR_SCALE && question.opcoes) {
+        formData = {
+          texto: question.texto,
+          tipo: question.tipo,
+          ratingLabels: {
+            min: question.opcoes[0].valor || "",
+            max: question.opcoes[1].valor || "",
+            minLabel: question.opcoes[0].texto || "",
+            maxLabel: question.opcoes[1].texto || ""
+          }
+        };
+      } else if (question.tipo === QuestionTypeEnum.MULTIPLE_CHOICE) {
+        formData = {
+          texto: question.texto,
+          tipo: question.tipo,
+          opcoes: question.opcoes?.map(convertOptionItem) || [],
+        };
+      } else if (question.tipo === QuestionTypeEnum.MENU) {
+        formData = {
+          texto: question.texto,
+          tipo: question.tipo,
+          opcoes: question.opcoes?.map(convertOptionItem) || [],
+        };
       }
+      reset(formData);
     }
-  }, [question]);
+  }, [question, reset]);
 
   const handleMutationSuccess = () => {
     router.push("/home");
@@ -81,6 +115,12 @@ export default function CreateQuestion() {
   const type = watch("tipo");
 
   const onSubmit = (data: FormSchemaType) => {
+    // Função para converter opções para o formato esperado pelo backend
+    const toApiOption = (opt: any) => ({
+      ...opt,
+      idOpcao: String(opt.id ?? opt.idOpcao),
+    });
+
     if (data.tipo === QuestionTypeEnum.LINEAR_SCALE) {
       const payloadLinearScale = {
         ...data,
@@ -115,23 +155,27 @@ export default function CreateQuestion() {
           data.colunas.map((item) => {
             return { ...item, ehColuna: true };
           })
-        ),
+        ).map(toApiOption),
       };
-      delete payloadArray.colunas;
+      const { colunas, ...payloadWithoutColunas } = payloadArray;
       if (question && id) {
-        questionPut({ id: id as string, payload: payloadArray });
+        questionPut({ id: id as string, payload: payloadWithoutColunas });
         return;
       }
-      questionPost(payloadArray);
+      questionPost(payloadWithoutColunas);
       return;
     }
 
+    // Para os outros tipos
+    let payload: any = { ...data };
+    if ('opcoes' in data && Array.isArray(data.opcoes)) {
+      payload.opcoes = data.opcoes.map(toApiOption);
+    }
     if (data && id) {
-      questionPut({ id: id as string, payload: data });
+      questionPut({ id: id as string, payload });
       return;
     }
-
-    questionPost(data as QuestionPostParams);
+    questionPost(payload as QuestionPostParams);
   };
 
   return (

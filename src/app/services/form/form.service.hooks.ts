@@ -14,6 +14,14 @@ export const useGetForm = (param: FormGetParams) => {
   });
 };
 
+export const useGetForms = () => {
+  return useQuery({
+    queryKey: ["forms-list"],
+    queryFn: async () => FormServices.list(),
+    staleTime: STALE_TIME,
+    refetchOnWindowFocus: false,
+  });
+};
 
 export const useFormPostMutate = (
   handleMutationSuccess: () => void,
@@ -30,3 +38,9 @@ export const useFormPostMutate = (
       handleMutationSuccess(),
   })
 }
+
+export const useUpdateForm = () => {
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: any) => await FormServices.put(id, payload),
+  });
+};

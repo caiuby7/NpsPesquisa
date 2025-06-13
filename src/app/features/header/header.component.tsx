@@ -14,8 +14,10 @@ const pages = [
     { label: "Home", path: "/home" },
     { label: "Criar Questão", path: "/create-question" },
     { label: "Criar Formulário", path: "/create-form" },
-    { label: "Formulários", path: "/forms" },
+    { label: "Formulários", path: "/formularios" },
     { label: "Questões", path: "/questions" },
+    { label: "Participantes", path: "/participantes" },
+    { label: "Cursos", path: "/cursos" },
 ];
 
 export function AppHeader() {

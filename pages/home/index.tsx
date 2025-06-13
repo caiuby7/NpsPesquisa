@@ -2,6 +2,7 @@ import { useRouter } from "next/router";
 import { MdFormatAlignJustify } from "react-icons/md";
 import { TbPencilQuestion } from "react-icons/tb";
 import { MdFormatShapes } from "react-icons/md";
+import { MdPeople } from "react-icons/md";
 import { Box, Button, Heading, HStack, Text } from "@chakra-ui/react";
 import { useColorModeValue } from "@/components/ui/color-mode";
 import { withAuth } from "@/lib/withAuth";
@@ -88,7 +89,7 @@ export default function HomePage() {
             onClick={() => handleNavigate("/create-form")}
           />
         </HStack>
-        <HStack>
+        <HStack mb={4}>
           <CardButton
             icon={<MdFormatAlignJustify />}
             title="Formulários"
@@ -100,6 +101,20 @@ export default function HomePage() {
             title="Questões"
             description="Visualize todas as questões"
             onClick={() => handleNavigate("/questions")}
+          />
+        </HStack>
+        <HStack>
+          <CardButton
+            icon={<MdPeople />}
+            title="Participantes"
+            description="Gerencie os participantes"
+            onClick={() => handleNavigate("/participantes")}
+          />
+          <CardButton
+            icon={<MdFormatAlignJustify />}
+            title="Cursos"
+            description="Gerencie os cursos"
+            onClick={() => handleNavigate("/cursos")}
           />
         </HStack>
         <Button
