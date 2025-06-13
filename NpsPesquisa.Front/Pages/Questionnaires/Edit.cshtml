@@ -1,0 +1,23 @@
+@page "{id:int}"
+@model NpsPesquisa.Front.Pages.Questionnaires.EditModel
+@{
+    ViewData["Title"] = "Editar Formulário";
+}
+
+<h2>Editar Formulário</h2>
+<form method="post">
+    <div class="form-group">
+        <label>Título</label>
+        <input asp-for="Questionnaire.Title" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Descrição</label>
+        <input asp-for="Questionnaire.Description" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>IDs das Questões (separados por vírgula)</label>
+        <input asp-for="QuestionIdsInput" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-primary">Salvar</button>
+    <a asp-page="Index" class="btn btn-secondary">Voltar</a>
+</form> 

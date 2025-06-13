@@ -25,6 +25,8 @@ namespace NpsPesquisa.Api.Models
 
         public bool Respondido { get; set; }
 
+        public DateTime? DataUltimoLembrete { get; set; }
+
         [ForeignKey("QuestionarioId")]
         public Questionario Questionario { get; set; }
 

@@ -1,0 +1,35 @@
+@page
+@model NpsPesquisa.Front.Pages.Usuarios.IndexModel
+@{
+    ViewData["Title"] = "Usuários";
+}
+
+<h2>Usuários</h2>
+<a asp-page="Create" class="btn btn-success mb-3">Novo Usuário</a>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Nome</th>
+            <th>Email</th>
+            <th>Perfil</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var u in Model.Usuarios)
+    {
+        <tr>
+            <td>@u.Nome</td>
+            <td>@u.Email</td>
+            <td>@(Model.PerfisDict.ContainsKey(u.PerfilId) ? Model.PerfisDict[u.PerfilId] : "-")</td>
+            <td>
+                <a asp-page="Edit" asp-route-id="@u.Id" class="btn btn-primary btn-sm">Editar</a>
+                <a asp-page="Details" asp-route-id="@u.Id" class="btn btn-info btn-sm">Detalhes</a>
+                <form method="post" asp-page-handler="Delete" asp-route-id="@u.Id" style="display:inline;">
+                    <button type="submit" class="btn btn-danger btn-sm">Excluir</button>
+                </form>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table> 

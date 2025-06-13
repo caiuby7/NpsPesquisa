@@ -34,13 +34,55 @@ namespace NpsPesquisa.Api.Migrations
                     b.Property<int>("CursoId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Email")
+                    b.Property<string>("Filial")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("longtext")
+                        .HasCharSet("utf8mb4");
+
+                    b.Property<string>("NivelEnsino")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasCharSet("utf8mb4");
+
+                    b.Property<string>("PeriodoLetivo")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasCharSet("utf8mb4");
 
                     b.Property<string>("Nome")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("longtext")
+                        .HasCharSet("utf8mb4");
+
+                    b.Property<string>("Matricula")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasCharSet("utf8mb4");
+
+                    b.Property<string>("Turno")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasCharSet("utf8mb4");
+
+                    b.Property<string>("EmailInstitucional")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasCharSet("utf8mb4");
+
+                    b.Property<string>("EmailPessoal")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasCharSet("utf8mb4");
+
+                    b.Property<string>("Fone")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasCharSet("utf8mb4");
+
+                    b.Property<string>("StatusNoPeriodoLetivo")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasCharSet("utf8mb4");
 
                     b.HasKey("Id");
 

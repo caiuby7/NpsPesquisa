@@ -31,11 +31,43 @@ namespace NpsPesquisa.Api.Migrations
                     b.Property<int>("CursoId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Email")
+                    b.Property<string>("EmailInstitucional")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("EmailPessoal")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Filial")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Fone")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Matricula")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("NivelEnsino")
                         .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("PeriodoLetivo")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("StatusNoPeriodoLetivo")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Turno")
                         .IsRequired()
                         .HasColumnType("longtext");
 
@@ -63,6 +95,9 @@ namespace NpsPesquisa.Api.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<DateTime?>("DataResposta")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DataUltimoLembrete")
                         .HasColumnType("datetime(6)");
 
                     b.Property<int>("QuestionarioId")
@@ -224,7 +259,8 @@ namespace NpsPesquisa.Api.Migrations
                     b.Property<DateTime>("DataCriacao")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<DateTime>("DataExpiracao")
+                    b.Property<DateTime?>("DataExpiracao")
+                        .IsRequired()
                         .HasColumnType("datetime(6)");
 
                     b.Property<DateTime?>("DataFim")
@@ -238,8 +274,26 @@ namespace NpsPesquisa.Api.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("varchar(1000)");
 
+                    b.Property<bool>("EnviarLembreteAutomatico")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("EnviarLembreteParaTodos")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int?>("LembrarACadaXDias")
+                        .HasColumnType("int");
+
                     b.Property<bool>("OrdemAleatoria")
                         .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("TemplateEmailConvite")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("TemplateEmailLembrete")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("TextoBoasVindas")
+                        .HasColumnType("longtext");
 
                     b.Property<string>("Titulo")
                         .IsRequired()
@@ -301,7 +355,6 @@ namespace NpsPesquisa.Api.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<string>("Valor")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");

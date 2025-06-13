@@ -1,0 +1,33 @@
+@page
+@model NpsPesquisa.Front.Pages.Questionnaires.IndexModel
+@{
+    ViewData["Title"] = "Formulários";
+}
+
+<h2>Formulários</h2>
+<a asp-page="Create" class="btn btn-success mb-3">Novo Formulário</a>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Título</th>
+            <th>Descrição</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var f in Model.Questionnaires)
+    {
+        <tr>
+            <td>@f.Title</td>
+            <td>@f.Description</td>
+            <td>
+                <a asp-page="Edit" asp-route-id="@f.Id" class="btn btn-primary btn-sm">Editar</a>
+                <a asp-page="Details" asp-route-id="@f.Id" class="btn btn-info btn-sm">Detalhes</a>
+                <form method="post" asp-page-handler="Delete" asp-route-id="@f.Id" style="display:inline;">
+                    <button type="submit" class="btn btn-danger btn-sm">Excluir</button>
+                </form>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table> 

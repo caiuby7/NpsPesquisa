@@ -1,0 +1,16 @@
+@page "{id:int}"
+@model NpsPesquisa.Front.Pages.Questionnaires.DetailsModel
+@{
+    ViewData["Title"] = "Detalhes do Formulário";
+}
+
+<h2>Detalhes do Formulário</h2>
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">@Model.Questionnaire.Title</h5>
+        <p><strong>Descrição:</strong> @Model.Questionnaire.Description</p>
+        <p><strong>IDs das Questões:</strong> @(Model.Questionnaire.QuestionIds != null ? string.Join(", ", Model.Questionnaire.QuestionIds) : "-")</p>
+        <a asp-page="Edit" asp-route-id="@Model.Questionnaire.Id" class="btn btn-primary">Editar</a>
+        <a asp-page="Index" class="btn btn-secondary">Voltar</a>
+    </div>
+</div> 

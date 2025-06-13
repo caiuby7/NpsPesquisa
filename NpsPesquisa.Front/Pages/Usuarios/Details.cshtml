@@ -1,0 +1,16 @@
+@page "{id:int}"
+@model NpsPesquisa.Front.Pages.Usuarios.DetailsModel
+@{
+    ViewData["Title"] = "Detalhes do Usuário";
+}
+
+<h2>Detalhes do Usuário</h2>
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">@Model.Usuario.Nome</h5>
+        <p><strong>Email:</strong> @Model.Usuario.Email</p>
+        <p><strong>Perfil ID:</strong> @Model.Usuario.PerfilId</p>
+        <a asp-page="Edit" asp-route-id="@Model.Usuario.Id" class="btn btn-primary">Editar</a>
+        <a asp-page="Index" class="btn btn-secondary">Voltar</a>
+    </div>
+</div> 

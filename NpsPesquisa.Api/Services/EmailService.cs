@@ -35,9 +35,21 @@ namespace NpsPesquisa.Api.Services
                     IsBodyHtml = true
                 };
                 mailMessage.To.Add(to);
+                try
+                {
+                    await client.SendMailAsync(mailMessage);
+                }
+                catch (Exception ex) 
+                {
+                    var e = ex;
+                }
+                finally
+                {
+                    mailMessage.Dispose();
+                }
 
-                await client.SendMailAsync(mailMessage);
+
             }
         }
     }
-} 
+}

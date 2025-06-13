@@ -21,7 +21,7 @@ namespace NpsPesquisa.Api.Models
         public DateTime DataCriacao { get; set; }
 
         [Required(ErrorMessage = "A data de expiração é obrigatória")]
-        public DateTime DataExpiracao { get; set; }
+        public DateTime? DataExpiracao { get; set; }
 
         [Required]
         public bool OrdemAleatoria { get; set; }
@@ -38,5 +38,15 @@ namespace NpsPesquisa.Api.Models
         public ICollection<Questao>? Questoes { get; set; }
 
         public virtual ICollection<Resposta>? Respostas { get; set; }
+
+        public string? TextoBoasVindas { get; set; }
+        public string? TemplateEmailConvite { get; set; }
+        public string? TemplateEmailLembrete { get; set; }
+
+        public int? LembrarACadaXDias { get; set; }
+
+        public bool EnviarLembreteAutomatico { get; set; }
+
+        public bool EnviarLembreteParaTodos { get; set; }
     }
 } 

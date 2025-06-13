@@ -14,8 +14,7 @@ namespace NpsPesquisa.Api.Models
         [Required]
         public int QuestaoId { get; set; }
 
-        [Required]
-        public string Valor { get; set; }
+        public string? Valor { get; set; }
 
         public string? Texto { get; set; }
 

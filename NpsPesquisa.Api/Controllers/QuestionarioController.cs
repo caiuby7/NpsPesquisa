@@ -320,7 +320,9 @@ namespace NpsPesquisa.Api.Controllers
                 Descricao = questionarioDto.Descricao,
                 DataCriacao = DateTime.UtcNow,
                 DataExpiracao = questionarioDto.DataExpiracao,
-                OrdemAleatoria = questionarioDto.OrdemAleatoria ?? false,
+                DataInicio = questionarioDto.DataInicio,
+                DataFim = questionarioDto.DataFim,
+                OrdemAleatoria = questionarioDto.OrdemAleatoria,
                 QuestoesQuestionarios = questionarioDto.Questoes.Select(q => new QuestaoQuestionario
                 {
                     QuestaoId = q.QuestaoId,
@@ -376,7 +378,7 @@ namespace NpsPesquisa.Api.Controllers
             questionario.Titulo = questionarioDto.Titulo;
             questionario.Descricao = questionarioDto.Descricao;
             questionario.DataExpiracao = questionarioDto.DataExpiracao;
-            questionario.OrdemAleatoria = questionarioDto.OrdemAleatoria ?? false;
+            questionario.OrdemAleatoria = questionarioDto.OrdemAleatoria;
 
             // Remove todas as questões existentes
             _context.QuestoesQuestionarios.RemoveRange(questionario.QuestoesQuestionarios);
@@ -449,6 +451,7 @@ namespace NpsPesquisa.Api.Controllers
         {
             var questionario = await _context.Questionarios
                 .Include(q => q.Participantes)
+                .ThenInclude(p => p.Aluno)
                 .FirstOrDefaultAsync(q => q.Id == id);
 
             if (questionario == null)
@@ -479,7 +482,7 @@ namespace NpsPesquisa.Api.Controllers
                     <p><a href='{link}'>{link}</a></p>
                     <p>Este link é único e pessoal.</p>";
 
-                await _emailService.SendEmailAsync(participante.Aluno.Email, "Convite para Questionário", emailBody);
+                await _emailService.SendEmailAsync(participante.Aluno.EmailInstitucional, "Convite para Questionário", emailBody);
             }
 
             await _context.SaveChangesAsync();
@@ -500,10 +503,14 @@ namespace NpsPesquisa.Api.Controllers
             if (convite == null)
                 return NotFound(new { message = "Convite não encontrado" });
 
-            if (convite.DataResposta.HasValue)
+            if (convite.DataResposta.HasValue && convite.Respondido)
                 return BadRequest(new { message = "Este questionário já foi respondido" });
 
             var questionario = convite.Questionario;
+
+            if (DateTime.UtcNow < convite.Questionario.DataInicio || DateTime.UtcNow > convite.Questionario.DataFim)
+                return BadRequest(new { message = "O período para responder este questionário está encerrado" });
+
             var questoes = questionario.QuestoesQuestionarios
                 .OrderBy(qq => qq.Ordem)
                 .Select(qq => new QuestaoResponseDto
@@ -546,13 +553,29 @@ namespace NpsPesquisa.Api.Controllers
                 {
                     id = convite.Aluno.Id,
                     nome = convite.Aluno.Nome,
-                    email = convite.Aluno.Email
+                    email = convite.Aluno.EmailInstitucional
                 }
             });
         }
 
+        public class ResponderQuestionarioDto
+        {
+            public int QuestionarioId { get; set; }
+            public int AlunoId { get; set; }
+            public List<RespostaDto> Respostas { get; set; }
+        }
+
+        public class RespostaDto
+        {
+            public int QuestaoId { get; set; }
+            public string Valor { get; set; }
+            public string? Texto { get; set; }
+            public int? OpcaoId { get; set; }
+            public int? ColunaId { get; set; }
+        }
+
         [HttpPost("responder/{chave}")]
-        public async Task<IActionResult> ResponderQuestionario(string chave, [FromBody] List<RespostaDto> respostas)
+        public async Task<IActionResult> ResponderQuestionario(string chave, [FromBody] ResponderQuestionarioDto dto)
         {
             var convite = await _context.ConvitesQuestionarios
                 .Include(c => c.Questionario)
@@ -568,7 +591,19 @@ namespace NpsPesquisa.Api.Controllers
             if (DateTime.UtcNow < convite.Questionario.DataInicio || DateTime.UtcNow > convite.Questionario.DataFim)
                 return BadRequest(new { message = "O período para responder este questionário está encerrado" });
 
-            foreach (var resposta in respostas)
+            var questoesQuestionario = await _context.QuestoesQuestionarios
+                .Where(qq => qq.QuestionarioId == convite.QuestionarioId)
+                .Select(qq => qq.QuestaoId)
+                .ToListAsync();
+
+            var questoesRespondidas = dto.Respostas.Select(r => r.QuestaoId).ToList();
+
+            if (!questoesQuestionario.All(q => questoesRespondidas.Contains(q)))
+            {
+                return BadRequest(new { message = "Todas as questões do questionário devem ser respondidas" });
+            }
+
+            foreach (var resposta in dto.Respostas)
             {
                 var questaoQuestionario = await _context.QuestoesQuestionarios
                     .FirstOrDefaultAsync(qq => qq.QuestionarioId == convite.QuestionarioId && qq.QuestaoId == resposta.QuestaoId);
@@ -585,14 +620,69 @@ namespace NpsPesquisa.Api.Controllers
                         DataResposta = DateTime.UtcNow
                     },
                     QuestaoId = resposta.QuestaoId,
-                    Valor = resposta.Valor,
-                    Texto = resposta.Texto
+                    Valor = resposta.ColunaId.HasValue ? await _context.OpcoesQuestao.Where(o => o.Id == resposta.ColunaId && o.QuestaoId == resposta.QuestaoId).Select(o => o.Texto).FirstOrDefaultAsync() ?? resposta.Valor : resposta.Valor,
+                    Texto = resposta.Texto,
+                    OpcaoId = resposta.OpcaoId
                 };
 
                 _context.RespostasQuestoes.Add(novaResposta);
             }
 
             convite.DataResposta = DateTime.UtcNow;
+            convite.Respondido = true;
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        [HttpGet("{id}/participantes")]
+        public async Task<ActionResult<IEnumerable<object>>> GetParticipantes(int id)
+        {
+            var participantes = await _context.ParticipantesQuestionarios
+                .Where(p => p.QuestionarioId == id)
+                .Select(p => new
+                {
+                    p.Id,
+                    p.AlunoId,
+                    p.QuestionarioId,
+                    Aluno = new
+                    {
+                        p.Aluno.Id,
+                        p.Aluno.Nome,
+                        p.Aluno.EmailInstitucional,
+                        p.Aluno.EmailPessoal,
+                        p.Aluno.Matricula,
+                        p.Aluno.Turno,
+                        p.Aluno.CursoId,
+                        Curso = new
+                        {
+                            p.Aluno.Curso.Id,
+                            p.Aluno.Curso.Nome
+                        }
+                    }
+                })
+                .ToListAsync();
+
+            if (participantes == null || !participantes.Any())
+            {
+                return NotFound("Nenhum participante encontrado para este questionário.");
+            }
+
+            return participantes;
+        }
+
+        [HttpDelete("{id}/participantes/{alunoId}")]
+        public async Task<IActionResult> DeleteParticipante(int id, int alunoId)
+        {
+            var participante = await _context.ParticipantesQuestionarios
+                .FirstOrDefaultAsync(p => p.QuestionarioId == id && p.AlunoId == alunoId);
+
+            if (participante == null)
+            {
+                return NotFound("Participant not found.");
+            }
+
+            _context.ParticipantesQuestionarios.Remove(participante);
             await _context.SaveChangesAsync();
 
             return NoContent();

@@ -1,0 +1,23 @@
+@page "{id:int}"
+@model NpsPesquisa.Front.Pages.Usuarios.EditModel
+@{
+    ViewData["Title"] = "Editar Usuário";
+}
+
+<h2>Editar Usuário</h2>
+<form method="post">
+    <div class="form-group">
+        <label>Nome</label>
+        <input asp-for="Usuario.Nome" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Email</label>
+        <input asp-for="Usuario.Email" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Perfil ID</label>
+        <input asp-for="Usuario.PerfilId" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-primary">Salvar</button>
+    <a asp-page="Index" class="btn btn-secondary">Voltar</a>
+</form> 

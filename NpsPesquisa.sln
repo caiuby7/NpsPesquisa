@@ -12,6 +12,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpsPesquisa.Front", "NpsPesquisa.Front\NpsPesquisa.Front.csproj", "{5C500841-63A3-404A-9890-2FA5984EA67C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,6 +28,10 @@ Global
 		{20BE417A-3B67-454B-B8C7-2C1183AE68FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{20BE417A-3B67-454B-B8C7-2C1183AE68FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{20BE417A-3B67-454B-B8C7-2C1183AE68FE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5C500841-63A3-404A-9890-2FA5984EA67C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C500841-63A3-404A-9890-2FA5984EA67C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C500841-63A3-404A-9890-2FA5984EA67C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C500841-63A3-404A-9890-2FA5984EA67C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
