@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import { Box, Button, Heading, Input, Stack, Spinner, Switch, HStack } from "@chakra-ui/react";
+import { Box, Button, Heading, Input, Stack, Spinner, HStack } from "@chakra-ui/react";
 import { AppHeader } from "@/app/features/header/header.component";
 import { useGetForm, useUpdateForm } from "@/app/services/form/form.service.hooks";
 import { useEffect, useState } from "react";
@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 export default function EditarFormularioPage() {
   const router = useRouter();
   const { id } = router.query;
-  const { data: form, isLoading } = useGetForm({ id });
+  const { data: form, isLoading } = useGetForm({ id: typeof id === "string" ? id : "" });
   const { mutate: updateForm, isPending } = useUpdateForm();
 
   const [titulo, setTitulo] = useState("");
@@ -59,7 +59,7 @@ export default function EditarFormularioPage() {
       <Box p={8} maxW="720px" m="auto" display="flex" flexDirection="column">
         <Heading mb={8}>Editar Formulário</Heading>
         <form onSubmit={handleSubmit}>
-          <Stack spacing={4} maxW="500px" m="auto">
+          <Stack gap={4} maxW="500px" m="auto">
             <Input
               placeholder="Título"
               value={titulo}
@@ -87,7 +87,12 @@ export default function EditarFormularioPage() {
               required
             />
             <label style={{ display: "flex", alignItems: "center" }}>
-              <Switch.Root checked={ordemAleatoria} onCheckedChange={setOrdemAleatoria} style={{ marginRight: 8 }} />
+              <input
+                type="checkbox"
+                checked={ordemAleatoria}
+                onChange={e => setOrdemAleatoria(e.target.checked)}
+                style={{ marginRight: 8, width: 18, height: 18 }}
+              />
               Ordem Aleatória
               <span style={{ marginLeft: 8, color: ordemAleatoria ? 'green' : 'gray' }}>
                 {ordemAleatoria ? 'Ativado' : 'Desativado'}

@@ -8,13 +8,23 @@ export default function ResponderFormularioPage() {
   const { id } = router.query;
 
   return (
-    <Box>
+    <Box
+      minH="100vh"
+      bgImage="url('/background.jpg')"
+      bgSize="cover"
+      backgroundPosition="center"
+      bgRepeat="no-repeat"
+      display="flex"
+      flexDirection="column"
+    >
       <AppHeader />
-      <Box p={8} maxW="900px" m="auto">
+      <Box p={8} maxW="900px" m="auto" bg="rgba(255,255,255,0.92)" borderRadius="lg" boxShadow="lg">
         <Stack gap={8}>
           <Heading>Responder Formulário</Heading>
           <Button colorScheme="gray" onClick={() => router.push("/formularios")}>Voltar</Button>
-          <ExecutionForm />
+          {id && (
+            <ExecutionForm questionarioId={0} alunoId={0} chave={String(id)} />
+          )}
         </Stack>
       </Box>
     </Box>

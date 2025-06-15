@@ -74,7 +74,20 @@ export default function ParticipantesPage() {
       await api.post("/Aluno", novoParticipante);
       alert("Participante criado com sucesso!");
       setShowModal(false);
-      setNovoParticipante({ nome: "", matricula: "" });
+      setNovoParticipante({
+        nome: "",
+        filial: "",
+        nivelEnsino: "",
+        periodoLetivo: "",
+        matricula: "",
+        nomeCurso: "",
+        turno: "",
+        emailInstitucional: "",
+        emailPessoal: "",
+        fone: "",
+        statusNoPeriodoLetivo: "",
+        aceitaContato: false
+      });
       fetchParticipantes();
     } catch (e) {
       alert("Erro ao criar participante");
@@ -109,13 +122,13 @@ export default function ParticipantesPage() {
         </HStack>
 
         {/* Lista de participantes */}
-        <Stack spacing={4}>
-          {participantes.length === 0 && (
+        <Stack gap={4}>
+              {participantes.length === 0 && (
             <Text textAlign="center" color="gray.500">
-              Nenhum participante encontrado.
+                    Nenhum participante encontrado.
             </Text>
-          )}
-          {participantes.map((p) => (
+              )}
+              {participantes.map((p) => (
             <Flex
               key={p.id}
               p={4}
@@ -130,27 +143,27 @@ export default function ParticipantesPage() {
                 <Text fontWeight="bold">{p.nome}</Text>
                 <Text fontSize="sm" color="gray.600">Matrícula: {p.matricula}</Text>
                 <Text fontSize="sm" color={p.status === 'Ativo' ? "green.600" : "gray.500"}>
-                  {p.status}
+                      {p.status}
                 </Text>
               </Box>
               <HStack>
                 <Button
                   size="sm"
-                  colorScheme="blue"
+                        colorScheme="blue"
                   variant="outline"
-                  onClick={() => router.push(`/participantes/${p.id}`)}
+                        onClick={() => router.push(`/participantes/${p.id}`)}
                 >
                   <Box as={MdEdit} mr={2} display="inline" /> Editar
                 </Button>
                 <Button
                   size="sm"
-                  colorScheme="red"
+                        colorScheme="red"
                   variant="outline"
-                  onClick={() => handleRemove(p.id)}
+                        onClick={() => handleRemove(p.id)}
                 >
                   <Box as={MdDelete} mr={2} display="inline" /> Remover
                 </Button>
-              </HStack>
+                    </HStack>
             </Flex>
           ))}
         </Stack>

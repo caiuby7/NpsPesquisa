@@ -123,11 +123,11 @@ export default function QuestionsWidget() {
             defaultPage={currentPage}
             w="100%"
             m="auto"
-            onChange={handlePageChange}
+            onChange={page => handlePageChange(typeof page === "number" ? page : (page as any)?.value ?? 1)}
           >
             <ButtonGroup variant="ghost" size="sm">
               <Pagination.PrevTrigger asChild>
-                <IconButton isDisabled={currentPage === 1}>
+                <IconButton disabled={currentPage === 1}>
                   <LuChevronLeft />
                 </IconButton>
               </Pagination.PrevTrigger>
@@ -144,7 +144,7 @@ export default function QuestionsWidget() {
               />
 
               <Pagination.NextTrigger asChild>
-                <IconButton isDisabled={currentPage === totalPages}>
+                <IconButton disabled={currentPage === totalPages}>
                   <LuChevronRight />
                 </IconButton>
               </Pagination.NextTrigger>

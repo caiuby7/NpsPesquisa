@@ -1,9 +1,9 @@
 import { useRouter } from "next/router";
 import { Box, Button, Heading, Stack, Text } from "@chakra-ui/react";
-import { AppHeader } from "@/app/features/header/header.component";
 import { useEffect, useState } from "react";
 import { api } from "@/app/services/api";
 import ExecutionForm from "@/app/widgets/execution-question/execution-question.component";
+import { QuestionResponse } from "@/app/services/form";
 
 interface QuestionarioResponse {
   questionario: {
@@ -12,7 +12,7 @@ interface QuestionarioResponse {
     descricao: string;
     dataInicio: string;
     dataFim: string;
-    questoes: any[];
+    questoes: QuestionResponse[];
   };
   aluno: {
     id: number;
@@ -30,7 +30,6 @@ export default function QuestionarioPorChavePage() {
   useEffect(() => {
     async function loadQuestionario() {
       if (!chave) return;
-      
       try {
         const response = await api.get(`/Questionario/por-chave/${chave}`);
         setData(response.data);
@@ -40,14 +39,12 @@ export default function QuestionarioPorChavePage() {
         setLoading(false);
       }
     }
-
     loadQuestionario();
   }, [chave]);
 
   if (loading) {
     return (
-      <Box>
-        <AppHeader />
+      <Box minH="100vh" bgImage="url('/login-bg.jpg')" backgroundSize="cover" backgroundPosition="center">
         <Box p={8} maxW="900px" m="auto">
           <Text>Carregando questionário...</Text>
         </Box>
@@ -57,9 +54,8 @@ export default function QuestionarioPorChavePage() {
 
   if (!data) {
     return (
-      <Box>
-        <AppHeader />
-        <Box p={8} maxW="900px" m="auto">
+      <Box minH="100vh" bgImage="url('/login-bg.jpg')" backgroundSize="cover" backgroundPosition="center">
+        <Box p={8} maxW="900px" m="auto" bg="rgba(255,255,255,0.85)" borderRadius="2xl" border="2px solid rgba(255,255,255,0.5)">
           <Stack gap={8}>
             <Heading>Questionário não encontrado</Heading>
             <Text>O link pode ter expirado ou o questionário não existe mais.</Text>
@@ -73,11 +69,13 @@ export default function QuestionarioPorChavePage() {
   }
 
   return (
-    <Box>
-      <AppHeader />
-      <Box p={8} maxW="900px" m="auto">
+    <Box minH="100vh" bgImage="url('/login-bg.jpg')" backgroundSize="cover" backgroundPosition="center">
+      <Box p={8} maxW="900px" m="auto" bg="rgba(255,255,255,0.85)" borderRadius="2xl" border="2px solid rgba(255,255,255,0.5)">
         <Stack gap={8}>
-          <Heading>{data.questionario.titulo}</Heading>
+          <Box display="flex" alignItems="center" mb={4}>
+            <img src="/logo.png" alt="Logo" style={{ height: 48, marginRight: 16 }} />
+            <Heading as="h1" size="lg">{data.questionario.titulo}</Heading>
+          </Box>
           <Text>{data.questionario.descricao}</Text>
           <Text fontSize="sm" color="gray.600">
             Olá, {data.aluno.nome}! Por favor, responda o questionário abaixo.

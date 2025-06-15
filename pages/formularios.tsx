@@ -33,7 +33,7 @@ export default function FormulariosPage() {
       <AppHeader />
       <Box p={8} maxW="900px" m="auto">
         <Heading mb={8}>Formulários</Heading>
-        <Stack spacing={4}>
+        <Stack gap={4}>
           {currentForms.length === 0 && <Text>Nenhum formulário cadastrado.</Text>}
           {currentForms.map((form) => {
             const inicio = form.dataInicio ? new Date(form.dataInicio) : null;
@@ -49,7 +49,7 @@ export default function FormulariosPage() {
                 borderColor={isActive ? "green.400" : "gray.200"}
                 position="relative"
               >
-                <Stack direction={{ base: "column", md: "row" }} justify="space-between" align="center">
+                <Stack direction={{ base: "column", md: "row" }} justify="space-between" align="center" gap={4}>
                   <Box>
                     <HStack mb={1}>
                       <Heading size="md">{form.titulo}</Heading>
@@ -62,8 +62,8 @@ export default function FormulariosPage() {
                     <IconButton aria-label="Editar" colorScheme="blue" variant="ghost" onClick={() => window.location.href = `/editar-formulario/${form.id}`}><MdEdit /></IconButton>
                     <IconButton aria-label="Excluir" colorScheme="red" variant="ghost" onClick={() => window.location.href = `/excluir-formulario/${form.id}`}><MdDelete /></IconButton>
                     <IconButton aria-label="Respostas" colorScheme="purple" variant="ghost" onClick={() => window.location.href = `/respostas-formulario/${form.id}`}><MdListAlt /></IconButton>
-                    <Button colorScheme="teal" variant="solid" size="sm" leftIcon={<MdGroupAdd />} onClick={() => window.location.href = `/participantes-formulario/${form.id}`}>Adicionar Participantes</Button>
-                    <Button colorScheme="green" variant="solid" size="sm" leftIcon={<MdAssignment />} onClick={() => window.location.href = `/responder-formulario/${form.id}`}>Responder</Button>
+                    <Button colorScheme="teal" variant="solid" size="sm" onClick={() => window.location.href = `/participantes-formulario/${form.id}`}><MdGroupAdd /> Adicionar Participantes</Button>
+                    <Button colorScheme="green" variant="solid" size="sm" onClick={() => window.location.href = `/responder-formulario/${form.id}`}><MdAssignment /> Responder</Button>
                     <Button colorScheme="orange" variant="outline" size="sm" onClick={async () => {
                       try {
                         await axios.post(`/api/Questionario/${form.id}/gerar-convites`);
@@ -85,7 +85,10 @@ export default function FormulariosPage() {
             defaultPage={currentPage}
             w="100%"
             m="auto"
-            onChange={setCurrentPage}
+            onChange={page => {
+              const pageValue = typeof page === 'number' ? page : (page as any)?.value ?? 1;
+              setCurrentPage(pageValue);
+            }}
           >
             <ButtonGroup variant="ghost" size="sm" mt={6}>
               <Pagination.PrevTrigger asChild>

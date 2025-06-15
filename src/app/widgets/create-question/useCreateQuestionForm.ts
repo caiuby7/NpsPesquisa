@@ -8,7 +8,7 @@ import { QuestionResponse } from "@/app/services/form";
 
 export const useCreateQuestionForm = (question?: QuestionResponse) =>
   useForm<FormSchemaType>({
-    resolver: zodResolver(schemaWithPreprocessing as unknown as ZodType<FormSchemaType>),
+    resolver: zodResolver(schemaWithPreprocessing as any),
     mode: "onTouched",
     shouldFocusError: false,
     defaultValues: {

@@ -6,7 +6,7 @@ import { Box } from "@chakra-ui/react";
 export default function Execution() {
   return (
     <Box p={8}>
-      <ExecutionQuestion />
+      <ExecutionQuestion questionarioId={0} alunoId={0} chave="" />
     </Box>
   );
 }

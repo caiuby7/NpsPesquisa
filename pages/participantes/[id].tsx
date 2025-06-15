@@ -70,7 +70,7 @@ export default function EditarParticipantePage() {
       <AppHeader />
       <Box p={8} maxW="600px" m="auto">
         <Heading mb={8}>Editar Participante</Heading>
-        <Stack spacing={4}>
+        <Stack gap={4}>
           <Box>
             <Text fontWeight="bold">Nome</Text>
             <Input
@@ -99,7 +99,7 @@ export default function EditarParticipantePage() {
           <Button
             colorScheme="teal"
             onClick={handleSave}
-            isLoading={loading}
+            loading={loading}
             width="100%"
           >
             Salvar Alterações

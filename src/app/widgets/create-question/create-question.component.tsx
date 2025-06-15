@@ -167,7 +167,7 @@ export default function CreateQuestion() {
     }
 
     // Para os outros tipos
-    let payload: any = { ...data };
+    const payload: any = { ...data };
     if ('opcoes' in data && Array.isArray(data.opcoes)) {
       payload.opcoes = data.opcoes.map(toApiOption);
     }

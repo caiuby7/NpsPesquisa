@@ -19,6 +19,12 @@ const createFormSchema = z.object({
   dataFim: z.string().min(1, "Data de fim é obrigatório"),
   ordemAleatoria: z.boolean().optional(),
   questoes: z.array(z.number()).optional(),
+  textoBoasVindas: z.string().optional(),
+  templateEmailConvite: z.string().optional(),
+  templateEmailLembrete: z.string().optional(),
+  lembrarACadaXDias: z.number().optional(),
+  enviarLembreteAutomatico: z.boolean().optional(),
+  enviarLembreteParaTodos: z.boolean().optional(),
 });
 
 export type CreateFormSchema = z.infer<typeof createFormSchema>;

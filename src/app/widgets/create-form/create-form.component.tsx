@@ -38,11 +38,18 @@ export default function ExecutionQuestion() {
   };
 
   const onFirstStep = (data: FirstStepFormValues) => {
+    console.log('onFirstStep chamado com dados:', data);
     setValue("titulo", data.titulo);
     setValue("descricao", data.descricao);
     setValue("dataInicio", data.dataInicio);
     setValue("dataFim", data.dataFim);
     setValue("ordemAleatoria", data.ordemAleatoria ?? false);
+    setValue("textoBoasVindas", data.textoBoasVindas);
+    setValue("templateEmailConvite", data.templateEmailConvite);
+    setValue("templateEmailLembrete", data.templateEmailLembrete);
+    setValue("lembrarACadaXDias", data.lembrarACadaXDias);
+    setValue("enviarLembreteAutomatico", data.enviarLembreteAutomatico ?? false);
+    setValue("enviarLembreteParaTodos", data.enviarLembreteParaTodos ?? false);
     setToggle(true);
   };
 
@@ -67,6 +74,12 @@ export default function ExecutionQuestion() {
       descricao: values.descricao,
       dataExpiracao: values.dataFim,
       ordemAleatoria: true,
+      textoBoasVindas: values.textoBoasVindas,
+      templateEmailConvite: values.templateEmailConvite,
+      templateEmailLembrete: values.templateEmailLembrete,
+      lembrarACadaXDias: values.lembrarACadaXDias,
+      enviarLembreteAutomatico: values.enviarLembreteAutomatico,
+      enviarLembreteParaTodos: values.enviarLembreteParaTodos,
       questoes: (values.questoes ?? []).map((item: number, index: number) => {
         return {
           questaoId: item,

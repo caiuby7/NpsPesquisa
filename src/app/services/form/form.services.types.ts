@@ -18,6 +18,12 @@ export interface FormPostParams {
   descricao: string;
   ordemAleatoria: boolean;
   questoes: { questaoId: number; ordem: number }[];
+  textoBoasVindas?: string;
+  templateEmailConvite?: string;
+  templateEmailLembrete?: string;
+  lembrarACadaXDias?: number;
+  enviarLembreteAutomatico?: boolean;
+  enviarLembreteParaTodos?: boolean;
 }
 
 export interface FormResponse {
