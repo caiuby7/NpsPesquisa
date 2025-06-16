@@ -1,7 +1,7 @@
 // pages/form-builder.tsx
-import { AppHeader } from "@/app/features/header/header.component";
-import QuestionsWidget from "@/app/widgets/questions/questions.component";
-import { withAuth } from "@/lib/withAuth";
+import { AppHeader } from "../../src/app/features/header/header.component";
+import QuestionsWidget from "../../src/app/widgets/questions/questions.component";
+import { withAuth } from "../../src/lib/withAuth";
 import { Box } from "@chakra-ui/react";
 
 export const getServerSideProps = withAuth();

@@ -1,32 +1,31 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Box, Text } from "@chakra-ui/react";
 import { Control } from "react-hook-form";
-import { QuestionResponse } from "@/app/services/form";
-import { CustomSelect } from "@/app/components/Select/select.component";
+import { QuestionResponse } from "../../../services/form";
+import { CustomSelect } from "../../../components/Select/select.component";
 
-export default function MenuExecution({
-  control,
-  question,
-  index
-}: {
-  control: Control;
-  question: QuestionResponse
-  index: number
-}) {
+interface Props {
+  question: QuestionResponse;
+  control: Control<any>;
+  index: number;
+}
 
-  const options = question.opcoes?.map(option => {
-    return { value: option.id, label: option.texto }
-  }) || []
+export default function MenuExecution({ question, control, index }: Props) {
+  const options = question.opcoes?.map((opcao) => ({
+    value: opcao.id,
+    label: opcao.texto,
+  })) || [];
 
   return (
-    <Box as="form">
+    <Box>
       <Text mb={4} fontWeight="bold" textAlign="left">
         {question.texto}
       </Text>
       <CustomSelect
         control={control}
-        items={options}
         name={`${index}.resposta`}
+        items={options}
+        placeholder="Selecione uma opção"
       />
     </Box>
   );

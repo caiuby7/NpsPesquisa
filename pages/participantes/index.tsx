@@ -9,10 +9,10 @@ import {
   Input,
   HStack,
 } from "@chakra-ui/react";
-import { AppHeader } from "@/app/features/header/header.component";
+import { AppHeader } from "../src/app/features/header/header.component";
 import { useEffect, useState } from "react";
 import { MdDelete, MdEdit, MdPersonAdd } from "react-icons/md";
-import { api } from "@/app/services/api";
+import { api } from "../src/app/services/api";
 
 interface Participante {
   id: number;

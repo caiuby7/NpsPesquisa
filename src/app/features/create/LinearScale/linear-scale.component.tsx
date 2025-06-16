@@ -1,64 +1,115 @@
-import { CustomSelect } from "@/app/components/Select/select.component";
-import { EscalaLinearSchema, FormSchemaType } from "@/app/widgets/create-question/useCreateQuestionForm";
-import { Box, Field, Flex, HStack, Input, Text, VStack } from "@chakra-ui/react";
+import { CustomSelect } from "../../../components/Select/select.component";
+import { EscalaLinearSchema, FormSchemaType } from "../../../widgets/create-question/useCreateQuestionForm";
+import { Box, FormControl, Flex, HStack, Input, Text, VStack } from "@chakra-ui/react";
 import { useWatch, UseFormRegister, Control, FieldErrors } from "react-hook-form";
 
-export default function RatingLabelsEditorForm({
-  control,
-  register,
-  errors
-}: {
-  register: UseFormRegister<FormSchemaType>;
-  control: Control<FormSchemaType>;
+interface Props {
+  register: UseFormRegister<EscalaLinearSchema>;
+  control: Control<EscalaLinearSchema>;
   errors: FieldErrors<EscalaLinearSchema>;
-}) {
-  const minValue = useWatch({ control, name: `ratingLabels.min` });
-  const maxValue = useWatch({ control, name: `ratingLabels.max` });
-  const options = Array.from({ length: 11 }, (_, i) => {
-    return { label: String(i), value: String(i) };
+  index: number;
+}
+
+export default function RatingLabelsEditorForm({
+  register,
+  control,
+  errors,
+  index,
+}: Props) {
+  const min = useWatch({
+    control,
+    name: `ratingLabels.min`,
   });
 
+  const max = useWatch({
+    control,
+    name: `ratingLabels.max`,
+  });
+
+  const range = Array.from(
+    { length: Number(max) - Number(min) + 1 },
+    (_, i) => Number(min) + i
+  );
+
+  const minOptions = [
+    { value: "1", label: "1" },
+    { value: "2", label: "2" },
+    { value: "3", label: "3" },
+    { value: "4", label: "4" },
+    { value: "5", label: "5" },
+  ];
+
+  const maxOptions = [
+    { value: "5", label: "5" },
+    { value: "6", label: "6" },
+    { value: "7", label: "7" },
+    { value: "8", label: "8" },
+    { value: "9", label: "9" },
+    { value: "10", label: "10" },
+  ];
+
   return (
-    <Box p={4}>
-      <HStack mb={4}>
-        <CustomSelect
-          control={control}
-          invalid={errors?.ratingLabels && !!errors.ratingLabels.min}
-          items={options}
-          name={`ratingLabels.min`}
-        />
-        <Text>a</Text>
-        <CustomSelect
-          control={control}
-          invalid={errors?.ratingLabels && !!errors.ratingLabels.max}
-          items={options}
-          name={`ratingLabels.max`}
-        />
+    <VStack spacing={4} align="stretch">
+      <HStack>
+        <FormControl isInvalid={!!errors?.ratingLabels?.min}>
+          <Text mb={2}>Valor mínimo</Text>
+          <CustomSelect
+            items={minOptions}
+            control={control}
+            name="ratingLabels.min"
+            placeholder="Selecione o valor mínimo"
+          />
+        </FormControl>
+
+        <FormControl isInvalid={!!errors?.ratingLabels?.max}>
+          <Text mb={2}>Valor máximo</Text>
+          <CustomSelect
+            items={maxOptions}
+            control={control}
+            name="ratingLabels.max"
+            placeholder="Selecione o valor máximo"
+          />
+        </FormControl>
       </HStack>
 
-      <VStack align="stretch" >
-        <Flex align="center" gap={2}>
-          <Text width="20px">{minValue}</Text>
-          <Field.Root invalid={errors?.ratingLabels && !!errors.ratingLabels.minLabel}>
-            <Input
-              placeholder="Descrição para mínimo"
-              {...register(`ratingLabels.minLabel`)}
-            />
-          </Field.Root>
+      <FormControl isInvalid={!!errors?.ratingLabels?.minLabel}>
+        <Text mb={2}>Rótulo do valor mínimo</Text>
+        <Input
+          placeholder="Ex: Discordo totalmente"
+          {...register(`ratingLabels.minLabel`)}
+        />
+      </FormControl>
 
+      <FormControl isInvalid={!!errors?.ratingLabels?.maxLabel}>
+        <Text mb={2}>Rótulo do valor máximo</Text>
+        <Input
+          placeholder="Ex: Concordo totalmente"
+          {...register(`ratingLabels.maxLabel`)}
+        />
+      </FormControl>
+
+      <Box>
+        <Text mb={2}>Visualização</Text>
+        <Flex
+          direction="column"
+          align="center"
+          justify="center"
+          p={4}
+          borderWidth="1px"
+          borderRadius="md"
+        >
+          <Text mb={4} fontWeight="bold">
+            Pergunta exemplo
+          </Text>
+          <HStack spacing={4} justify="center">
+            {range.map((val) => (
+              <Box key={val} textAlign="center">
+                <Text fontSize="sm">{val}</Text>
+              </Box>
+            ))}
+          </HStack>
         </Flex>
-
-        <Flex align="center" gap={2}>
-          <Text width="20px">{maxValue}</Text>
-          <Field.Root invalid={errors?.ratingLabels && !!errors.ratingLabels.maxLabel}>
-            <Input
-              placeholder="Descrição para máximo"
-              {...register(`ratingLabels.maxLabel`)}
-            />
-          </Field.Root>
-
-        </Flex>
-      </VStack>
-    </Box>
+      </Box>
+    </VStack>
   );
 }

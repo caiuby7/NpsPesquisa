@@ -22,7 +22,6 @@ import {
   VStack,
   Text,
   Checkbox,
-  Field,
 } from "@chakra-ui/react";
 import { TfiAlignJustify } from "react-icons/tfi";
 import {
@@ -34,11 +33,27 @@ import {
   FieldErrors,
 } from "react-hook-form";
 import { FiTrash } from "react-icons/fi";
-import { OptionItem } from "@/app/services/form";
-import {
-  FormSchemaType,
-  MatrixSchemaType,
-} from "@/app/widgets/create-question/useCreateQuestionForm";
+import { QuestionTypeEnum } from "../../../services/question";
+
+interface OptionItem {
+  id: string;
+  texto: string;
+  ordem: number;
+  peso: number;
+  ehColuna: boolean;
+}
+
+interface FormSchemaType {
+  opcoes: OptionItem[];
+  colunas: OptionItem[];
+}
+
+interface MatrixSchemaType {
+  tipo: QuestionTypeEnum.MATRIX;
+  texto: string;
+  opcoes: OptionItem[];
+  colunas: OptionItem[];
+}
 
 export default function DualSortableFieldArray({
   register,
@@ -47,10 +62,10 @@ export default function DualSortableFieldArray({
   getValues,
   errors,
 }: {
-  register: UseFormRegister<FormSchemaType>;
-  control: Control<FormSchemaType>;
-  getValues: UseFormGetValues<FormSchemaType>;
-  setValue: UseFormSetValue<FormSchemaType>;
+  register: UseFormRegister<MatrixSchemaType>;
+  control: Control<MatrixSchemaType>;
+  getValues: UseFormGetValues<MatrixSchemaType>;
+  setValue: UseFormSetValue<MatrixSchemaType>;
   errors: FieldErrors<MatrixSchemaType>;
 }) {
   const options = useFieldArray({ control, name: "opcoes", keyName: "key" });
@@ -68,12 +83,12 @@ export default function DualSortableFieldArray({
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { active, over } = event as any;
+    const { active, over } = event;
     if (!over || active.id === over.id) return;
 
-    const sourceName = findList(active.id);
-    const targetName = findList(over.id);
+    const sourceName = findList(active.id as string);
+    const targetName = findList(over.id as string);
+
     if (!sourceName || !targetName) return;
 
     const sourceItems = getValues(sourceName);
@@ -86,6 +101,7 @@ export default function DualSortableFieldArray({
 
     const [movedItem] = sourceItems.splice(activeIndex, 1);
     movedItem.ehColuna = targetName === "colunas";
+
     targetItems.splice(overIndex, 0, movedItem);
 
     setValue(sourceName, sourceItems);
@@ -137,8 +153,8 @@ function SortableFieldArray({
   title: string;
   name: "opcoes" | "colunas";
   fields: OptionItem[];
-  register: UseFormRegister<FormSchemaType>;
-  control: Control<FormSchemaType>;
+  register: UseFormRegister<MatrixSchemaType>;
+  control: Control<MatrixSchemaType>;
   remove: (index: number) => void;
   append: (item: OptionItem) => void;
   errors: FieldErrors<MatrixSchemaType>;
@@ -165,13 +181,7 @@ function SortableFieldArray({
                 name === "opcoes" ? (
                   `${index + 1}.`
                 ) : (
-                  <Checkbox.Root disabled>
-                    <Checkbox.HiddenInput />
-                    <Checkbox.Control>
-                      <Checkbox.Indicator />
-                    </Checkbox.Control>
-                    <Checkbox.Label />
-                  </Checkbox.Root>
+                  <Checkbox isDisabled />
                 )
               }
               key={field.id}
@@ -221,8 +231,8 @@ function SortableItem({
   index: number;
   name: `opcoes.${number}.texto` | `colunas.${number}.texto`;
   remove: () => void;
-  register: UseFormRegister<FormSchemaType>;
-  control: Control<FormSchemaType>;
+  register: UseFormRegister<MatrixSchemaType>;
+  control: Control<MatrixSchemaType>;
   leftLabel: string | React.JSX.Element;
   errors: FieldErrors<MatrixSchemaType>;
 }) {
@@ -248,13 +258,13 @@ function SortableItem({
         <TfiAlignJustify />
       </Box>
       {leftLabel}
-      <Field.Root
-        invalid={
+      <Input 
+        placeholder={`Opção ${index + 1}`} 
+        {...register(name)}
+        isInvalid={
           ((errors?.opcoes && !!errors.opcoes[index]?.texto) || (errors?.colunas && !!errors.colunas[index]?.texto))
         }
-      >
-        <Input placeholder={`Opção ${index + 1}`} {...register(name)} />
-      </Field.Root>
+      />
 
       <Button onClick={remove} size="sm" colorScheme="red" variant="ghost">
         <FiTrash />

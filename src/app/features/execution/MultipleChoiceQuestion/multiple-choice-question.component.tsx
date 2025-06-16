@@ -1,34 +1,31 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Box, Checkbox, VStack, Text } from "@chakra-ui/react";
+import { Box, Checkbox, Text, VStack } from "@chakra-ui/react";
 import { UseFormRegister } from "react-hook-form";
+import { QuestionResponse } from "../../../services/form/form.services.types";
 
-import { QuestionResponse } from "@/app/services/form";
+interface Props {
+  register: UseFormRegister<any>;
+  question: QuestionResponse;
+  index: number;
+}
 
 export default function MultipleChoiceQuestion({
   register,
   question,
-  index
-}: {
-  register: UseFormRegister<any>;
-  question: QuestionResponse;
-  index: number;
-}) {
+  index,
+}: Props) {
   return (
-    <Box p={2} borderRadius="md">
+    <Box>
       <Text mb={4} fontWeight="bold" textAlign="left">{question.texto}</Text>
       <VStack align="stretch">
         {question?.opcoes?.map((field) => (
-          <Checkbox.Root
-            value={String(field.id)}
+          <Checkbox
             key={field.id}
+            value={String(field.id)}
             {...register(`${index}.resposta`)}
           >
-            <Checkbox.HiddenInput />
-            <Checkbox.Control>
-              <Checkbox.Indicator />
-            </Checkbox.Control>
-            <Checkbox.Label>{field.texto}</Checkbox.Label>
-          </Checkbox.Root>
+            {field.texto}
+          </Checkbox>
         ))}
       </VStack>
     </Box>

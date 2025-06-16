@@ -1,22 +1,21 @@
-const theme = {
-  colors: {
-    brand: {
-      500: '#9d2235',
-      600: '#7a1a29',
-    },
-  },
-  components: {
-    Button: {
-      defaultProps: {
-        colorScheme: 'brand',
-      },
-    },
-    Link: {
-      defaultProps: {
-        colorScheme: 'brand',
-      },
-    },
-  },
-}
+import { extendTheme } from '@chakra-ui/react';
 
-export default theme 
+const theme = extendTheme({
+  components: {
+    Stack: {
+      baseStyle: {
+        spacing: 4,
+      },
+    },
+    Button: {
+      baseStyle: {
+        _disabled: {
+          opacity: 0.4,
+          cursor: 'not-allowed',
+        },
+      },
+    },
+  },
+});
+
+export default theme; 

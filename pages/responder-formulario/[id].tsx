@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
 import { Box, Button, Heading, Stack } from "@chakra-ui/react";
-import { AppHeader } from "@/app/features/header/header.component";
-import ExecutionForm from "@/app/widgets/execution-question/execution-question.component";
+import { AppHeader } from "../../src/app/features/header/header.component";
+import ExecutionForm from "../../src/app/widgets/execution-question/execution-question.component";
 
 export default function ResponderFormularioPage() {
   const router = useRouter();

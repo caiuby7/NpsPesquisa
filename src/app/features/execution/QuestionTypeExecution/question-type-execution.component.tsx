@@ -8,18 +8,21 @@ import {
   QuestionResponse,
   QuestionType,
   QuestionTypeEnum,
-} from "@/app/services/form";
+} from "../../../services/form/form.services.types";
 import MenuExecution from "../Menu/menu.component";
+
+interface FormValues {
+  [key: string]: string | number | boolean | string[] | number[];
+}
 
 interface Props {
   type: QuestionType;
-  register: UseFormRegister<any>;
-  control: Control;
+  register: UseFormRegister<FormValues>;
+  control: Control<FormValues>;
   question: QuestionResponse;
   index: number;
   disabled?: boolean;
-  watch: UseFormWatch<any>
-
+  watch: UseFormWatch<FormValues>;
 }
 
 export function QuestionTypeExecution({
@@ -84,14 +87,15 @@ export function QuestionTypeExecution({
   }
 
   if (type === "Matriz" && question.opcoes && question.colunas) {
-
     return (
       <MatrixQuestion
         texto={question.texto}
         opcoes={question.opcoes}
         colunas={question.colunas}
         watch={watch}
-        register={register} index={index} />
+        register={register} 
+        index={index} 
+      />
     );
   }
 

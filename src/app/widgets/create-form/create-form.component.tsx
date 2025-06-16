@@ -1,23 +1,26 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useState } from "react";
 import {
   Box,
   Button,
   ButtonGroup,
   Heading,
   IconButton,
-  Pagination,
   Stack,
+  Text,
+  HStack,
+  Spinner,
+  Badge,
 } from "@chakra-ui/react";
-import { useState } from "react";
 import { RiArrowRightLine } from "react-icons/ri";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
-import { QuestionTypeExecution } from "@/app/features/execution/QuestionTypeExecution/question-type-execution.component";
-import { FirstStepForm } from "@/app/features/create/FirstStepForm/first-step-form.component";
-import { useGetQuestions } from "@/app/services/question";
-import { FirstStepFormValues } from "@/app/features/create/FirstStepForm/validationSchema";
+import { QuestionTypeExecution } from "../../features/execution/QuestionTypeExecution/question-type-execution.component";
+import { FirstStepForm } from "../../features/create/FirstStepForm/first-step-form.component";
+import { useGetQuestions } from "../../services/question";
+import { FirstStepFormValues } from "../../features/create/FirstStepForm/validationSchema";
 import { useCreateForm } from "./useCreateQuestionForm";
-import { useFormPostMutate } from "@/app/services/form";
-import router from "next/router";
+import { useFormPostMutate } from "../../services/form";
+import { useNavigate } from "react-router-dom";
 
 
 export default function ExecutionQuestion() {
@@ -26,6 +29,7 @@ export default function ExecutionQuestion() {
   const { setValue, watch, register, getValues, control, handleSubmit, formState } = useCreateForm();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 2; // Número de questões por página
+  const navigate = useNavigate();
 
   const selectedIds: number[] = watch("questoes") || [];
 
@@ -54,7 +58,7 @@ export default function ExecutionQuestion() {
   };
 
   const handleMutationSuccess = () => {
-    router.push("/home");
+    navigate("/home");
   };
 
   const handleMutationError = () => {
@@ -114,7 +118,7 @@ export default function ExecutionQuestion() {
                 color={"blue.500"}
                 bg={"blue.50"}
                 onClick={onSubmit}
-                loading={isPending}
+                isLoading={isPending}
               >
                 {`Salvar formulário com ${selectedIds.length} questões`} {" "}
                 <RiArrowRightLine />
@@ -143,43 +147,29 @@ export default function ExecutionQuestion() {
                       type={question.tipo}
                       question={question}
                       register={register as any}
-                      index={startIndex + index} watch={watch} control={control as any} />
+                      index={startIndex + index}
+                      watch={watch as any}
+                      control={control as any}
+                    />
                   </Stack>
                 </Box>
               );
             })}
-            <Pagination.Root
-              count={totalPages}
-              pageSize={1}
-              defaultPage={currentPage}
-              w="100%"
-              m="auto"
-            >
-              <ButtonGroup variant="ghost" size="sm">
-                <Pagination.PrevTrigger asChild>
-                  <IconButton disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)}>
-                    <LuChevronLeft />
-                  </IconButton>
-                </Pagination.PrevTrigger>
-
-                <Pagination.Items
-                  render={(page) => (
-                    <IconButton
-                      variant={page.value === currentPage ? "outline" : "ghost"}
-                      onClick={() => setCurrentPage(page.value)}
-                    >
-                      {String(page.value)}
-                    </IconButton>
-                  )}
-                />
-
-                <Pagination.NextTrigger asChild>
-                  <IconButton disabled={currentPage === totalPages} onClick={() => setCurrentPage(currentPage + 1)}>
-                    <LuChevronRight />
-                  </IconButton>
-                </Pagination.NextTrigger>
-              </ButtonGroup>
-            </Pagination.Root>
+            <HStack spacing={2} justify="center" mt={4}>
+              <IconButton
+                aria-label="Página anterior"
+                icon={<LuChevronLeft />}
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                isDisabled={currentPage === 1}
+              />
+              <Text>Página {currentPage}</Text>
+              <IconButton
+                aria-label="Próxima página"
+                icon={<LuChevronRight />}
+                onClick={() => setCurrentPage((prev) => prev + 1)}
+                isDisabled={currentPage >= totalPages}
+              />
+            </HStack>
           </Stack>
         </>
       ) : (

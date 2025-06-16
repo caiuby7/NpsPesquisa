@@ -1,14 +1,13 @@
-import { useColorModeValue } from "@/components/ui/color-mode";
 import {
     Box,
     Flex,
     HStack,
     Avatar,
     Button,
-    Image
+    Image,
+    useColorMode
 } from "@chakra-ui/react";
-import { useRouter } from "next/router";
-import NextLink from 'next/link';
+import { useNavigate } from "react-router-dom";
 
 const pages = [
     { label: "Home", path: "/home" },
@@ -21,22 +20,24 @@ const pages = [
 ];
 
 export function AppHeader() {
-    const bg = useColorModeValue("brand.500", "brand.600");
-    const color = useColorModeValue("white", "white");
-    const router = useRouter();
+    const { colorMode } = useColorMode();
+    const navigate = useNavigate();
 
     return (
-        <Box bg={bg} color={color} px={6} py={3} boxShadow="sm">
+        <Box bg={colorMode === "light" ? "brand.500" : "brand.600"} color="white" px={6} py={3} boxShadow="sm">
             <Flex align="center" justify="space-between">
                 {/* Logo */}
-                <NextLink href="/home">
-                    <Image src="/logo.png" alt="Logo" style={{ height: 40, marginRight: 8, cursor: 'pointer' }} />
-                </NextLink>
+                <Image 
+                    src="/logo.png" 
+                    alt="Logo" 
+                    style={{ height: 40, marginRight: 8, cursor: 'pointer' }} 
+                    onClick={() => navigate("/home")}
+                />
 
                 {/* Navigation Tabs */}
                 <HStack>
                     {pages.map((page) => {
-                        const isActive = router.pathname === page.path;
+                        const isActive = window.location.pathname === page.path;
                         return (
                             <Button
                                 key={page.path}
@@ -46,7 +47,7 @@ export function AppHeader() {
                                 fontWeight={isActive ? "bold" : "normal"}
                                 borderRadius="0"
                                 _hover={{ color: "white", bg: "#9d2235" }}
-                                onClick={() => router.push(page.path)}
+                                onClick={() => navigate(page.path)}
                             >
                                 {page.label}
                             </Button>
@@ -54,9 +55,7 @@ export function AppHeader() {
                     })}
                 </HStack>
                 {/* Avatar */}
-                <Avatar.Root>
-                    <Avatar.Fallback name="User" />
-                </Avatar.Root>
+                <Avatar name="User" />
             </Flex>
         </Box>
     );

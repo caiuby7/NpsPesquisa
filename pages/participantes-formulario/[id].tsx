@@ -11,10 +11,10 @@ import {
   Flex,
   Text,
 } from "@chakra-ui/react";
-import { AppHeader } from "@/app/features/header/header.component";
+import { AppHeader } from "../../src/app/features/header/header.component";
 import { useEffect, useState } from "react";
 import { MdDelete, MdPersonAdd } from "react-icons/md";
-import { api } from "@/app/services/api";
+import { api } from "../../src/app/services/api";
 
 // Mock de participante
 interface Participante {

@@ -1,22 +1,13 @@
 // pages/login.tsx
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/router";
-import nookies from "nookies";
 import { Box, Button, Input, Heading, Stack, Flex, Image } from "@chakra-ui/react";
-import {
-  LoginParams,
-  LoginResponse,
-  useLoginMutate,
-} from "@/app/services/login";
+import { useLogin, useAuth } from "../../src/app/services/login";
 import { MdEmail, MdLock } from "react-icons/md";
 
 export default function LoginPage() {
   const handleMutationSuccess = (data: LoginResponse) => {
-    nookies.set(null, "token", data.token, {
-      path: "/",
-      maxAge: 60 * 60 * 24, // 1 dia
-    });
-
+    localStorage.setItem("token", data.token);
     router.push("/home");
   };
 

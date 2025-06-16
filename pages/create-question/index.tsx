@@ -1,6 +1,6 @@
-import { AppHeader } from "@/app/features/header/header.component";
-import CreateQuestion from "@/app/widgets/create-question/create-question.component";
-import { withAuth } from "@/lib/withAuth";
+import { AppHeader } from "../../src/app/features/header/header.component";
+import CreateQuestion from "../../src/app/widgets/create-question/create-question.component";
+import { withAuth } from "../../src/lib/withAuth";
 import { Box } from "@chakra-ui/react";
 
 

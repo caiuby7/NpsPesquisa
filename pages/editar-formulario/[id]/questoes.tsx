@@ -1,8 +1,8 @@
 import { useRouter } from "next/router";
 import { Box, Button, Heading, Stack, Checkbox, Spinner } from "@chakra-ui/react";
-import { AppHeader } from "@/app/features/header/header.component";
-import { useGetForm } from "@/app/services/form/form.service.hooks";
-import { useGetQuestions } from "@/app/services/question";
+import { AppHeader } from "../../src/app/features/header/header.component";
+import { useGetForm } from "../../src/app/services/form/form.service.hooks";
+import { useGetQuestions } from "../../src/app/services/question";
 import { useEffect, useState } from "react";
 
 export default function EditarQuestoesFormularioPage() {

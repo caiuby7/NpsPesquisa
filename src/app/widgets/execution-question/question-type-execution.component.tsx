@@ -1,5 +1,5 @@
 import { Box, Input, Stack, Text, Textarea } from "@chakra-ui/react";
-import { QuestionResponse } from "@/app/services/form";
+import { QuestionResponse } from "../../services/form";
 
 interface QuestionTypeExecutionProps {
   type: string;

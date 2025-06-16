@@ -4,24 +4,24 @@ import {
   ButtonGroup,
   Heading,
   IconButton,
-  Pagination,
   Stack,
   HStack,
   Button,
 } from "@chakra-ui/react";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import { MdEdit, MdDelete } from "react-icons/md";
-import { QuestionTypeExecution } from "@/app/features/execution/QuestionTypeExecution/question-type-execution.component";
-import { useGetQuestions } from "@/app/services/question";
+import { QuestionTypeExecution } from "../../features/execution/QuestionTypeExecution/question-type-execution.component";
+import { useGetQuestions } from "../../services/question";
 import { useForm } from "react-hook-form";
-import { useRouter } from "next/router";
-import { QuestionService } from "@/app/services/question/question.services";
+import { useNavigate } from "react-router-dom";
+import { QuestionService } from "../../services/question/question.services";
+import { QuestionResponse } from "../../services/form/form.services.types";
 import { useState } from "react";
 
 export default function QuestionsWidget() {
   const { register, control, watch } = useForm();
   const { data, refetch } = useGetQuestions();
-  const router = useRouter();
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
@@ -38,7 +38,7 @@ export default function QuestionsWidget() {
   const currentQuestions = questions.slice(startIndex, endIndex);
 
   const handleEdit = (id: string) => {
-    router.push(`/create-question/${id}`);
+    navigate(`/create-question/${id}`);
   };
 
   const handleDelete = async (id: string) => {
@@ -73,7 +73,7 @@ export default function QuestionsWidget() {
       </Stack>
 
       <Stack>
-        {currentQuestions.map((question, index) => (
+        {currentQuestions.map((question: QuestionResponse, index: number) => (
           <Box
             key={question.id}
             borderWidth="1px"
@@ -117,39 +117,31 @@ export default function QuestionsWidget() {
           </Box>
         ))}
         {totalPages > 1 && (
-          <Pagination.Root
-            count={totalPages}
-            pageSize={1}
-            defaultPage={currentPage}
-            w="100%"
-            m="auto"
-            onChange={page => handlePageChange(typeof page === "number" ? page : (page as any)?.value ?? 1)}
-          >
-            <ButtonGroup variant="ghost" size="sm">
-              <Pagination.PrevTrigger asChild>
-                <IconButton disabled={currentPage === 1}>
-                  <LuChevronLeft />
-                </IconButton>
-              </Pagination.PrevTrigger>
-
-              <Pagination.Items
-                render={(page) => (
-                  <IconButton
-                    variant={page.value === currentPage ? "outline" : "ghost"}
-                    onClick={() => handlePageChange(page.value)}
-                  >
-                    {String(page.value)}
-                  </IconButton>
-                )}
-              />
-
-              <Pagination.NextTrigger asChild>
-                <IconButton disabled={currentPage === totalPages}>
-                  <LuChevronRight />
-                </IconButton>
-              </Pagination.NextTrigger>
-            </ButtonGroup>
-          </Pagination.Root>
+          <HStack justify="center" mt={4}>
+            <IconButton
+              aria-label="Página anterior"
+              icon={<LuChevronLeft />}
+              onClick={() => handlePageChange(currentPage - 1)}
+              isDisabled={currentPage === 1}
+            />
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page: number) => (
+              <IconButton
+                key={page}
+                aria-label={`Ir para página ${page}`}
+                variant={page === currentPage ? "solid" : "ghost"}
+                onClick={() => handlePageChange(page)}
+                size="sm"
+              >
+                {page}
+              </IconButton>
+            ))}
+            <IconButton
+              aria-label="Próxima página"
+              icon={<LuChevronRight />}
+              onClick={() => handlePageChange(currentPage + 1)}
+              isDisabled={currentPage === totalPages}
+            />
+          </HStack>
         )}
       </Stack>
     </Box>

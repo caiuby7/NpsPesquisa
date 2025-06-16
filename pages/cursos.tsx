@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Box, Button, Heading, Input, Stack, Flex, Text, HStack } from "@chakra-ui/react";
-import { AppHeader } from "@/app/features/header/header.component";
-import { api } from "@/app/services/api";
+import { AppHeader } from "./src/app/features/header/header.component";
+import { api } from "./src/app/services/api";
 
 interface Curso {
   id: number;

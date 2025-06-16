@@ -1,6 +1,6 @@
 import { useRouter } from "next/router";
 import { Box, Button, Heading, Text } from "@chakra-ui/react";
-import { AppHeader } from "@/app/features/header/header.component";
+import { AppHeader } from "../../src/app/features/header/header.component";
 
 export default function ExcluirFormularioPage() {
   const router = useRouter();

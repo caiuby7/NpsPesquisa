@@ -1,9 +1,9 @@
 import { useRouter } from "next/router";
 import { Box, Button, Heading, Stack, Text } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
-import { api } from "@/app/services/api";
-import ExecutionForm from "@/app/widgets/execution-question/execution-question.component";
-import { QuestionResponse } from "@/app/services/form";
+import { api } from "../src/app/services/api";
+import ExecutionForm from "../src/app/widgets/execution-question/execution-question.component";
+import { QuestionResponse } from "../src/app/services/form";
 
 interface QuestionarioResponse {
   questionario: {

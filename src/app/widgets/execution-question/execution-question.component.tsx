@@ -1,9 +1,9 @@
-import { Box, Button, Stack, Text } from "@chakra-ui/react";
+import { Box, Button, Stack, Text, Heading } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
-import { api } from "@/app/services/api";
+import { api } from "../../services/api";
 import { QuestionTypeExecution } from "./question-type-execution.component";
-import { QuestionResponse } from "@/app/services/form";
-import { OptionItem } from "@/app/services/form/form.services.types";
+import { QuestionResponse } from "../../services/form";
+import { OptionItem } from "../../services/form/form.services.types";
 
 interface ExecutionFormProps {
   questionarioId: number;
@@ -15,6 +15,7 @@ export default function ExecutionForm({ questionarioId, alunoId, chave }: Execut
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [responses, setResponses] = useState<Record<number, any>>({});
+  const [started, setStarted] = useState(false);
 
   useEffect(() => {
     async function loadQuestionario() {
@@ -98,6 +99,30 @@ export default function ExecutionForm({ questionarioId, alunoId, chave }: Execut
   }
 
   const questoes = data.questionario.questoes || [];
+
+  if (!started) {
+    return (
+      <Box p={8} bg="white" borderRadius="lg" boxShadow="md">
+        <Stack spacing={6} align="center">
+          <Heading size="lg" color="blue.600">Bem-vindo ao Questionário</Heading>
+          <Text fontSize="lg" textAlign="center">
+            {data.questionario.textoBoasVindas || "Por favor, responda todas as questões com atenção. Suas respostas são muito importantes para nós."}
+          </Text>
+          <Text fontSize="md" color="gray.600" textAlign="center">
+            Olá, {data.aluno.nome}! Este questionário contém {questoes.length} questões.
+          </Text>
+          <Button
+            colorScheme="blue"
+            size="lg"
+            onClick={() => setStarted(true)}
+            px={8}
+          >
+            Começar Questionário
+          </Button>
+        </Stack>
+      </Box>
+    );
+  }
 
   return (
     <Box>

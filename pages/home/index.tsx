@@ -4,10 +4,10 @@ import { TbPencilQuestion } from "react-icons/tb";
 import { MdFormatShapes } from "react-icons/md";
 import { MdPeople } from "react-icons/md";
 import { Box, Button, Heading, HStack, Text } from "@chakra-ui/react";
-import { useColorModeValue } from "@/components/ui/color-mode";
-import { withAuth } from "@/lib/withAuth";
+import { useColorModeValue } from "../../src/components/ui/color-mode";
+import { withAuth } from "../../src/lib/withAuth";
 
-import { AppHeader } from "@/app/features/header/header.component";
+import { AppHeader } from "../../src/app/features/header/header.component";
 
 export const getServerSideProps = withAuth();
 

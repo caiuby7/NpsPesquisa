@@ -2,9 +2,9 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { QuestionTypeEnum } from "@/app/services/question";
+import { QuestionTypeEnum } from "../../services/question";
 import { ZodType } from "zod";
-import { QuestionResponse } from "@/app/services/form";
+import { QuestionResponse } from "../../services/form";
 
 export const useCreateQuestionForm = (question?: QuestionResponse) =>
   useForm<FormSchemaType>({
@@ -18,12 +18,12 @@ export const useCreateQuestionForm = (question?: QuestionResponse) =>
   });
 
 export const optionSchema = z.object({
-  id: z.union([z.string(), z.number()]),
+  id: z.string(),
   texto: z.string().min(1, "Titulo é obrigatório"),
   ordem: z.number(),
   peso: z.number(),
   valor: z.string().optional(),
-  ehColuna: z.boolean().optional(),
+  ehColuna: z.boolean().default(false),
 });
 
 const tipoBase = z.object({

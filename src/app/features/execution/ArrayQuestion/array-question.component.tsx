@@ -4,88 +4,65 @@ import {
   Text,
   HStack,
   VStack,
+  Radio,
   RadioGroup,
 } from "@chakra-ui/react";
 import { UseFormRegister, UseFormWatch } from "react-hook-form";
+import { OptionItem } from "../../../services/form/form.services.types";
 
-interface Option {
-  id: string | number;
+interface Props {
   texto: string;
-  ordem: number;
-  peso: number;
-}
-
-interface MatrixQuestionProps {
-  texto: string;
-  opcoes: Option[];
-  colunas: Option[];
-  index: number;
+  opcoes: OptionItem[];
+  colunas: OptionItem[];
+  watch: UseFormWatch<any>;
   register: UseFormRegister<any>;
-  watch: UseFormWatch<any>
+  index: number;
 }
 
-export const MatrixQuestion: React.FC<MatrixQuestionProps> = ({
+export function MatrixQuestion({
   texto,
   opcoes,
   colunas,
-  index,
+  watch,
   register,
-  watch
-}) => {
+  index,
+}: Props) {
   return (
-    <Box borderRadius="md" p={4} w="100%">
-      <Text mb={4} fontWeight="bold" textAlign="left">
-        {texto}
-      </Text>
-
-      <VStack w="100%" gap={0}>
-        {/* Cabeçalho */}
-        <HStack w="100%" alignItems="flex-end" gap={0}>
-          <Box minW="220px" maxW="300px" w="25%" />
+    <VStack align="stretch" spacing={4}>
+      <Text fontWeight="bold">{texto}</Text>
+      <Box overflowX="auto">
+        <HStack spacing={0} align="stretch">
+          <Box flex={1} minW="120px" px={2} py={3}>
+            <Text fontWeight="medium">Opções</Text>
+          </Box>
           {colunas.map((coluna) => (
-            <Box
-              key={coluna.id}
-              flex={1}
-              minW="80px"
-              textAlign="center"
-              fontWeight="medium"
-              wordBreak="break-word"
-              display="flex"
-              flexDirection="column"
-              justifyContent="flex-end"
-              px={2}
-            >
-              <Text fontSize="xs" wordBreak="break-word">{coluna.texto}</Text>
+            <Box key={coluna.id} flex={1} minW="80px" textAlign="center" px={2} py={3}>
+              <Text fontWeight="medium">{coluna.texto}</Text>
             </Box>
           ))}
         </HStack>
-
-        {opcoes.map((linha, rowIdx) => (
-          <HStack key={linha.id} borderRadius="md" w="100%" bg={rowIdx % 2 === 0 ? "gray.50" : "white"} gap={0}>
-            <Box minW="220px" maxW="300px" w="25%" textAlign="left" px={4} py={3} fontSize="sm">{linha.texto}</Box>
+        {opcoes.map((linha) => (
+          <HStack key={linha.id} spacing={0} align="stretch">
+            <Box flex={1} minW="120px" px={2} py={3}>
+              <Text>{linha.texto}</Text>
+            </Box>
             {colunas.map((coluna) => (
               <Box key={coluna.id} flex={1} minW="80px" textAlign="center" px={2} py={3}>
-                <RadioGroup.Root
+                <RadioGroup
                   value={watch(`${index}.resposta.${linha.id}`) || ""}
-                  cursor="pointer"
-                  w="100%"
-                  ml="0"
-                  {...register(`${index}.resposta.${linha.id}`)}
+                  onChange={(value) => register(`${index}.resposta.${linha.id}`).onChange({ target: { value } })}
                 >
-                  <RadioGroup.Item
+                  <Radio
                     value={String(coluna.id)}
                     key={coluna.id}
                     colorScheme="purple"
-                  >
-                    <RadioGroup.ItemHiddenInput />
-                    <RadioGroup.ItemIndicator />
-                  </RadioGroup.Item>
-                </RadioGroup.Root>
+                  />
+                </RadioGroup>
               </Box>
             ))}
           </HStack>
         ))}
-      </VStack>
-    </Box>
+      </Box>
+    </VStack>
   );
-};
+}

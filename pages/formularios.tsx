@@ -1,9 +1,10 @@
-import { Box, Heading, Text, Stack, Button, ButtonGroup, IconButton, HStack, Pagination, Spinner, Badge } from "@chakra-ui/react";
-import { AppHeader } from "@/app/features/header/header.component";
-import { useGetForms } from "@/app/services/form/form.service.hooks";
+import { Box, Heading, Text, Stack, Button, ButtonGroup, IconButton, HStack, Spinner, Badge } from "@chakra-ui/react";
+import { AppHeader } from "./src/app/features/header/header.component";
+import { useGetForms } from "./src/app/services/form/form.service.hooks";
 import { useState } from "react";
-import { MdEdit, MdDelete, MdGroupAdd, MdListAlt, MdAssignment } from "react-icons/md";
+import { MdEdit, MdDelete, MdGroupAdd, MdAssignment } from "react-icons/md";
 import axios from "axios";
+import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 
 export default function FormulariosPage() {
   const { data, isLoading } = useGetForms();
@@ -78,38 +79,21 @@ export default function FormulariosPage() {
             );
           })}
         </Stack>
-        {totalPages > 1 && (
-          <Pagination.Root
-            count={totalPages}
-            pageSize={1}
-            defaultPage={currentPage}
-            w="100%"
-            m="auto"
-            onChange={page => {
-              const pageValue = typeof page === 'number' ? page : (page as any)?.value ?? 1;
-              setCurrentPage(pageValue);
-            }}
-          >
-            <ButtonGroup variant="ghost" size="sm" mt={6}>
-              <Pagination.PrevTrigger asChild>
-                <IconButton disabled={currentPage === 1}>{"<"}</IconButton>
-              </Pagination.PrevTrigger>
-              <Pagination.Items
-                render={(page) => (
-                  <IconButton
-                    variant={page.value === currentPage ? "outline" : "ghost"}
-                    onClick={() => setCurrentPage(page.value)}
-                  >
-                    {String(page.value)}
-                  </IconButton>
-                )}
-              />
-              <Pagination.NextTrigger asChild>
-                <IconButton disabled={currentPage === totalPages}>{">"}</IconButton>
-              </Pagination.NextTrigger>
-            </ButtonGroup>
-          </Pagination.Root>
-        )}
+        <HStack spacing={2} justify="center" mt={4}>
+          <IconButton
+            aria-label="Página anterior"
+            icon={<LuChevronLeft />}
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            isDisabled={currentPage === 1}
+          />
+          <Text>Página {currentPage}</Text>
+          <IconButton
+            aria-label="Próxima página"
+            icon={<LuChevronRight />}
+            onClick={() => setCurrentPage((prev) => prev + 1)}
+            isDisabled={currentPage >= totalPages}
+          />
+        </HStack>
       </Box>
     </Box>
   );

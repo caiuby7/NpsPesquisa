@@ -6,8 +6,6 @@ import {
 } from "next";
 import { jwtDecode } from "jwt-decode";
 
-import { parseCookies } from "nookies";
-
 export function isTokenValid(token: string): boolean {
   try {
     const decoded = jwtDecode<{ exp: number }>(token);
@@ -25,7 +23,7 @@ export function withAuth<
   return async (
     ctx: GetServerSidePropsContext
   ): Promise<GetServerSidePropsResult<P>> => {
-    const { token } = parseCookies(ctx);
+    const token = localStorage.getItem("token");
 
     if (!token || !isTokenValid(token)) {
       return {

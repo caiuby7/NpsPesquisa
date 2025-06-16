@@ -1,32 +1,33 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Button,
-  Field,
   Flex,
   Heading,
   Input,
   Stack,
+  FormControl,
+  FormLabel,
+  FormErrorMessage,
 } from "@chakra-ui/react";
 import {
   useGetQuestionById,
   useQuestionPostMutate,
   useQuestionPutMutate,
-} from "@/app/services/question";
+} from "../../services/question";
 import {
   QuestionPostParams,
   QUESTIONS_TYPES,
   QuestionType,
   QuestionTypeEnum,
   OptionItem as QuestionOptionItem,
-} from "@/app/services/question";
+} from "../../services/question";
 import { FormSchemaType, useCreateQuestionForm } from "./useCreateQuestionForm";
-import { CustomSelect } from "@/app/components/Select/select.component";
-import { QuestionTypeForm } from "@/app/features/create/QuestionTypeForm/question-type-form.component";
-import router from "next/router";
-import { useParams } from "next/navigation";
-import { useEffect } from "react";
-import { OptionItem as FormOptionItem } from "@/app/services/form";
+import { CustomSelect } from "../../components/Select/select.component";
+import { QuestionTypeForm } from "../../features/create/QuestionTypeForm/question-type-form.component";
+import { useParams } from "react-router-dom";
+import { OptionItem as FormOptionItem } from "../../services/form";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const convertOptionItem = (opt: FormOptionItem | { [key: string]: any }): any => ({
@@ -38,9 +39,15 @@ const convertOptionItem = (opt: FormOptionItem | { [key: string]: any }): any =>
   ehColuna: opt.ehColuna
 });
 
-export default function CreateQuestion() {
+interface CreateQuestionComponentProps {
+  initialData?: {
+    id?: string;
+  };
+}
+
+const CreateQuestionComponent: React.FC<CreateQuestionComponentProps> = ({ initialData }) => {
   const params = useParams();
-  const id = params?.id;
+  const id = initialData?.id || params?.id;
   const { data: question } = useGetQuestionById(id as string);
   const {
     control,
@@ -95,7 +102,7 @@ export default function CreateQuestion() {
   }, [question, reset]);
 
   const handleMutationSuccess = () => {
-    router.push("/home");
+    console.log("success");
   };
 
   const handleMutationError = () => {
@@ -184,15 +191,13 @@ export default function CreateQuestion() {
         <Heading>Criar Questão</Heading>
         <Box borderWidth="1px" p={4} borderRadius="md">
           <Stack>
-            <Flex d="row" gap={8}>
+            <Flex direction="row" gap={8}>
               <Box w="100%">
-                <Field.Root invalid={!!errors.texto?.message}>
-                  <Field.Label>Título da questão</Field.Label>
-                  <Input
-                    placeholder="Título da questão"
-                    {...register(`texto`)}
-                  />
-                </Field.Root>
+                <FormControl isInvalid={!!errors.texto?.message}>
+                  <FormLabel>Título da questão</FormLabel>
+                  <Input {...register("texto")} />
+                  <FormErrorMessage>{errors.texto?.message}</FormErrorMessage>
+                </FormControl>
               </Box>
               <CustomSelect
                 invalid={!!errors.tipo?.message}
@@ -207,18 +212,20 @@ export default function CreateQuestion() {
               <QuestionTypeForm
                 errors={errors}
                 type={question?.tipo || (Array.isArray(type) ? type[0] : type) as QuestionType}
-                register={register}
-                setValue={setValue}
-                getValues={getValues}
-                control={control}
+                register={register as any}
+                setValue={setValue as any}
+                getValues={getValues as any}
+                control={control as any}
               />
             )}
           </Stack>
         </Box>
-        <Button mt={8} colorScheme="blue" type="submit" loading={isPending}>
+        <Button mt={8} colorScheme="blue" type="submit" isLoading={isPending}>
           Salvar questão
         </Button>
       </Stack>
     </form>
   );
-}
+};
+
+export default CreateQuestionComponent;
