@@ -1,4 +1,4 @@
-import { Box, Checkbox, FormControl, HStack, Input, VStack } from "@chakra-ui/react";
+import { Box, Checkbox, FormControl, HStack, Input, VStack, Button } from "@chakra-ui/react";
 import {
   Control,
   FieldErrors,
@@ -18,6 +18,7 @@ import {
   MultipleChoiceSchemaType,
 } from "../../../widgets/create-question/useCreateQuestionForm";
 import { GripVertical } from "lucide-react";
+import { FiTrash } from "react-icons/fi";
 
 interface SortableItemProps {
   id: string;
@@ -98,6 +99,14 @@ export default function MultipleChoiceQuestion({
                     placeholder="Opção"
                     {...register(`opcoes.${optionIndex}.texto`)}
                   />
+                  <Button
+                    onClick={() => remove(optionIndex)}
+                    size="sm"
+                    colorScheme="red"
+                    variant="ghost"
+                  >
+                    <FiTrash />
+                  </Button>
                 </HStack>
               </FormControl>
             </SortableItem>
@@ -105,12 +114,14 @@ export default function MultipleChoiceQuestion({
         </SortableContext>
       </DndContext>
       <HStack>
-        <button
+        <Button
           type="button"
           onClick={() => append({ texto: "", id: Date.now().toString(), ordem: fields.length + 1, peso: 0, ehColuna: false })}
+          size="sm"
+          colorScheme="teal"
         >
-          Adicionar opção
-        </button>
+          + Adicionar
+        </Button>
       </HStack>
     </VStack>
   );

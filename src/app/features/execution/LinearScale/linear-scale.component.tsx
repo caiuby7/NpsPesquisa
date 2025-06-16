@@ -42,23 +42,32 @@ export function EscalaLinear({
         <Text fontSize="sm" color="gray.600">
           {minLabel}
         </Text>
-        <HStack spacing={2}>
-          {range.map((val) => (
-            <Box key={val} w="32px" textAlign="center" display="flex" alignItems="center" justifyContent="center">
-              <RadioGroup
-                onChange={(value) => onChange(value)}
-                value={String(val)}
-              >
-                <Radio
-                  disabled={disabled}
+        <Box>
+          <HStack spacing={2} justify="center">
+            {range.map((val) => (
+              <Box key={val} w="32px" textAlign="center" display="flex" alignItems="center" justifyContent="center">
+                <RadioGroup
+                  onChange={(value) => onChange(value)}
                   value={String(val)}
-                  m="auto"
-                  {...register(`${index}.resposta`)}
-                />
-              </RadioGroup>
-            </Box>
-          ))}
-        </HStack>
+                >
+                  <Radio
+                    disabled={disabled}
+                    value={String(val)}
+                    m="auto"
+                    {...register(`${index}.resposta`)}
+                  />
+                </RadioGroup>
+              </Box>
+            ))}
+          </HStack>
+          <HStack spacing={2} justify="center" mt={2}>
+            {range.map((val) => (
+              <Box key={val} w="32px" textAlign="center">
+                <Text fontSize="xs" color="gray.600">{val}</Text>
+              </Box>
+            ))}
+          </HStack>
+        </Box>
         <Text fontSize="sm" color="gray.600">
           {maxLabel}
         </Text>

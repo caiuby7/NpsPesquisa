@@ -10,6 +10,8 @@ import {
   FormControl,
   FormLabel,
   FormErrorMessage,
+  Textarea,
+  useToast,
 } from "@chakra-ui/react";
 import {
   useGetQuestionById,
@@ -26,7 +28,7 @@ import {
 import { FormSchemaType, useCreateQuestionForm } from "./useCreateQuestionForm";
 import { CustomSelect } from "../../components/Select/select.component";
 import { QuestionTypeForm } from "../../features/create/QuestionTypeForm/question-type-form.component";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { OptionItem as FormOptionItem } from "../../services/form";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -59,6 +61,9 @@ const CreateQuestionComponent: React.FC<CreateQuestionComponentProps> = ({ initi
     reset,
     formState: { errors },
   } = useCreateQuestionForm(question);
+
+  const toast = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (question) {
@@ -102,11 +107,24 @@ const CreateQuestionComponent: React.FC<CreateQuestionComponentProps> = ({ initi
   }, [question, reset]);
 
   const handleMutationSuccess = () => {
-    console.log("success");
+    toast({
+      title: "Questão salva com sucesso!",
+      status: "success",
+      duration: 3000,
+      isClosable: true,
+      position: "top"
+    });
+    reset();
   };
 
   const handleMutationError = () => {
-    console.log("error");
+    toast({
+      title: "Erro ao salvar a questão. Tente novamente.",
+      status: "error",
+      duration: 3000,
+      isClosable: true,
+      position: "top"
+    });
   };
 
   const { mutate: questionPost, isPending } = useQuestionPostMutate(
@@ -191,23 +209,22 @@ const CreateQuestionComponent: React.FC<CreateQuestionComponentProps> = ({ initi
         <Heading>Criar Questão</Heading>
         <Box borderWidth="1px" p={4} borderRadius="md">
           <Stack>
-            <Flex direction="row" gap={8}>
-              <Box w="100%">
-                <FormControl isInvalid={!!errors.texto?.message}>
-                  <FormLabel>Título da questão</FormLabel>
-                  <Input {...register("texto")} />
-                  <FormErrorMessage>{errors.texto?.message}</FormErrorMessage>
-                </FormControl>
-              </Box>
+            <FormControl isInvalid={!!errors.texto?.message} mb={4}>
+              <FormLabel>Título da questão</FormLabel>
+              <Textarea rows={4} {...register("texto")} />
+              <FormErrorMessage>{errors.texto?.message}</FormErrorMessage>
+            </FormControl>
+            <FormControl isInvalid={!!errors.tipo?.message} mb={4}>
+              <FormLabel>Tipo de questão</FormLabel>
               <CustomSelect
                 invalid={!!errors.tipo?.message}
                 control={control}
-                label="Tipo da questão"
                 items={QUESTIONS_TYPES}
                 placeholder="Selecione o Tipo da Questão"
                 name="tipo"
               />
-            </Flex>
+              <FormErrorMessage>{errors.tipo?.message}</FormErrorMessage>
+            </FormControl>
             {(type || question?.tipo) && (
               <QuestionTypeForm
                 errors={errors}
@@ -222,6 +239,9 @@ const CreateQuestionComponent: React.FC<CreateQuestionComponentProps> = ({ initi
         </Box>
         <Button mt={8} colorScheme="blue" type="submit" isLoading={isPending}>
           Salvar questão
+        </Button>
+        <Button mt={2} variant="outline" colorScheme="gray" onClick={() => navigate(-1)}>
+          Voltar
         </Button>
       </Stack>
     </form>

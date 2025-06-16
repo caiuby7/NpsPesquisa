@@ -5,15 +5,15 @@ import { LoginParams, LoginResponse } from "./login.services.types";
 const LOGIN_POST_KEY = "login-post-key";
 
 export const useLoginMutate = (
-  handleMutationSuccess: (data: LoginResponse) => void,
-  handleMutationError: () => void,
+  handleMutationSuccess?: (data: LoginResponse) => void,
+  handleMutationError?: (error: any) => void,
   handleOnMutate?: () => void
 ) => {
   return useMutation({
     mutationKey: [LOGIN_POST_KEY],
     mutationFn: async (params: LoginParams) => await LoginServices.post(params),
-    onError: () => handleMutationError(),
+    onError: (error) => handleMutationError && handleMutationError(error),
     onMutate: () => handleOnMutate && handleOnMutate(),
-    onSuccess: (data: LoginResponse) => handleMutationSuccess(data),
+    onSuccess: (data: LoginResponse) => handleMutationSuccess && handleMutationSuccess(data),
   });
 };

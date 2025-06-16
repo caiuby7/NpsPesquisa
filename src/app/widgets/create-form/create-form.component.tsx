@@ -162,7 +162,17 @@ export default function ExecutionQuestion() {
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 isDisabled={currentPage === 1}
               />
-              <Text>Página {currentPage}</Text>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <Button
+                  key={page}
+                  size="sm"
+                  variant={page === currentPage ? "solid" : "ghost"}
+                  colorScheme={page === currentPage ? "blue" : undefined}
+                  onClick={() => setCurrentPage(page)}
+                >
+                  {page}
+                </Button>
+              ))}
               <IconButton
                 aria-label="Próxima página"
                 icon={<LuChevronRight />}

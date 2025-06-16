@@ -1,4 +1,4 @@
-import { Box, Heading, Text, Stack, Button, ButtonGroup, IconButton, HStack, Badge, Spinner } from "@chakra-ui/react";
+import { Box, Heading, Text, Stack, Button, ButtonGroup, IconButton, HStack, Badge, Spinner, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, useDisclosure } from "@chakra-ui/react";
 import { AppHeader } from "../../components/header/header.component";
 import { useGetForms, Form } from "../../services/form/form.service.hooks";
 import { useState } from "react";
@@ -6,12 +6,19 @@ import { MdEdit, MdDelete, MdGroupAdd, MdListAlt, MdAssignment } from "react-ico
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
+import { Pie } from 'react-chartjs-2';
+import { Chart, ArcElement, Tooltip, Legend } from 'chart.js';
+Chart.register(ArcElement, Tooltip, Legend);
 
 export default function FormulariosPage() {
   const navigate = useNavigate();
   const { data, isLoading } = useGetForms();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [parcial, setParcial] = useState<any>(null);
+  const [loadingParcial, setLoadingParcial] = useState(false);
+  const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -42,6 +49,28 @@ export default function FormulariosPage() {
     } catch (e) {
       alert("Erro ao enviar convites");
     }
+  };
+
+  const handleSendReminder = async (formId: string) => {
+    try {
+      await axios.post(`/api/ConviteQuestionario/lembrete/questionario/${formId}`);
+      alert("Lembrete enviado com sucesso!");
+    } catch (e) {
+      alert("Erro ao enviar lembrete");
+    }
+  };
+
+  const handleAcompanhar = async (formId: string) => {
+    setSelectedFormId(formId);
+    setLoadingParcial(true);
+    onOpen();
+    try {
+      const { data } = await axios.get(`/api/Questionario/${formId}/parcial-convites`);
+      setParcial(data);
+    } catch (e) {
+      setParcial(null);
+    }
+    setLoadingParcial(false);
   };
 
   return (
@@ -108,20 +137,28 @@ export default function FormulariosPage() {
                       <MdGroupAdd /> Adicionar Participantes
                     </Button>
                     <Button 
-                      colorScheme="green" 
-                      variant="solid" 
-                      size="sm" 
-                      onClick={() => handleNavigate(`/responder-formulario/${form.id}`)}
-                    >
-                      <MdAssignment /> Responder
-                    </Button>
-                    <Button 
                       colorScheme="orange" 
                       variant="outline" 
                       size="sm" 
                       onClick={() => handleSendInvites(form.id.toString())}
                     >
                       Enviar Convites
+                    </Button>
+                    <Button 
+                      colorScheme="green" 
+                      variant="solid" 
+                      size="sm" 
+                      onClick={() => handleSendReminder(form.id.toString())}
+                    >
+                      <MdAssignment /> Enviar Lembrete
+                    </Button>
+                    <Button 
+                      colorScheme="blue" 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleAcompanhar(form.id.toString())}
+                    >
+                      📊 Acompanhar Respostas
                     </Button>
                   </ButtonGroup>
                 </Stack>
@@ -160,6 +197,44 @@ export default function FormulariosPage() {
           </Box>
         )}
       </Box>
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Acompanhamento de Respostas</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            {loadingParcial && <Text>Carregando...</Text>}
+            {!loadingParcial && parcial && (
+              <>
+                <Pie
+                  data={{
+                    labels: ['Respondidos', 'Pendentes'],
+                    datasets: [
+                      {
+                        data: [parcial.convitesRespondidos, parcial.convitesPendentes],
+                        backgroundColor: ['#38A169', '#ECC94B'],
+                      },
+                    ],
+                  }}
+                  options={{
+                    plugins: {
+                      legend: { position: 'bottom' },
+                    },
+                  }}
+                />
+                <Text mt={4}><b>Total Convites:</b> {parcial.totalConvites}</Text>
+                <Text><b>Respondidos:</b> {parcial.convitesRespondidos}</Text>
+                <Text><b>Pendentes:</b> {parcial.convitesPendentes}</Text>
+                <Text><b>Percentual de Resposta:</b> {parcial.percentualResposta}%</Text>
+              </>
+            )}
+            {!loadingParcial && !parcial && <Text>Não foi possível carregar os dados.</Text>}
+          </ModalBody>
+          <ModalFooter>
+            <Button onClick={onClose}>Fechar</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 } 

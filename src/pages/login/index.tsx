@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
-import { Box, Button, Input, Heading, Stack, Flex, Image } from "@chakra-ui/react";
+import { Box, Button, Input, Heading, Stack, Flex, Image, useToast } from "@chakra-ui/react";
 import { useLoginMutate } from "../../app/services/login";
 import { useAuth } from "../../contexts/AuthContext";
 import { MdEmail, MdLock } from "react-icons/md";
@@ -22,6 +22,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
   const { register, handleSubmit } = useForm<LoginParams>();
+  const toast = useToast();
 
   const handleMutationSuccess = (data: LoginResponse) => {
     // Salvar token e dados do usuário
@@ -29,6 +30,7 @@ export default function LoginPage() {
       expires: 1, // 1 dia
       path: "/",
     });
+    localStorage.setItem("token", data.token);
 
     // Atualizar o contexto de autenticação
     login(data.token, {
@@ -41,20 +43,34 @@ export default function LoginPage() {
     navigate("/home");
   };
 
-  const handleMutationError = () => {
-    console.log("error");
-  };
-
-  const { mutate: loginMutate, isPending } = useLoginMutate(
-    handleMutationSuccess,
-    handleMutationError
-  );
+  const { mutate: loginMutate, isPending } = useLoginMutate(handleMutationSuccess);
 
   const onSubmit = async (data: LoginParams) => {
     try {
-      loginMutate(data);
+      loginMutate(data, {
+        onError: (error: any) => {
+          if (error?.response?.status === 400 && error?.response?.data?.message === "Email ou senha inválidos") {
+            toast({
+              title: "Email ou senha inválidos",
+              status: "error",
+              duration: 10000,
+              isClosable: true,
+              position: "top"
+            });
+            return;
+          }
+          toast({
+            title: "Erro ao fazer login.",
+            description: "Tente novamente mais tarde.",
+            status: "error",
+            duration: 4000,
+            isClosable: true,
+            position: "top"
+          });
+        }
+      });
     } catch (err) {
-      console.log(err);
+      // fallback
     }
   };
 
