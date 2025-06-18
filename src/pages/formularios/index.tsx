@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import { Pie } from 'react-chartjs-2';
 import { Chart, ArcElement, Tooltip, Legend } from 'chart.js';
+import { api } from "../../services/api";
 Chart.register(ArcElement, Tooltip, Legend);
 
 export default function FormulariosPage() {
@@ -44,7 +45,7 @@ export default function FormulariosPage() {
 
   const handleSendInvites = async (formId: string) => {
     try {
-      await axios.post(`/api/Questionario/${formId}/gerar-convites`);
+      await api.post(`/Questionario/${formId}/gerar-convites`);
       alert("Convites enviados com sucesso!");
     } catch (e) {
       alert("Erro ao enviar convites");
@@ -53,7 +54,7 @@ export default function FormulariosPage() {
 
   const handleSendReminder = async (formId: string) => {
     try {
-      await axios.post(`/api/ConviteQuestionario/lembrete/questionario/${formId}`);
+      await api.post(`/ConviteQuestionario/lembrete/questionario/${formId}`);
       alert("Lembrete enviado com sucesso!");
     } catch (e) {
       alert("Erro ao enviar lembrete");
@@ -65,7 +66,7 @@ export default function FormulariosPage() {
     setLoadingParcial(true);
     onOpen();
     try {
-      const { data } = await axios.get(`/api/Questionario/${formId}/parcial-convites`);
+      const { data } = await api.get(`/Questionario/${formId}/parcial-convites`);
       setParcial(data);
     } catch (e) {
       setParcial(null);
@@ -76,7 +77,7 @@ export default function FormulariosPage() {
   return (
     <Box>
       <AppHeader />
-      <Box p={8} maxW="900px" m="auto">
+      <Box p={8} maxW="1200px" m="auto">
         <Heading mb={8}>Formulários</Heading>
         <Stack gap={4}>
           {currentForms.length === 0 && <Text>Nenhum formulário cadastrado.</Text>}
@@ -95,7 +96,7 @@ export default function FormulariosPage() {
                 position="relative"
               >
                 <Stack direction={{ base: "column", md: "row" }} justify="space-between" align="center" gap={4}>
-                  <Box>
+                  <Box flex="1">
                     <HStack mb={1}>
                       <Heading size="md">{form.titulo}</Heading>
                       {isActive && <Badge colorScheme="green">Ativo</Badge>}
@@ -103,64 +104,60 @@ export default function FormulariosPage() {
                     <Text fontSize="sm" color="gray.600">{form.descricao}</Text>
                     <Text fontSize="xs" color="gray.400">Início: {form.dataInicio ? new Date(form.dataInicio).toLocaleDateString() : "-"} | Fim: {form.dataFim ? new Date(form.dataFim).toLocaleDateString() : "-"}</Text>
                   </Box>
-                  <ButtonGroup>
-                    <IconButton 
-                      aria-label="Editar" 
-                      colorScheme="blue" 
-                      variant="ghost" 
-                      onClick={() => handleNavigate(`/editar-formulario/${form.id}`)}
-                    >
-                      <MdEdit />
-                    </IconButton>
-                    <IconButton 
-                      aria-label="Excluir" 
-                      colorScheme="red" 
-                      variant="ghost" 
-                      onClick={() => handleNavigate(`/excluir-formulario/${form.id}`)}
-                    >
-                      <MdDelete />
-                    </IconButton>
-                    <IconButton 
-                      aria-label="Respostas" 
-                      colorScheme="purple" 
-                      variant="ghost" 
-                      onClick={() => handleNavigate(`/respostas-formulario/${form.id}`)}
-                    >
-                      <MdListAlt />
-                    </IconButton>
-                    <Button 
-                      colorScheme="teal" 
-                      variant="solid" 
-                      size="sm" 
-                      onClick={() => handleNavigate(`/participantes-formulario/${form.id}`)}
-                    >
-                      <MdGroupAdd /> Adicionar Participantes
-                    </Button>
-                    <Button 
-                      colorScheme="orange" 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleSendInvites(form.id.toString())}
-                    >
-                      Enviar Convites
-                    </Button>
-                    <Button 
-                      colorScheme="green" 
-                      variant="solid" 
-                      size="sm" 
-                      onClick={() => handleSendReminder(form.id.toString())}
-                    >
-                      <MdAssignment /> Enviar Lembrete
-                    </Button>
-                    <Button 
-                      colorScheme="blue" 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleAcompanhar(form.id.toString())}
-                    >
-                      📊 Acompanhar Respostas
-                    </Button>
-                  </ButtonGroup>
+                  <Stack direction={{ base: "column", md: "row" }} spacing={2} align="center">
+                    <ButtonGroup size="sm" isAttached variant="ghost">
+                      <IconButton 
+                        aria-label="Editar" 
+                        colorScheme="blue" 
+                        onClick={() => handleNavigate(`/editar-formulario/${form.id}`)}
+                        icon={<MdEdit />}
+                      />
+                      <IconButton 
+                        aria-label="Excluir" 
+                        colorScheme="red" 
+                        onClick={() => handleNavigate(`/excluir-formulario/${form.id}`)}
+                        icon={<MdDelete />}
+                      />
+                      <IconButton 
+                        aria-label="Respostas" 
+                        colorScheme="purple" 
+                        onClick={() => handleNavigate(`/respostas-formulario/${form.id}`)}
+                        icon={<MdListAlt />}
+                      />
+                    </ButtonGroup>
+                    <ButtonGroup size="sm" spacing={2}>
+                      <Button 
+                        colorScheme="teal" 
+                        variant="solid" 
+                        leftIcon={<MdGroupAdd />}
+                        onClick={() => handleNavigate(`/participantes-formulario/${form.id}`)}
+                      >
+                        Adicionar Participantes
+                      </Button>
+                      <Button 
+                        colorScheme="orange" 
+                        variant="outline" 
+                        onClick={() => handleSendInvites(form.id.toString())}
+                      >
+                        Enviar Convites
+                      </Button>
+                      <Button 
+                        colorScheme="green" 
+                        variant="solid" 
+                        leftIcon={<MdAssignment />}
+                        onClick={() => handleSendReminder(form.id.toString())}
+                      >
+                        Enviar Lembrete
+                      </Button>
+                      <Button 
+                        colorScheme="blue" 
+                        variant="outline" 
+                        onClick={() => handleAcompanhar(form.id.toString())}
+                      >
+                        📊 Acompanhar
+                      </Button>
+                    </ButtonGroup>
+                  </Stack>
                 </Stack>
               </Box>
             );

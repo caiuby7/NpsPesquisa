@@ -2,7 +2,7 @@ import axios from 'axios'
 import Cookies from 'js-cookie'
 
 export const api = axios.create({
-  baseURL: 'http://paconlinesearch.us-east-1.elasticbeanstalk.com/api',
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
 })
 
 // Adiciona o token a cada requisição automaticamente

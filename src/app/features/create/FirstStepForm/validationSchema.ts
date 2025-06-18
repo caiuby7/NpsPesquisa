@@ -1,15 +1,15 @@
 import { z } from "zod";
 
 export const firstStepFormSchema = z.object({
-  titulo: z.string().min(1, "Titulo é obrigatório"),
-  descricao: z.string().min(1, "Descricao é obrigatório"),
-  dataInicio: z.string().min(1, "Data de início é obrigatória"),
-  dataFim: z.string().min(1, "Data de fim é obrigatória"),
+  titulo: z.string().min(1, "Titulo é obrigatório").optional(),
+  descricao: z.string().min(1, "Descricao é obrigatório").optional(),
+  dataInicio: z.string().min(1, "Data de início é obrigatória").optional(),
+  dataFim: z.string().min(1, "Data de fim é obrigatória").optional(),
   ordemAleatoria: z.boolean().optional(),
-  textoBoasVindas: z.string().min(1, "Texto de boas-vindas é obrigatório"),
-  templateEmailConvite: z.string().min(1, "Template de convite é obrigatório"),
-  templateEmailLembrete: z.string().min(1, "Template de lembrete é obrigatório"),
-  lembrarACadaXDias: z.coerce.number().min(1, "Informe o intervalo de dias para lembrete"),
+  textoBoasVindas: z.string().optional(),
+  templateEmailConvite: z.string().optional(),
+  templateEmailLembrete: z.string().optional(),
+  lembrarACadaXDias: z.coerce.number().optional(),
   enviarLembreteAutomatico: z.boolean().optional(),
   enviarLembreteParaTodos: z.boolean().optional(),
 });

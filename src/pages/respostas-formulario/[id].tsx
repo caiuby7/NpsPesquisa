@@ -1,10 +1,22 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { Box, Button, Heading } from "@chakra-ui/react";
 import { AppHeader } from "../../components/header/header.component";
+import { api } from "../../services/api";
+import { useEffect, useState } from "react";
 
 export default function RespostasFormularioPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [respostas, setRespostas] = useState([]);
+
+  useEffect(() => {
+    const fetchRespostas = async () => {
+      const response = await api.get(`/Questionario/${id}/respostas`);
+      setRespostas(response.data);
+    };
+    fetchRespostas();
+  }, [id]);
+
   return (
     <Box>
       <AppHeader />

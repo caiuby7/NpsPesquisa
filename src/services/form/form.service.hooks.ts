@@ -13,7 +13,7 @@ export function useGetForms() {
   return useQuery({
     queryKey: ["forms"],
     queryFn: async () => {
-      const response = await api.get<Form[]>("/Formulario");
+      const response = await api.get<Form[]>("/Questionario");
       return response.data;
     },
   });

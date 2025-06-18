@@ -8,7 +8,7 @@ export default function DeleteFormPage() {
   const navigate = useNavigate();
 
   const deleteMutation = useMutation({
-    mutationFn: () => api.delete(`/formularios/${id}`),
+    mutationFn: () => api.delete(`/Questionario/${id}`),
     onSuccess: () => {
       navigate('/formularios');
     },

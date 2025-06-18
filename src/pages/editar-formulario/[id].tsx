@@ -3,6 +3,7 @@ import { Box, Button, Heading, Input, Stack, Spinner, HStack } from "@chakra-ui/
 import { AppHeader } from "../../components/header/header.component";
 import { useGetForm, useUpdateForm } from "../../app/services/form/form.service.hooks";
 import { useEffect, useState } from "react";
+import axios from "axios";
 
 export default function EditarFormularioPage() {
   const { id } = useParams();
@@ -30,15 +31,16 @@ export default function EditarFormularioPage() {
     e.preventDefault();
     if (!id) return;
 
+    const formData = {
+      titulo,
+      descricao,
+      dataInicio,
+      dataFim,
+      ordemAleatoria,
+    };
+
     updateForm(
-      {
-        id,
-        titulo,
-        descricao,
-        dataInicio,
-        dataFim,
-        ordemAleatoria,
-      },
+      formData,
       {
         onSuccess: () => {
           alert("Formulário atualizado!");

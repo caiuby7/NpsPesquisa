@@ -74,10 +74,7 @@ export default function QuestionarioPorChavePage() {
             <img src="/logo.png" alt="Logo" style={{ height: 48, marginRight: 16 }} />
             <Heading as="h1" size="lg">{data.questionario.titulo}</Heading>
           </Box>
-          <Text>{data.questionario.descricao}</Text>
-          <Text fontSize="sm" color="gray.600">
-            Olá, {data.aluno.nome}! Por favor, responda o questionário abaixo.
-          </Text>
+          
           <ExecutionForm 
             questionarioId={data.questionario.id}
             alunoId={data.aluno.id}

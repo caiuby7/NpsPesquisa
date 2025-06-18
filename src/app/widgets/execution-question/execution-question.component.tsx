@@ -104,15 +104,11 @@ export default function ExecutionForm({ questionarioId, alunoId, chave }: Execut
     return (
       <Box p={8} bg="white" borderRadius="lg" boxShadow="md">
         <Stack spacing={6} align="center">
-          <Heading size="lg" color="blue.600">Bem-vindo ao Questionário</Heading>
           <Text fontSize="lg" textAlign="center">
-            {data.questionario.textoBoasVindas || "Por favor, responda todas as questões com atenção. Suas respostas são muito importantes para nós."}
-          </Text>
-          <Text fontSize="md" color="gray.600" textAlign="center">
-            Olá, {data.aluno.nome}! Este questionário contém {questoes.length} questões.
+            {data.questionario.textoBoasVindas || "Suas respostas são muito importantes para nós."}
           </Text>
           <Button
-            colorScheme="blue"
+            colorScheme="red"
             size="lg"
             onClick={() => setStarted(true)}
             px={8}

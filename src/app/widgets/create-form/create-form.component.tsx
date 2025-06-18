@@ -19,7 +19,7 @@ import { FirstStepForm } from "../../features/create/FirstStepForm/first-step-fo
 import { useGetQuestions } from "../../services/question";
 import { FirstStepFormValues } from "../../features/create/FirstStepForm/validationSchema";
 import { useCreateForm } from "./useCreateQuestionForm";
-import { useFormPostMutate } from "../../services/form";
+import { useFormPostMutate } from "../../services/form/form.service.hooks";
 import { useNavigate } from "react-router-dom";
 
 
@@ -41,19 +41,7 @@ export default function ExecutionQuestion() {
     setValue("questoes", updated as never);
   };
 
-  const onFirstStep = (data: FirstStepFormValues) => {
-    console.log('onFirstStep chamado com dados:', data);
-    setValue("titulo", data.titulo);
-    setValue("descricao", data.descricao);
-    setValue("dataInicio", data.dataInicio);
-    setValue("dataFim", data.dataFim);
-    setValue("ordemAleatoria", data.ordemAleatoria ?? false);
-    setValue("textoBoasVindas", data.textoBoasVindas);
-    setValue("templateEmailConvite", data.templateEmailConvite);
-    setValue("templateEmailLembrete", data.templateEmailLembrete);
-    setValue("lembrarACadaXDias", data.lembrarACadaXDias);
-    setValue("enviarLembreteAutomatico", data.enviarLembreteAutomatico ?? false);
-    setValue("enviarLembreteParaTodos", data.enviarLembreteParaTodos ?? false);
+  const onFirstStep = () => {
     setToggle(true);
   };
 
@@ -187,6 +175,8 @@ export default function ExecutionQuestion() {
           onSubmit={onFirstStep}
           register={register}
           handleSubmit={handleSubmit}
+          setValue={setValue}
+          watch={watch}
           errors={formState.errors}
         />
       )}

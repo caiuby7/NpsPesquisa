@@ -7,6 +7,7 @@ import axios from "axios";
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
+import { api } from "../../../services/api";
 
 interface Participante {
   id: number;
@@ -24,7 +25,7 @@ export default function ParticipantesFormularioPage() {
   const { data: participantes, isLoading } = useQuery({
     queryKey: ['participantes', id],
     queryFn: async () => {
-      const response = await axios.get(`/api/formularios/${id}/participantes`);
+      const response = await api.get(`/Questionario/${id}/participantes`);
       setTotalPages(Math.ceil(response.data.length / 10));
       return response.data;
     }
@@ -32,7 +33,7 @@ export default function ParticipantesFormularioPage() {
 
   const handleAddParticipant = async (alunoId: string) => {
     try {
-      await axios.post(`/api/formularios/${id}/participantes`, { alunoId });
+      await api.post(`/Questionario/${id}/participantes`, { alunoId });
       // Recarregar a lista de participantes
       window.location.reload();
     } catch (error) {
@@ -78,7 +79,7 @@ export default function ParticipantesFormularioPage() {
                         icon={<MdDelete />}
                         onClick={() => {
                           if (window.confirm('Tem certeza que deseja remover este participante?')) {
-                            axios.delete(`/api/formularios/${id}/participantes/${participante.id}`);
+                            api.delete(`/Questionario/${id}/participantes/${participante.id}`);
                             window.location.reload();
                           }
                         }}

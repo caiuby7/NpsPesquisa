@@ -14,7 +14,7 @@ export default function RespostasFormularioPage() {
 
   const { data: respostas, isLoading } = useQuery<Resposta[]>({
     queryKey: ['respostas-formulario', id],
-    queryFn: () => api.get(`/formularios/${id}/respostas`).then(res => res.data),
+    queryFn: () => api.get(`/Questionario/${id}/respostas`).then(res => res.data),
   });
 
   if (isLoading) {

@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { FormGetParams, FormPostParams, FormServices } from ".";
+import { FormGetParams, FormPostParams } from "./form.services.types";
+import { FormServices } from "./form.services";
 
 const STALE_TIME = 10 * 1000;
 const GET_FORM_QUERY_KEY = "";
