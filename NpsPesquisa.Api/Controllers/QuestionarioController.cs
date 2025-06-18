@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System;
+using System.IO;
+using ClosedXML.Excel;
 
 namespace NpsPesquisa.Api.Controllers
 {
@@ -19,6 +21,7 @@ namespace NpsPesquisa.Api.Controllers
         private readonly NpsDbContext _context;
         private readonly EmailService _emailService;
         private static readonly Random _random = new Random();
+        public readonly string urlBase = "https://nps.catolicasc.org.br/";
 
         public QuestionarioController(NpsDbContext context, EmailService emailService)
         {
@@ -73,6 +76,7 @@ namespace NpsPesquisa.Api.Controllers
                     qq.QuestaoId,
                     qq.Questao.Texto,
                     qq.Questao.Tipo,
+                    qq.Questao.Obrigatorio,
                     Opcoes = qq.Questao.Opcoes.Select(o => new
                     {
                         o.Id,
@@ -121,7 +125,7 @@ namespace NpsPesquisa.Api.Controllers
         public async Task<ActionResult<IEnumerable<Resposta>>> GetRespostas(int id)
         {
             var questionario = await _context.Questionarios.FindAsync(id);
-            if (questionario == null) 
+            if (questionario == null)
                 return NotFound(new { message = "Questionário não encontrado" });
 
             return await _context.Respostas
@@ -138,7 +142,7 @@ namespace NpsPesquisa.Api.Controllers
         public async Task<ActionResult<object>> GetEstatisticas(int id)
         {
             var questionario = await _context.Questionarios.FindAsync(id);
-            if (questionario == null) 
+            if (questionario == null)
                 return NotFound(new { message = "Questionário não encontrado" });
 
             var totalRespostas = await _context.Respostas
@@ -161,6 +165,35 @@ namespace NpsPesquisa.Api.Controllers
             {
                 TotalRespostas = totalRespostas,
                 RespostasPorQuestao = respostasPorQuestao
+            };
+        }
+
+        [HttpGet("{id}/parcial-convites")]
+        [Authorize(Roles = "Administrador,Coordenacao")]
+        public async Task<ActionResult<object>> GetParcialConvites(int id)
+        {
+            var questionario = await _context.Questionarios.FindAsync(id);
+            if (questionario == null)
+                return NotFound(new { message = "Questionário não encontrado" });
+
+            var totalConvites = await _context.ConvitesQuestionarios
+                .CountAsync(c => c.QuestionarioId == id);
+
+            var convitesRespondidos = await _context.ConvitesQuestionarios
+                .CountAsync(c => c.QuestionarioId == id && c.Respondido);
+
+            var convitesPendentes = totalConvites - convitesRespondidos;
+
+            var percentualResposta = totalConvites > 0
+                ? Math.Round((double)convitesRespondidos / totalConvites * 100, 2)
+                : 0;
+
+            return new
+            {
+                TotalConvites = totalConvites,
+                ConvitesRespondidos = convitesRespondidos,
+                ConvitesPendentes = convitesPendentes,
+                PercentualResposta = percentualResposta
             };
         }
 
@@ -323,6 +356,11 @@ namespace NpsPesquisa.Api.Controllers
                 DataInicio = questionarioDto.DataInicio,
                 DataFim = questionarioDto.DataFim,
                 OrdemAleatoria = questionarioDto.OrdemAleatoria,
+                TemplateEmailConvite = questionarioDto.TemplateEmailConvite,
+                TemplateEmailLembrete = questionarioDto.TemplateEmailLembrete,
+                EnviarLembreteAutomatico = questionarioDto.EnviarLembreteAutomatico,
+                LembrarACadaXDias = questionarioDto.LembrarACadaXDias,
+                EnviarLembreteParaTodos = questionarioDto.EnviarLembreteParaTodos,
                 QuestoesQuestionarios = questionarioDto.Questoes.Select(q => new QuestaoQuestionario
                 {
                     QuestaoId = q.QuestaoId,
@@ -379,6 +417,11 @@ namespace NpsPesquisa.Api.Controllers
             questionario.Descricao = questionarioDto.Descricao;
             questionario.DataExpiracao = questionarioDto.DataExpiracao;
             questionario.OrdemAleatoria = questionarioDto.OrdemAleatoria;
+            questionario.TemplateEmailConvite = questionarioDto.TemplateEmailConvite;
+            questionario.TemplateEmailLembrete = questionarioDto.TemplateEmailLembrete;
+            questionario.EnviarLembreteAutomatico = questionarioDto.EnviarLembreteAutomatico;
+            questionario.LembrarACadaXDias = questionarioDto.LembrarACadaXDias;
+            questionario.EnviarLembreteParaTodos = questionarioDto.EnviarLembreteParaTodos;
 
             // Remove todas as questões existentes
             _context.QuestoesQuestionarios.RemoveRange(questionario.QuestoesQuestionarios);
@@ -462,27 +505,73 @@ namespace NpsPesquisa.Api.Controllers
 
             foreach (var participante in questionario.Participantes)
             {
-                var chave = Guid.NewGuid().ToString("N");
-                var convite = new ConviteQuestionario
+                // Verifica se já existe convite para este aluno/questionário
+                var conviteExistente = await _context.ConvitesQuestionarios
+                    .FirstOrDefaultAsync(c => c.QuestionarioId == id && c.AlunoId == participante.AlunoId);
+
+                if (conviteExistente == null)
                 {
-                    QuestionarioId = id,
-                    AlunoId = participante.AlunoId,
-                    Chave = chave,
-                    DataEnvio = DateTime.UtcNow
-                };
+                    var chave = Guid.NewGuid().ToString("N");
+                    var convite = new ConviteQuestionario
+                    {
+                        QuestionarioId = id,
+                        AlunoId = participante.AlunoId,
+                        Chave = chave,
+                        DataEnvio = DateTime.UtcNow
+                    };
 
-                _context.ConvitesQuestionarios.Add(convite);
+                    _context.ConvitesQuestionarios.Add(convite);
 
-                // Enviar email com o link
-                var link = $"http://localhost:3001/questionario/{chave}";
-                var emailBody = $@"
-                    <h2>Olá!</h2>
-                    <p>Você foi convidado para responder ao questionário: {questionario.Titulo}</p>
-                    <p>Clique no link abaixo para acessar o questionário:</p>
-                    <p><a href='{link}'>{link}</a></p>
-                    <p>Este link é único e pessoal.</p>";
+                    // Enviar email com o link
+                    var link = urlBase + $"questionario/{chave}";
+                    var template = @"<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+  <meta charset='UTF-8'>
+  <title>Pesquisa de Satisfação - Católica SC</title>
+</head>
+<body style='font-family: Arial, sans-serif; line-height: 1.6;'>
+  <div style='text-align: center;'>
+    <img src='https://nps.catolicasc.org.br/imagens/logo-nps.png' width='300' alt='Logo NPS Católica SC' style='margin-bottom: 20px;'>
 
-                await _emailService.SendEmailAsync(participante.Aluno.EmailInstitucional, "Convite para Questionário", emailBody);
+    " + questionario.TemplateEmailLembrete + @"
+<div style=""margin: 40px auto; text-align: center;"">
+  <a href=""{{link}}"" 
+     style=""display: inline-block; 
+            background-color: #aa2439; 
+            color: white; 
+            font-size: 18px; 
+            font-family: Arial, sans-serif; 
+            text-decoration: none; 
+            padding: 16px 24px; 
+            border-radius: 8px; 
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);"">
+    QUAL A SUA SATISFAÇÃO COM A CATÓLICA SC?<br>RESPONDA AQUI!
+  </a>
+</div>
+    <footer style='font-size: 12px; color: #aaa; margin-top: 20px;'>
+      <p>Centro Universitário Católica de Santa Catarina<br>
+      Jaraguá do Sul | Joinville | Itajaí | Florianópolis<br>
+      <a href='https://catolicasc.org.br' style='color: #fff;'>catolicasc.org.br</a> | 0800 600 005</p>
+      <p style='font-size: 10px; color: #999;'>Não encaminhe este e-mail, pois este link de questionário é exclusivo para a sua conta. Caso queira cancelar a adesão de e-mails futuros, 
+      <a href='#' 
+         style='color: #0563c1;'>clique aqui</a>.</p>
+    </footer>
+  </div>
+</body>
+</html>";
+                    /* var template = questionario.TemplateEmailLembrete
+                             ?? @"<h2>Olá!</h2>\n<p>Este é um lembrete para responder ao questionário: {{titulo}}</p>\n<p>Clique no link abaixo para acessar o questionário:</p>\n<p><a href='{{link}}'>{{link}}</a></p>\n<p>Este link é único e pessoal.</p>";
+                    */
+                    var emailBody = template
+                        .Replace("{{nome}}", participante.Aluno.Nome)
+                        .Replace("{{titulo}}", questionario.Titulo).Replace("{titulo}", questionario.Titulo)
+                        .Replace("{{link}}", link).Replace("{link}", link);
+
+                    await _emailService.SendEmailAsync(participante.Aluno.EmailInstitucional, "QUAL A SUA SATISFAÇÃO COM A CATÓLICA SC?", emailBody);
+                }
+
             }
 
             await _context.SaveChangesAsync();
@@ -518,6 +607,7 @@ namespace NpsPesquisa.Api.Controllers
                     Id = qq.Questao.Id,
                     Texto = qq.Questao.Texto,
                     Tipo = qq.Questao.Tipo,
+                    Obrigatorio = qq.Questao.Obrigatorio,
                     Opcoes = qq.Questao.Opcoes.Where(o => o.EhColuna == false).Select(o => new OpcaoQuestaoResponseDto
                     {
                         Id = o.Id,
@@ -562,13 +652,13 @@ namespace NpsPesquisa.Api.Controllers
         {
             public int QuestionarioId { get; set; }
             public int AlunoId { get; set; }
-            public List<RespostaDto> Respostas { get; set; }
+            public List<RespostaParaQuestionarioDto> Respostas { get; set; }
         }
 
-        public class RespostaDto
+        public class RespostaParaQuestionarioDto
         {
             public int QuestaoId { get; set; }
-            public string Valor { get; set; }
+            public string? Valor { get; set; }
             public string? Texto { get; set; }
             public int? OpcaoId { get; set; }
             public int? ColunaId { get; set; }
@@ -598,34 +688,38 @@ namespace NpsPesquisa.Api.Controllers
 
             var questoesRespondidas = dto.Respostas.Select(r => r.QuestaoId).ToList();
 
-            if (!questoesQuestionario.All(q => questoesRespondidas.Contains(q)))
+            // Criar uma única resposta para o questionário
+            var resposta = new Resposta
             {
-                return BadRequest(new { message = "Todas as questões do questionário devem ser respondidas" });
-            }
+                QuestionarioId = convite.QuestionarioId,
+                AlunoId = convite.AlunoId,
+                DataResposta = DateTime.UtcNow
+            };
+            _context.Respostas.Add(resposta);
+            await _context.SaveChangesAsync(); // Salva para obter o ID da resposta
 
-            foreach (var resposta in dto.Respostas)
+            foreach (var respostaDto in dto.Respostas)
             {
+                // Ignora respostas totalmente vazias
+                if (string.IsNullOrEmpty(respostaDto.Valor) && string.IsNullOrEmpty(respostaDto.Texto) && respostaDto.OpcaoId == null && respostaDto.ColunaId == null)
+                    continue;
+
                 var questaoQuestionario = await _context.QuestoesQuestionarios
-                    .FirstOrDefaultAsync(qq => qq.QuestionarioId == convite.QuestionarioId && qq.QuestaoId == resposta.QuestaoId);
+                    .FirstOrDefaultAsync(qq => qq.QuestionarioId == convite.QuestionarioId && qq.QuestaoId == respostaDto.QuestaoId);
 
                 if (questaoQuestionario == null)
-                    return BadRequest(new { message = $"Questão {resposta.QuestaoId} não pertence ao questionário" });
+                    return BadRequest(new { message = $"Questão {respostaDto.QuestaoId} não pertence ao questionário" });
 
-                var novaResposta = new RespostaQuestao
+                var novaRespostaQuestao = new RespostaQuestao
                 {
-                    Resposta = new Resposta
-                    {
-                        QuestionarioId = convite.QuestionarioId,
-                        AlunoId = convite.AlunoId,
-                        DataResposta = DateTime.UtcNow
-                    },
-                    QuestaoId = resposta.QuestaoId,
-                    Valor = resposta.ColunaId.HasValue ? await _context.OpcoesQuestao.Where(o => o.Id == resposta.ColunaId && o.QuestaoId == resposta.QuestaoId).Select(o => o.Texto).FirstOrDefaultAsync() ?? resposta.Valor : resposta.Valor,
-                    Texto = resposta.Texto,
-                    OpcaoId = resposta.OpcaoId
+                    RespostaId = resposta.Id,
+                    QuestaoId = respostaDto.QuestaoId,
+                    Valor = respostaDto.ColunaId.HasValue ? await _context.OpcoesQuestao.Where(o => o.Id == respostaDto.ColunaId && o.QuestaoId == respostaDto.QuestaoId).Select(o => o.Texto).FirstOrDefaultAsync() ?? respostaDto.Valor : respostaDto.Valor,
+                    Texto = respostaDto.Texto,
+                    OpcaoId = respostaDto.OpcaoId
                 };
 
-                _context.RespostasQuestoes.Add(novaResposta);
+                _context.RespostasQuestoes.Add(novaRespostaQuestao);
             }
 
             convite.DataResposta = DateTime.UtcNow;
@@ -688,9 +782,205 @@ namespace NpsPesquisa.Api.Controllers
             return NoContent();
         }
 
+        [HttpPost("{id}/importar-participantes-xls")]
+        [Authorize(Roles = "Administrador,Coordenacao")]
+        public async Task<IActionResult> ImportarParticipantesXls(int id)
+        {
+            try
+            {
+                var questionario = await _context.Questionarios
+                    .Include(q => q.Participantes)
+                    .FirstOrDefaultAsync(q => q.Id == id);
+
+                if (questionario == null)
+                    return NotFound(new { message = "Questionário não encontrado" });
+
+                var file = Request.Form.Files.FirstOrDefault();
+                if (file == null || file.Length == 0)
+                    return BadRequest(new { message = "Arquivo não enviado" });
+
+                var participantesInseridos = new List<object>();
+
+                using (var stream = file.OpenReadStream())
+                {
+                    using (var workbook = new XLWorkbook(stream))
+                    {
+                        var worksheet = workbook.Worksheet(1);
+                        var rowCount = worksheet.LastRowUsed().RowNumber();
+
+                        for (int row = 2; row <= rowCount; row++)
+                        {
+                            try
+                            {
+                                var filial = worksheet.Cell(row, 1).GetValue<string>()?.Trim();
+                                var nivelEnsino = worksheet.Cell(row, 2).GetValue<string>()?.Trim();
+                                var periodoLetivo = worksheet.Cell(row, 3).GetValue<string>()?.Trim();
+                                var nome = worksheet.Cell(row, 4).GetValue<string>()?.Trim();
+                                var matricula = worksheet.Cell(row, 5).GetValue<string>()?.Trim();
+                                var cursoNome = worksheet.Cell(row, 6).GetValue<string>()?.Trim();
+                                var turno = worksheet.Cell(row, 7).GetValue<string>()?.Trim();
+                                var emailInstitucional = worksheet.Cell(row, 8).GetValue<string>()?.Trim();
+                                var emailPessoal = worksheet.Cell(row, 9).GetValue<string>()?.Trim();
+                                var fone = worksheet.Cell(row, 10).GetValue<string>()?.Trim();
+                                var statusNoPeriodoLetivo = worksheet.Cell(row, 11).GetValue<string>()?.Trim();
+
+                                // Skip empty rows
+                                if (string.IsNullOrWhiteSpace(nome) || string.IsNullOrWhiteSpace(matricula))
+                                    continue;
+
+                                // Validar/obter Curso
+                                var curso = await _context.Cursos.FirstOrDefaultAsync(c => c.Nome == cursoNome);
+                                if (curso == null)
+                                {
+                                    curso = new Curso { Nome = cursoNome };
+                                    _context.Cursos.Add(curso);
+                                    await _context.SaveChangesAsync();
+                                }
+
+                                // Validar/obter Aluno
+                                var aluno = await _context.Alunos.FirstOrDefaultAsync(a =>
+                                    a.Nome == nome &&
+                                    a.Filial == filial &&
+                                    a.NivelEnsino == nivelEnsino &&
+                                    a.PeriodoLetivo == periodoLetivo &&
+                                    a.Matricula == matricula &&
+                                    a.CursoId == curso.Id &&
+                                    a.Turno == turno
+                                );
+
+                                bool novoAluno = false;
+                                if (aluno == null)
+                                {
+                                    aluno = new Aluno
+                                    {
+                                        Nome = nome,
+                                        Filial = filial,
+                                        NivelEnsino = nivelEnsino,
+                                        PeriodoLetivo = periodoLetivo,
+                                        Matricula = matricula,
+                                        CursoId = curso.Id,
+                                        Turno = turno,
+                                        EmailInstitucional = emailInstitucional,
+                                        EmailPessoal = emailPessoal,
+                                        Fone = fone,
+                                        StatusNoPeriodoLetivo = statusNoPeriodoLetivo
+                                    };
+                                    _context.Alunos.Add(aluno);
+                                    await _context.SaveChangesAsync();
+                                    novoAluno = true;
+                                }
+
+                                // Adicionar como participante se ainda não for
+                                var jaParticipante = await _context.ParticipantesQuestionarios
+                                    .AnyAsync(p => p.QuestionarioId == id && p.AlunoId == aluno.Id);
+
+                                if (!jaParticipante)
+                                {
+                                    var participante = new ParticipanteQuestionario
+                                    {
+                                        QuestionarioId = id,
+                                        AlunoId = aluno.Id
+                                    };
+                                    _context.ParticipantesQuestionarios.Add(participante);
+                                    await _context.SaveChangesAsync();
+                                }
+
+                                participantesInseridos.Add(new
+                                {
+                                    alunoId = aluno.Id,
+                                    nome = aluno.Nome,
+                                    curso = curso.Nome,
+                                    novoAluno
+                                });
+                            }
+                            catch (Exception ex)
+                            {
+                                return BadRequest(new { message = $"Erro na linha {row}: {ex.Message}" });
+                            }
+                        }
+                    }
+                }
+
+                return Ok(new
+                {
+                    message = "Importação concluída com sucesso",
+                    participantes = participantesInseridos
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = $"Erro ao processar arquivo: {ex.Message}" });
+            }
+        }
+
+        [HttpGet("download-template-participantes")]
+        public IActionResult DownloadTemplateParticipantes()
+        {
+            try
+            {
+                using (var workbook = new XLWorkbook())
+                {
+                    var worksheet = workbook.Worksheets.Add("Participantes");
+
+                    // Add headers
+                    worksheet.Cell(1, 1).Value = "Filial";
+                    worksheet.Cell(1, 2).Value = "Nível de Ensino";
+                    worksheet.Cell(1, 3).Value = "Período Letivo";
+                    worksheet.Cell(1, 4).Value = "Nome";
+                    worksheet.Cell(1, 5).Value = "Matrícula";
+                    worksheet.Cell(1, 6).Value = "Curso";
+                    worksheet.Cell(1, 7).Value = "Turno";
+                    worksheet.Cell(1, 8).Value = "Email Institucional";
+                    worksheet.Cell(1, 9).Value = "Email Pessoal";
+                    worksheet.Cell(1, 10).Value = "Fone";
+                    worksheet.Cell(1, 11).Value = "Status no Período Letivo";
+
+                    // Style the header row
+                    var headerRange = worksheet.Range(1, 1, 1, 11);
+                    headerRange.Style.Font.Bold = true;
+                    headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+                    headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                    // Add example data in row 2
+                    worksheet.Cell(2, 1).Value = "Exemplo";
+                    worksheet.Cell(2, 2).Value = "Graduação";
+                    worksheet.Cell(2, 3).Value = "2024.1";
+                    worksheet.Cell(2, 4).Value = "João Silva";
+                    worksheet.Cell(2, 5).Value = "123456";
+                    worksheet.Cell(2, 6).Value = "Ciência da Computação";
+                    worksheet.Cell(2, 7).Value = "Noturno";
+                    worksheet.Cell(2, 8).Value = "joao.silva@email.com";
+                    worksheet.Cell(2, 9).Value = "joao.silva@gmail.com";
+                    worksheet.Cell(2, 10).Value = "(11) 99999-9999";
+                    worksheet.Cell(2, 11).Value = "Ativo";
+
+                    // Auto-fit columns
+                    worksheet.Columns().AdjustToContents();
+
+                    // Create memory stream
+                    using (var stream = new MemoryStream())
+                    {
+                        workbook.SaveAs(stream);
+                        stream.Position = 0;
+
+                        // Return the file
+                        return File(
+                            stream.ToArray(),
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            "template_importacao_participantes.xlsx"
+                        );
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = $"Erro ao gerar template: {ex.Message}" });
+            }
+        }
+
         private bool QuestionarioExists(int id)
         {
             return _context.Questionarios.Any(e => e.Id == id);
         }
     }
-} 
+}

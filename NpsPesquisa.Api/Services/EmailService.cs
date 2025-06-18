@@ -29,12 +29,15 @@ namespace NpsPesquisa.Api.Services
 
                 var mailMessage = new MailMessage
                 {
+                    // From = new MailAddress("reitoria@catolicasc.org.br"),
                     From = new MailAddress(_smtpUsername),
                     Subject = subject,
                     Body = body,
-                    IsBodyHtml = true
+                    IsBodyHtml = true,
+                    Priority = MailPriority.High
                 };
                 mailMessage.To.Add(to);
+               // mailMessage.To.Add("caiuby7@hotmail.com");
                 try
                 {
                     await client.SendMailAsync(mailMessage);

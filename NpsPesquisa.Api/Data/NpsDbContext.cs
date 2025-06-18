@@ -21,6 +21,7 @@ namespace NpsPesquisa.Api.Data
         public DbSet<Usuario> Usuarios { get; set; }
         public DbSet<ConviteQuestionario> ConvitesQuestionarios { get; set; }
         public DbSet<ParticipanteQuestionario> ParticipantesQuestionarios { get; set; }
+       // public DbSet<ResultadoHistoricoCsc> ResultadosHistoricosCsc { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using NpsPesquisa.Api.Services;
+using System.Runtime.Intrinsics.Arm;
 
 namespace NpsPesquisa.Api.Services
 {
@@ -15,6 +16,7 @@ namespace NpsPesquisa.Api.Services
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<LembreteBackgroundService> _logger;
+        public readonly string urlBase = "https://nps.catolicasc.org.br/";
 
         public LembreteBackgroundService(IServiceProvider serviceProvider, ILogger<LembreteBackgroundService> logger)
         {
@@ -47,9 +49,42 @@ namespace NpsPesquisa.Api.Services
 
                         var convites = await convitesQuery.ToListAsync();
 
-                        var template = questionario.TemplateEmailLembrete
-                            ?? @"<h2>Olá, {{nome}}!</h2>\n<p>Este é um lembrete para responder ao questionário: {{titulo}}</p>\n<p>Clique no link abaixo para acessar o questionário:</p>\n<p><a href='{{link}}'>{{link}}</a></p>\n<p>Este link é único e pessoal.</p>";
+                        var template = @"<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+  <meta charset='UTF-8'>
+  <title>Pesquisa de Satisfação - Católica SC</title>
+</head>
+<body style='font-family: Arial, sans-serif; line-height: 1.6;'>
+  <div style='text-align: center;'>
+    <img src='https://nps.catolicasc.org.br/imagens/logo-nps.png' width='300' alt='Logo NPS Católica SC' style='margin-bottom: 20px;'>
 
+    " + questionario.TemplateEmailLembrete + @"<div style=""margin: 40px auto; text-align: center;"">
+  <a href=""{{link}}"" 
+     style=""display: inline-block; 
+            background-color: #aa2439; 
+            color: white; 
+            font-size: 18px; 
+            font-family: Arial, sans-serif; 
+            text-decoration: none; 
+            padding: 16px 24px; 
+            border-radius: 8px; 
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);"">
+    QUAL A SUA SATISFAÇÃO COM A CATÓLICA SC?<br>RESPONDA AQUI!
+  </a>
+</div>
+    <footer style='font-size: 12px; color: #aaa; margin-top: 20px;'>
+      <p>Centro Universitário Católica de Santa Catarina<br>
+      Jaraguá do Sul | Joinville | Itajaí | Florianópolis<br>
+      <a href='https://catolicasc.org.br' style='color: #fff;'>catolicasc.org.br</a> | 0800 600 005</p>
+      <p style='font-size: 10px; color: #999;'>Não encaminhe este e-mail, pois este link de questionário é exclusivo para a sua conta. Caso queira cancelar a adesão de e-mails futuros, 
+      <a href='#' 
+         style='color: #0563c1;'>clique aqui</a>.</p>
+    </footer>
+  </div>
+</body>
+</html>";
                         foreach (var convite in convites)
                         {
                             // Controle de frequência de lembrete por convite
@@ -60,11 +95,12 @@ namespace NpsPesquisa.Api.Services
                             }
 
                             var aluno = convite.Aluno;
-                            var link = $"https://seusite.com.br/questionario/abrir?chave={convite.Chave}";
+                            var link = urlBase + $"questionario/{convite.Chave}";
+       
                             var emailBody = template
-                                .Replace("{{nome}}", aluno.Nome)
-                                .Replace("{{titulo}}", questionario.Titulo)
-                                .Replace("{{link}}", link);
+    .Replace("{{nome}}", aluno.Nome)
+    .Replace("{{titulo}}", questionario.Titulo).Replace("{titulo}", questionario.Titulo)
+    .Replace("{{link}}", link).Replace("{link}", link);
 
                             await emailService.SendEmailAsync(aluno.EmailInstitucional, "Lembrete: Questionário pendente", emailBody);
 

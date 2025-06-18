@@ -99,6 +99,9 @@ const ResponderQuestionario: React.FC = () => {
                 <Typography variant="h4" gutterBottom>
                     {questionario?.titulo}
                 </Typography>
+                <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', mb: 3 }}>
+                    Por favor, responda todas as questões com atenção. Suas respostas são muito importantes para nós.
+                </Typography>
                 <Typography variant="body1" paragraph>
                     {questionario?.descricao}
                 </Typography>

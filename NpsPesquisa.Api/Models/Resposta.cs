@@ -10,8 +10,6 @@ namespace NpsPesquisa.Api.Models
         public Questionario Questionario { get; set; }
         public int AlunoId { get; set; }
         public Aluno Aluno { get; set; }
-        public string Valor { get; set; }
-        public string? Texto { get; set; }
         public DateTime DataResposta { get; set; }
         public List<RespostaQuestao> RespostasQuestoes { get; set; }
     }

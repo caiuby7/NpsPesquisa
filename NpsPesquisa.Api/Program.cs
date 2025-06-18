@@ -40,7 +40,17 @@ builder.Services.AddCors(options =>
 // Configure Swagger
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "NPS Pesquisa API", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo 
+    { 
+        Title = "NPS Pesquisa API", 
+        Version = "v1",
+        Description = "API para gerenciamento de pesquisas NPS",
+        Contact = new OpenApiContact
+        {
+            Name = "Suporte",
+            Email = "suporte@nps.com"
+        }
+    });
     
     // Configure JWT Authentication in Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -66,6 +76,14 @@ builder.Services.AddSwaggerGen(c =>
             Array.Empty<string>()
         }
     });
+
+    // Include XML Comments
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+    {
+        c.IncludeXmlComments(xmlPath);
+    }
 });
 
 // Configure JWT Authentication

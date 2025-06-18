@@ -11,6 +11,8 @@ namespace NpsPesquisa.Api.Models
         [Required]
         public TipoQuestao Tipo { get; set; }
 
+        public bool Obrigatorio { get; set; } = true;
+
         public List<OpcaoQuestaoDto>? Opcoes { get; set; }
 
         public List<OpcaoQuestaoDto>? Colunas { get; set; }
@@ -35,6 +37,7 @@ namespace NpsPesquisa.Api.Models
         public int Id { get; set; }
         public string Texto { get; set; } = string.Empty;
         public TipoQuestao Tipo { get; set; }
+        public bool Obrigatorio { get; set; }
         public List<OpcaoQuestaoResponseDto> Opcoes { get; set; } = new();
         public List<OpcaoQuestaoResponseDto> Colunas { get; set; } = new();
     }

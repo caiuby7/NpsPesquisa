@@ -46,7 +46,8 @@ namespace NpsPesquisa.Api.Controllers
             var questao = new Questao
             {
                 Texto = questaoDto.Texto,
-                Tipo = questaoDto.Tipo
+                Tipo = questaoDto.Tipo,
+                Obrigatorio = questaoDto.Obrigatorio
             };
 
             _context.Questoes.Add(questao);
@@ -85,6 +86,7 @@ namespace NpsPesquisa.Api.Controllers
                     Id = q.Id,
                     Texto = q.Texto,
                     Tipo = q.Tipo,
+                    Obrigatorio = q.Obrigatorio,
                     Opcoes = q.Tipo == TipoQuestao.CaixaTexto ? new List<OpcaoQuestaoResponseDto>() : 
                         q.Opcoes.Where(o => o.EhColuna == false).Select(o => new OpcaoQuestaoResponseDto
                         {
@@ -126,6 +128,7 @@ namespace NpsPesquisa.Api.Controllers
                     Id = q.Id,
                     Texto = q.Texto,
                     Tipo = q.Tipo,
+                    Obrigatorio = q.Obrigatorio,
                     Opcoes = q.Tipo == TipoQuestao.CaixaTexto ? new List<OpcaoQuestaoResponseDto>() : 
                         q.Opcoes.Where(o => o.EhColuna == false).Select(o => new OpcaoQuestaoResponseDto
                         {
@@ -165,10 +168,22 @@ namespace NpsPesquisa.Api.Controllers
                 return NotFound();
             }
 
+            // Verifica se há respostas que usam as opções desta questão
+            var opcoesEmUso = await _context.RespostasQuestoes
+                .Where(rq => rq.QuestaoId == id && rq.OpcaoId.HasValue)
+                .Select(rq => rq.OpcaoId.Value)
+                .ToListAsync();
+
+            if (opcoesEmUso.Any())
+            {
+                return BadRequest(new { message = "Não é possível editar uma questão que possui respostas. As opções estão sendo utilizadas em respostas existentes." });
+            }
+
             questao.Texto = questaoDto.Texto;
             questao.Tipo = questaoDto.Tipo;
+            questao.Obrigatorio = questaoDto.Obrigatorio;
 
-            // Remove opções existentes
+            // Remove opções existentes (agora seguro pois verificamos que não estão em uso)
             _context.OpcoesQuestao.RemoveRange(questao.Opcoes);
 
             // Adiciona novas opções
@@ -284,6 +299,16 @@ namespace NpsPesquisa.Api.Controllers
         {
             var opcao = await _context.OpcoesQuestao.FindAsync(opcaoId);
             if (opcao == null) return NotFound();
+
+            // Verifica se a opção está sendo usada em respostas
+            var opcaoEmUso = await _context.RespostasQuestoes
+                .AnyAsync(rq => rq.OpcaoId == opcaoId);
+
+            if (opcaoEmUso)
+            {
+                return BadRequest(new { message = "Não é possível excluir uma opção que está sendo utilizada em respostas existentes." });
+            }
+
             _context.OpcoesQuestao.Remove(opcao);
             await _context.SaveChangesAsync();
             return NoContent();

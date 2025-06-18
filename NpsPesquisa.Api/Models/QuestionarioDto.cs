@@ -40,5 +40,11 @@ namespace NpsPesquisa.Api.Models
         public List<QuestaoDto> Questoes { get; set; }
 
         public List<int>? ParticipantesIds { get; set; }
+
+        public string? TemplateEmailConvite { get; set; }
+        public string? TemplateEmailLembrete { get; set; }
+        public bool EnviarLembreteAutomatico { get; set; }
+        public int? LembrarACadaXDias { get; set; }
+        public bool EnviarLembreteParaTodos { get; set; }
     }
 } 

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NpsPesquisa.Api.Data;
 
@@ -10,9 +11,11 @@ using NpsPesquisa.Api.Data;
 namespace NpsPesquisa.Api.Migrations
 {
     [DbContext(typeof(NpsDbContext))]
-    partial class NpsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250613214452_RemoveValorTextoFromResposta")]
+    partial class RemoveValorTextoFromResposta
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -210,9 +213,6 @@ namespace NpsPesquisa.Api.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
-
-                    b.Property<bool>("Obrigatorio")
-                        .HasColumnType("tinyint(1)");
 
                     b.Property<int>("Ordem")
                         .HasColumnType("int");

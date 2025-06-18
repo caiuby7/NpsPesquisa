@@ -17,6 +17,8 @@ namespace NpsPesquisa.Api.Models
 
         public int Ordem { get; set; }
 
+        public bool Obrigatorio { get; set; } = true;
+
         [JsonIgnore]
         public virtual ICollection<QuestaoQuestionario>? QuestoesQuestionarios { get; set; }
 

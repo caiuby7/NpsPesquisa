@@ -6,6 +6,7 @@ using NpsPesquisa.Api.Models;
 using System.Security.Cryptography;
 using System.Text;
 using NpsPesquisa.Api.Services;
+using static NpsPesquisa.Api.Controllers.QuestionarioController;
 
 namespace NpsPesquisa.Api.Controllers
 {
@@ -16,7 +17,7 @@ namespace NpsPesquisa.Api.Controllers
     {
         private readonly NpsDbContext _context;
         private readonly EmailService _emailService;
-
+        public readonly string urlBase = "https://nps.catolicasc.org.br/";
         public ConviteQuestionarioController(NpsDbContext context, EmailService emailService)
         {
             _context = context;
@@ -40,7 +41,7 @@ namespace NpsPesquisa.Api.Controllers
             if (conviteExistente != null)
             {
                 // Simula envio de e-mail
-                var linkExistente = $"https://seusite.com.br/questionario/abrir?chave={conviteExistente.Chave}";
+                var linkExistente = urlBase + $"questionario/{conviteExistente.Chave}";
                 var textoEmailExistente = $"Olá {aluno.Nome},\n\nVocê já possui um convite para o questionário '{questionario.Titulo}'.\nAcesse o link abaixo para responder:\n{linkExistente}\n\nObrigado!";
                 return Ok(new { conviteExistente.Id, conviteExistente.Chave, Link = linkExistente, Email = textoEmailExistente });
             }
@@ -60,8 +61,8 @@ namespace NpsPesquisa.Api.Controllers
             await _context.SaveChangesAsync();
 
             // Simula envio de e-mail
-            var link = $"https://seusite.com.br/questionario/abrir?chave={chave}";
-            var template = questionario.TemplateEmailConvite 
+            var link = urlBase + $"questionario/{conviteExistente.Chave}";
+            var template = questionario.TemplateEmailConvite
                 ?? @"<h2>Olá, {{nome}}!</h2>\n<p>Você foi convidado para responder ao questionário: {{titulo}}</p>\n<p>Clique no link abaixo para acessar o questionário:</p>\n<p><a href='{{link}}'>{{link}}</a></p>\n<p>Este link é único e pessoal.</p>";
 
             var emailBody = template
@@ -111,18 +112,53 @@ namespace NpsPesquisa.Api.Controllers
 
             var questionario = convite.Questionario;
             var aluno = convite.Aluno;
-            var link = $"https://seusite.com.br/questionario/abrir?chave={convite.Chave}";
+            var link = urlBase + $"questionario/{convite.Chave}";
+            var template = @"<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+  <meta charset='UTF-8'>
+  <title>Pesquisa de Satisfação - Católica SC</title>
+</head>
+<body style='font-family: Arial, sans-serif; line-height: 1.6;'>
+  <div style='text-align: center;'>
+    <img src='https://nps.catolicasc.org.br/imagens/logo-nps.png' width='300' alt='Logo NPS Católica SC' style='margin-bottom: 20px;'>
 
-            var template = questionario.TemplateEmailLembrete
-                ?? @"<h2>Olá, {{nome}}!</h2>\n<p>Este é um lembrete para responder ao questionário: {{titulo}}</p>\n<p>Clique no link abaixo para acessar o questionário:</p>\n<p><a href='{{link}}'>{{link}}</a></p>\n<p>Este link é único e pessoal.</p>";
-
+    " + questionario.TemplateEmailLembrete + @"<div style=""margin: 40px auto; text-align: center;"">
+  <a href=""{{link}}"" 
+     style=""display: inline-block; 
+            background-color: #aa2439; 
+            color: white; 
+            font-size: 18px; 
+            font-family: Arial, sans-serif; 
+            text-decoration: none; 
+            padding: 16px 24px; 
+            border-radius: 8px; 
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);"">
+    QUAL A SUA SATISFAÇÃO COM A CATÓLICA SC?<br>RESPONDA AQUI!
+  </a>
+</div>
+    <footer style='font-size: 12px; color: #aaa; margin-top: 20px;'>
+      <p>Centro Universitário Católica de Santa Catarina<br>
+      Jaraguá do Sul | Joinville | Itajaí | Florianópolis<br>
+      <a href='https://catolicasc.org.br' style='color: #fff;'>catolicasc.org.br</a> | 0800 600 005</p>
+      <p style='font-size: 10px; color: #999;'>Não encaminhe este e-mail, pois este link de questionário é exclusivo para a sua conta. Caso queira cancelar a adesão de e-mails futuros, 
+      <a href='" + link + @"' 
+         style='color: #0563c1;'>clique aqui</a>.</p>
+    </footer>
+  </div>
+</body>
+</html>";
+            /* var template = questionario.TemplateEmailLembrete
+                     ?? @"<h2>Olá!</h2>\n<p>Este é um lembrete para responder ao questionário: {{titulo}}</p>\n<p>Clique no link abaixo para acessar o questionário:</p>\n<p><a href='{{link}}'>{{link}}</a></p>\n<p>Este link é único e pessoal.</p>";
+            */
             var emailBody = template
                 .Replace("{{nome}}", aluno.Nome)
-                .Replace("{{titulo}}", questionario.Titulo)
-                .Replace("{{link}}", link);
+                .Replace("{{titulo}}", questionario.Titulo).Replace("{titulo}", questionario.Titulo)
+                .Replace("{{link}}", link).Replace("{link}", link);
 
             // Enviar e-mail (simulado)
-            await _emailService.SendEmailAsync(aluno.EmailInstitucional, "Lembrete: Questionário pendente", emailBody);
+            await _emailService.SendEmailAsync(aluno.EmailInstitucional, "Lembrete: SATISFAÇÃO COM A CATÓLICA SC | ESTAMOS ESPERANDO SUA RESPOSTA", emailBody);
 
             return Ok(new { convite.Id, convite.Chave, Link = link, Email = emailBody });
         }
@@ -136,26 +172,65 @@ namespace NpsPesquisa.Api.Controllers
                 return NotFound("Questionário não encontrado.");
 
             var convites = await _context.ConvitesQuestionarios
-                .Include(c => c.Aluno)
-                .Where(c => c.QuestionarioId == questionarioId && !c.Respondido)
-                .ToListAsync();
+                            .Include(c => c.Aluno)
+                            .Where(c => c.QuestionarioId == questionarioId)
+                            .ToListAsync();
+            
+            if (!questionario.EnviarLembreteParaTodos)
+            {
+                convites = convites.Where(c => !c.Respondido).ToList();
+            }
+
 
             if (!convites.Any())
                 return Ok(new { message = "Nenhum convite pendente para este questionário." });
 
-            var template = questionario.TemplateEmailLembrete
-                ?? @"<h2>Olá, {{nome}}!</h2>\n<p>Este é um lembrete para responder ao questionário: {{titulo}}</p>\n<p>Clique no link abaixo para acessar o questionário:</p>\n<p><a href='{{link}}'>{{link}}</a></p>\n<p>Este link é único e pessoal.</p>";
+            var template = @"<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+  <meta charset='UTF-8'>
+  <title>Pesquisa de Satisfação - Católica SC</title>
+</head>
+<body style='font-family: Arial, sans-serif; line-height: 1.6;'>
+  <div style='text-align: center;'>
+    <img src='https://nps.catolicasc.org.br/imagens/logo-nps.png' width='300' alt='Logo NPS Católica SC' style='margin-bottom: 20px;'>
 
+    " + questionario.TemplateEmailLembrete + @"<div style=""margin: 40px auto; text-align: center;"">
+  <a href=""{{link}}"" 
+     style=""display: inline-block; 
+            background-color: #aa2439; 
+            color: white; 
+            font-size: 18px; 
+            font-family: Arial, sans-serif; 
+            text-decoration: none; 
+            padding: 16px 24px; 
+            border-radius: 8px; 
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);"">
+    QUAL A SUA SATISFAÇÃO COM A CATÓLICA SC?<br>RESPONDA AQUI!
+  </a>
+</div>
+    <footer style='font-size: 12px; color: #aaa; margin-top: 20px;'>
+      <p>Centro Universitário Católica de Santa Catarina<br>
+      Jaraguá do Sul | Joinville | Itajaí | Florianópolis<br>
+      <a href='https://catolicasc.org.br' style='color: #fff;'>catolicasc.org.br</a> | 0800 600 005</p>
+      <p style='font-size: 10px; color: #999;'>Não encaminhe este e-mail, pois este link de questionário é exclusivo para a sua conta. Caso queira cancelar a adesão de e-mails futuros, 
+      <a href='#' 
+         style='color: #0563c1;'>clique aqui</a>.</p>
+    </footer>
+  </div>
+</body>
+</html>";
             foreach (var convite in convites)
             {
                 var aluno = convite.Aluno;
-                var link = $"https://seusite.com.br/questionario/abrir?chave={convite.Chave}";
+                var link = urlBase + $"questionario/{convite.Chave}";
                 var emailBody = template
                     .Replace("{{nome}}", aluno.Nome)
-                    .Replace("{{titulo}}", questionario.Titulo)
-                    .Replace("{{link}}", link);
+                    .Replace("{{titulo}}", questionario.Titulo).Replace("{titulo}", questionario.Titulo)
+                    .Replace("{{link}}", link).Replace("{link}", link);
                 // Enviar e-mail (simulado)
-                await _emailService.SendEmailAsync(aluno.EmailInstitucional, "Lembrete: Questionário pendente", emailBody);
+                await _emailService.SendEmailAsync(aluno.EmailInstitucional, "Lembrete: SATISFAÇÃO COM A CATÓLICA SC | ESTAMOS ESPERANDO SUA RESPOSTA", emailBody);
             }
 
             return Ok(new { message = $"Lembretes enviados para {convites.Count} participantes." });
@@ -177,4 +252,4 @@ namespace NpsPesquisa.Api.Controllers
         public int QuestionarioId { get; set; }
         public int AlunoId { get; set; }
     }
-} 
+}
