@@ -521,7 +521,7 @@ namespace NpsPesquisa.Api.Controllers
                     };
 
                     _context.ConvitesQuestionarios.Add(convite);
-
+                    await _context.SaveChangesAsync();
                     // Enviar email com o link
                     var link = urlBase + $"questionario/{chave}";
                     var template = @"<!DOCTYPE html>
@@ -574,7 +574,7 @@ namespace NpsPesquisa.Api.Controllers
 
             }
 
-            await _context.SaveChangesAsync();
+            
             return NoContent();
         }
 
@@ -800,6 +800,8 @@ namespace NpsPesquisa.Api.Controllers
                     return BadRequest(new { message = "Arquivo não enviado" });
 
                 var participantesInseridos = new List<object>();
+                var erros = new List<string>();
+                var totalProcessados = 0;
 
                 using (var stream = file.OpenReadStream())
                 {
@@ -808,108 +810,199 @@ namespace NpsPesquisa.Api.Controllers
                         var worksheet = workbook.Worksheet(1);
                         var rowCount = worksheet.LastRowUsed().RowNumber();
 
-                        for (int row = 2; row <= rowCount; row++)
+                        // Verificar se há pelo menos 2 linhas (cabeçalho + dados)
+                        if (rowCount < 2)
                         {
-                            try
+                            return BadRequest(new { message = "O arquivo deve conter pelo menos o cabeçalho e uma linha de dados" });
+                        }
+
+                        // Processar em lotes para economizar memória
+                        const int batchSize = 50;
+
+                        for (int batchStart = 2; batchStart <= rowCount; batchStart += batchSize)
+                        {
+                            var batchEnd = Math.Min(batchStart + batchSize - 1, rowCount);
+
+                            using (var transaction = await _context.Database.BeginTransactionAsync())
                             {
-                                var filial = worksheet.Cell(row, 1).GetValue<string>()?.Trim();
-                                var nivelEnsino = worksheet.Cell(row, 2).GetValue<string>()?.Trim();
-                                var periodoLetivo = worksheet.Cell(row, 3).GetValue<string>()?.Trim();
-                                var nome = worksheet.Cell(row, 4).GetValue<string>()?.Trim();
-                                var matricula = worksheet.Cell(row, 5).GetValue<string>()?.Trim();
-                                var cursoNome = worksheet.Cell(row, 6).GetValue<string>()?.Trim();
-                                var turno = worksheet.Cell(row, 7).GetValue<string>()?.Trim();
-                                var emailInstitucional = worksheet.Cell(row, 8).GetValue<string>()?.Trim();
-                                var emailPessoal = worksheet.Cell(row, 9).GetValue<string>()?.Trim();
-                                var fone = worksheet.Cell(row, 10).GetValue<string>()?.Trim();
-                                var statusNoPeriodoLetivo = worksheet.Cell(row, 11).GetValue<string>()?.Trim();
-
-                                // Skip empty rows
-                                if (string.IsNullOrWhiteSpace(nome) || string.IsNullOrWhiteSpace(matricula))
-                                    continue;
-
-                                // Validar/obter Curso
-                                var curso = await _context.Cursos.FirstOrDefaultAsync(c => c.Nome == cursoNome);
-                                if (curso == null)
+                                try
                                 {
-                                    curso = new Curso { Nome = cursoNome };
-                                    _context.Cursos.Add(curso);
-                                    await _context.SaveChangesAsync();
-                                }
-
-                                // Validar/obter Aluno
-                                var aluno = await _context.Alunos.FirstOrDefaultAsync(a =>
-                                    a.Nome == nome &&
-                                    a.Filial == filial &&
-                                    a.NivelEnsino == nivelEnsino &&
-                                    a.PeriodoLetivo == periodoLetivo &&
-                                    a.Matricula == matricula &&
-                                    a.CursoId == curso.Id &&
-                                    a.Turno == turno
-                                );
-
-                                bool novoAluno = false;
-                                if (aluno == null)
-                                {
-                                    aluno = new Aluno
+                                    for (int row = batchStart; row <= batchEnd; row++)
                                     {
-                                        Nome = nome,
-                                        Filial = filial,
-                                        NivelEnsino = nivelEnsino,
-                                        PeriodoLetivo = periodoLetivo,
-                                        Matricula = matricula,
-                                        CursoId = curso.Id,
-                                        Turno = turno,
-                                        EmailInstitucional = emailInstitucional,
-                                        EmailPessoal = emailPessoal,
-                                        Fone = fone,
-                                        StatusNoPeriodoLetivo = statusNoPeriodoLetivo
-                                    };
-                                    _context.Alunos.Add(aluno);
-                                    await _context.SaveChangesAsync();
-                                    novoAluno = true;
+                                        try
+                                        {
+                                            // Verificar se a linha está vazia antes de processar
+                                            var isRowEmpty = true;
+                                            for (int col = 1; col <= 11; col++)
+                                            {
+                                                var cellValue = worksheet.Cell(row, col).GetValue<string>();
+                                                if (!string.IsNullOrWhiteSpace(cellValue))
+                                                {
+                                                    isRowEmpty = false;
+                                                    break;
+                                                }
+                                            }
+
+                                            if (isRowEmpty)
+                                            {
+                                                continue; // Pular linhas completamente vazias
+                                            }
+
+                                            var filial = worksheet.Cell(row, 1).GetValue<string>()?.Trim() ?? "";
+                                            var nivelEnsino = worksheet.Cell(row, 2).GetValue<string>()?.Trim() ?? "";
+                                            var periodoLetivo = worksheet.Cell(row, 3).GetValue<string>()?.Trim() ?? "";
+                                            var nome = worksheet.Cell(row, 4).GetValue<string>()?.Trim();
+                                            var matricula = worksheet.Cell(row, 5).GetValue<string>()?.Trim();
+                                            var cursoNome = worksheet.Cell(row, 6).GetValue<string>()?.Trim() ?? "";
+                                            var turno = worksheet.Cell(row, 7).GetValue<string>()?.Trim() ?? "";
+                                            var emailInstitucional = worksheet.Cell(row, 8).GetValue<string>()?.Trim() ?? "";
+                                            var emailPessoal = worksheet.Cell(row, 9).GetValue<string>()?.Trim() ?? "";
+                                            var fone = worksheet.Cell(row, 10).GetValue<string>()?.Trim() ?? "";
+                                            var statusNoPeriodoLetivo = worksheet.Cell(row, 11).GetValue<string>()?.Trim() ?? "";
+
+                                            // Validações básicas
+                                            if (string.IsNullOrWhiteSpace(nome))
+                                            {
+                                                erros.Add($"Linha {row}: Nome é obrigatório");
+                                                continue;
+                                            }
+
+                                            if (string.IsNullOrWhiteSpace(matricula))
+                                            {
+                                                erros.Add($"Linha {row}: Matrícula é obrigatória");
+                                                continue;
+                                            }
+
+                                            if (string.IsNullOrWhiteSpace(cursoNome))
+                                            {
+                                                erros.Add($"Linha {row}: Curso é obrigatório");
+                                                continue;
+                                            }
+
+                                            // Validar/obter Curso
+                                            var curso = await _context.Cursos.FirstOrDefaultAsync(c => c.Nome == cursoNome);
+                                            if (curso == null)
+                                            {
+                                                curso = new Curso { Nome = cursoNome };
+                                                _context.Cursos.Add(curso);
+                                                await _context.SaveChangesAsync();
+                                            }
+
+                                            // Validar/obter Aluno
+                                            var aluno = await _context.Alunos.FirstOrDefaultAsync(a =>
+                                                a.Nome == nome &&
+                                                a.Filial == filial &&
+                                                a.NivelEnsino == nivelEnsino &&
+                                                a.PeriodoLetivo == periodoLetivo &&
+                                                a.Matricula == matricula &&
+                                                a.CursoId == curso.Id &&
+                                                a.Turno == turno
+                                            );
+
+                                            bool novoAluno = false;
+                                            if (aluno == null)
+                                            {
+                                                aluno = new Aluno
+                                                {
+                                                    Nome = nome,
+                                                    Email = emailInstitucional,
+                                                    Filial = filial,
+                                                    NivelEnsino = nivelEnsino,
+                                                    PeriodoLetivo = periodoLetivo,
+                                                    Matricula = matricula,
+                                                    CursoId = curso.Id,
+                                                    Turno = turno,
+                                                    EmailInstitucional = emailInstitucional,
+                                                    EmailPessoal = emailPessoal,
+                                                    Fone = fone,
+                                                    StatusNoPeriodoLetivo = statusNoPeriodoLetivo,
+                                                    AceitaContato = true
+                                                };
+                                                _context.Alunos.Add(aluno);
+                                                await _context.SaveChangesAsync();
+                                                novoAluno = true;
+                                            }
+
+                                            // Adicionar como participante se ainda não for
+                                            var jaParticipante = await _context.ParticipantesQuestionarios
+                                                .AnyAsync(p => p.QuestionarioId == id && p.AlunoId == aluno.Id);
+
+                                            if (!jaParticipante)
+                                            {
+                                                var participante = new ParticipanteQuestionario
+                                                {
+                                                    QuestionarioId = id,
+                                                    AlunoId = aluno.Id
+                                                };
+                                                _context.ParticipantesQuestionarios.Add(participante);
+                                                await _context.SaveChangesAsync();
+                                            }
+
+                                            participantesInseridos.Add(new
+                                            {
+                                                alunoId = aluno.Id,
+                                                nome = aluno.Nome,
+                                                curso = curso.Nome,
+                                                novoAluno
+                                            });
+
+                                            totalProcessados++;
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            var errorMessage = ex.Message;
+                                            if (ex.InnerException != null)
+                                            {
+                                                errorMessage += ". Inner Exception: " + ex.InnerException.Message;
+                                            }
+                                            erros.Add($"Erro na linha {row}: {errorMessage}");
+                                        }
+                                    }
+
+                                    await transaction.CommitAsync();
                                 }
-
-                                // Adicionar como participante se ainda não for
-                                var jaParticipante = await _context.ParticipantesQuestionarios
-                                    .AnyAsync(p => p.QuestionarioId == id && p.AlunoId == aluno.Id);
-
-                                if (!jaParticipante)
+                                catch (Exception ex)
                                 {
-                                    var participante = new ParticipanteQuestionario
+                                    await transaction.RollbackAsync();
+                                    var errorMessage = ex.Message;
+                                    if (ex.InnerException != null)
                                     {
-                                        QuestionarioId = id,
-                                        AlunoId = aluno.Id
-                                    };
-                                    _context.ParticipantesQuestionarios.Add(participante);
-                                    await _context.SaveChangesAsync();
+                                        errorMessage += ". Inner Exception: " + ex.InnerException.Message;
+                                    }
+                                    erros.Add($"Erro no lote {batchStart}-{batchEnd}: {errorMessage}");
                                 }
+                            }
 
-                                participantesInseridos.Add(new
-                                {
-                                    alunoId = aluno.Id,
-                                    nome = aluno.Nome,
-                                    curso = curso.Nome,
-                                    novoAluno
-                                });
-                            }
-                            catch (Exception ex)
-                            {
-                                return BadRequest(new { message = $"Erro na linha {row}: {ex.Message}" });
-                            }
+                            // Liberar memória entre lotes
+                            GC.Collect();
+                            GC.WaitForPendingFinalizers();
                         }
                     }
                 }
 
-                return Ok(new
+                var resultado = new
                 {
-                    message = "Importação concluída com sucesso",
-                    participantes = participantesInseridos
-                });
+                    message = "Importação concluída",
+                    participantes = participantesInseridos,
+                    totalProcessados = totalProcessados,
+                    erros = erros
+                };
+
+                if (erros.Any())
+                {
+                    return BadRequest(resultado);
+                }
+
+                return Ok(resultado);
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = $"Erro ao processar arquivo: {ex.Message}" });
+                var errorMessage = ex.Message;
+                if (ex.InnerException != null)
+                {
+                    errorMessage += ". Inner Exception: " + ex.InnerException.Message;
+                }
+                return BadRequest(new { message = $"Erro ao processar arquivo: {errorMessage}" });
             }
         }
 
@@ -941,18 +1034,21 @@ namespace NpsPesquisa.Api.Controllers
                     headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
                     headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
-                    // Add example data in row 2
-                    worksheet.Cell(2, 1).Value = "Exemplo";
-                    worksheet.Cell(2, 2).Value = "Graduação";
-                    worksheet.Cell(2, 3).Value = "2024.1";
-                    worksheet.Cell(2, 4).Value = "João Silva";
-                    worksheet.Cell(2, 5).Value = "123456";
-                    worksheet.Cell(2, 6).Value = "Ciência da Computação";
-                    worksheet.Cell(2, 7).Value = "Noturno";
-                    worksheet.Cell(2, 8).Value = "joao.silva@email.com";
-                    worksheet.Cell(2, 9).Value = "joao.silva@gmail.com";
-                    worksheet.Cell(2, 10).Value = "(11) 99999-9999";
-                    worksheet.Cell(2, 11).Value = "Ativo";
+                    // Adicionar uma linha de exemplo na linha 3 (não na linha 2)
+                    worksheet.Cell(3, 1).Value = "Exemplo";
+                    worksheet.Cell(3, 2).Value = "Graduação";
+                    worksheet.Cell(3, 3).Value = "2024.1";
+                    worksheet.Cell(3, 4).Value = "João Silva";
+                    worksheet.Cell(3, 5).Value = "123456";
+                    worksheet.Cell(3, 6).Value = "Ciência da Computação";
+                    worksheet.Cell(3, 7).Value = "Noturno";
+                    worksheet.Cell(3, 8).Value = "joao.silva@email.com";
+                    worksheet.Cell(3, 9).Value = "joao.silva@gmail.com";
+                    worksheet.Cell(3, 10).Value = "(11) 99999-9999";
+                    worksheet.Cell(3, 11).Value = "Ativo";
+
+                    // Adicionar comentário explicativo
+                    worksheet.Cell(2, 1).Value = "IMPORTANTE: Comece a inserir seus dados a partir da linha 2. A linha 3 contém apenas um exemplo.";
 
                     // Auto-fit columns
                     worksheet.Columns().AdjustToContents();
@@ -977,7 +1073,6 @@ namespace NpsPesquisa.Api.Controllers
                 return BadRequest(new { message = $"Erro ao gerar template: {ex.Message}" });
             }
         }
-
         private bool QuestionarioExists(int id)
         {
             return _context.Questionarios.Any(e => e.Id == id);

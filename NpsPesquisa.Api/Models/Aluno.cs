@@ -10,6 +10,7 @@ namespace NpsPesquisa.Api.Models
         public string PeriodoLetivo { get; set; }
         public string Nome { get; set; }
         public string Matricula { get; set; }
+        public string Email { get; set; }
         public int CursoId { get; set; }
         public virtual Curso? Curso { get; set; }
         public string Turno { get; set; }
