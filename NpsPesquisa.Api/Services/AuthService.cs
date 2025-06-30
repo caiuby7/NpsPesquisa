@@ -11,6 +11,7 @@ using System.Security.Cryptography;
 using NpsPesquisa.Api.Data;
 using System.Net.Mail;
 using System.Net;
+using DocumentFormat.OpenXml.InkML;
 
 namespace NpsPesquisa.Api.Services
 {
@@ -57,7 +58,8 @@ namespace NpsPesquisa.Api.Services
         {
             var usuario = await _context.Usuarios
                 .Include(u => u.Perfil)
-                .FirstOrDefaultAsync(u => u.Email == loginDto.Email && u.Ativo);
+                .FirstOrDefaultAsync(u=>u.Ativo);
+
 
             if (usuario == null || !VerifyPassword(loginDto.Senha, usuario.Senha))
                 throw new Exception("Email ou senha inválidos");

@@ -1073,6 +1073,388 @@ namespace NpsPesquisa.Api.Controllers
                 return BadRequest(new { message = $"Erro ao gerar template: {ex.Message}" });
             }
         }
+
+        [HttpGet("{id}/dashboard")]
+        [Authorize(Roles = "Administrador,Coordenacao")]
+        public async Task<ActionResult<object>> GetDashboardData(int id)
+        {
+            var questionario = await _context.Questionarios
+                .Include(q => q.QuestoesQuestionarios)
+                    .ThenInclude(qq => qq.Questao)
+                        .ThenInclude(q => q.Opcoes)
+                .FirstOrDefaultAsync(q => q.Id == id);
+            if (questionario == null)
+                return NotFound(new { message = "Questionário não encontrado" });
+
+            // Buscar todas as respostas do questionário
+            var respostas = await _context.Respostas
+                .Include(r => r.RespostasQuestoes)
+                    .ThenInclude(rq => rq.Questao)
+                .Include(r => r.Aluno)
+                    .ThenInclude(a => a.Curso)
+                .Where(r => r.QuestionarioId == id)
+                .OrderBy(r => r.DataResposta)
+                .ToListAsync();
+
+            if (!respostas.Any())
+            {
+                return Ok(new
+                {
+                    totalRespostas = 0,
+                    tendenciaRespostas = new object[] { },
+                    npsGeral = 0,
+                    npsDetalhamento = new { passivo = 0, promotor = 0, detrator = 0 },
+                    satisfacao = 0,
+                    satisfacaoDetalhamento = new { insatisfeito = 0, nemSatisfeito = 0, satisfeito = 0, muitoSatisfeito = 0 },
+                    satisfacaoPorCurso = new object[] { },
+                    comentariosQ19 = new object[] { },
+                    comentariosQ23 = new object[] { },
+                    matrizMedias = new object[] { }
+                });
+            }
+
+            // Tendência de respostas por dia
+            var tendenciaRespostas = respostas
+                .GroupBy(r => r.DataResposta.Date)
+                .OrderBy(g => g.Key)
+                .Select(g => new
+                {
+                    data = g.Key.ToString("MMM dd"),
+                    quantidade = g.Count()
+                })
+                .ToList();
+
+            // Calcular NPS (Net Promoter Score)
+            var questoesNPS = respostas
+                .SelectMany(r => r.RespostasQuestoes)
+                .Where(rq => rq.Questao.Tipo == TipoQuestao.EscalaLinear && rq.Valor != null)
+                .ToList();
+
+            var npsScores = questoesNPS
+                .Select(rq => int.Parse(rq.Valor))
+                .ToList();
+
+            var promotores = npsScores.Count(s => s >= 9 && s <= 10);
+            var detratores = npsScores.Count(s => s >= 0 && s <= 6);
+            var passivos = npsScores.Count(s => s >= 7 && s <= 8);
+            var totalNPS = npsScores.Count;
+
+            var npsGeral = totalNPS > 0 ? Math.Round(((double)(promotores - detratores) / totalNPS) * 100, 0) : 0;
+
+            // Cálculo da média de satisfação para questão múltipla escolha (exemplo QuestaoId = 22)
+            var questaoSatisfacao = _context.Questoes
+                .Include(q => q.Opcoes)
+                .FirstOrDefault(q => q.Id == 21);
+
+            var opcoesSatisfacao = questaoSatisfacao?.Opcoes.OrderBy(o => o.Ordem).ToList() ?? new List<OpcaoQuestao>();
+
+            var questoesSatisfacaoMultipla = respostas
+                .SelectMany(r => r.RespostasQuestoes)
+                .Where(rq => rq.QuestaoId == 21 && rq.OpcaoId != null)
+                .ToList();
+
+            // Agrupa as respostas por opção para mostrar no gráfico
+            var respostasPorOpcaoSatisfacao = questoesSatisfacaoMultipla
+                .GroupBy(rq => rq.OpcaoId)
+                .Select(g =>
+                {
+                    var opcao = opcoesSatisfacao.FirstOrDefault(o => o.Id == g.Key);
+                    var peso = opcao != null ? opcao.Peso : 0;
+                    return new
+                    {
+                        opcaoId = g.Key,
+                        opcaoNome = opcao?.Texto ?? "",
+                        peso = peso,
+                        quantidade = g.Count(),
+                        percentual = questoesSatisfacaoMultipla.Count > 0 ? Math.Round((double)g.Count() / questoesSatisfacaoMultipla.Count * 100, 1) : 0
+                    };
+                })
+                .OrderBy(x => x.peso)
+                .ToList();
+
+            var valoresSatisfacao = questoesSatisfacaoMultipla
+                .Select(rq => {
+                    var opcao = opcoesSatisfacao.FirstOrDefault(o => o.Id == rq.OpcaoId);
+                    return opcao != null ? (opcao.Peso != 0 ? opcao.Peso : (opcoesSatisfacao.IndexOf(opcao) + 1)) : (int?)null;
+                })
+                .Where(v => v.HasValue)
+                .Select(v => v.Value)
+                .ToList();
+
+            double mediaSatisfacao = valoresSatisfacao.Count > 0 ? Math.Round(valoresSatisfacao.Average(), 1) : 0;
+
+            // Satisfação por curso (questão 22)
+            var questaoSatisfacaoCurso = _context.Questoes
+                .Include(q => q.Opcoes)
+                .FirstOrDefault(q => q.Id == 22);
+
+            var opcoesSatisfacaoCurso = questaoSatisfacaoCurso?.Opcoes.OrderBy(o => o.Ordem).ToList() ?? new List<OpcaoQuestao>();
+
+            var respostasPorCurso = respostas
+                .SelectMany(r => r.RespostasQuestoes, (r, rq) => new { r, rq })
+                .Where(x => x.rq.QuestaoId == 22 && x.rq.OpcaoId != null && x.r.Aluno?.Curso != null)
+                .GroupBy(x => x.r.Aluno.Curso.Nome)
+                .ToList();
+
+            var satisfacaoPorCurso = respostasPorCurso.Select(g =>
+            {
+                var total = g.Count();
+                int GetPeso(int? opcaoId) {
+                    var opcao = opcoesSatisfacaoCurso.FirstOrDefault(o => o.Id == opcaoId);
+                    return opcao != null ? (opcao.Peso != 0 ? opcao.Peso : (opcoesSatisfacaoCurso.IndexOf(opcao) + 1)) : 0;
+                }
+                var muitoInsatisfeito = g.Count(x => GetPeso(x.rq.OpcaoId) == 1);
+                var insatisfeito = g.Count(x => GetPeso(x.rq.OpcaoId) == 2);
+                var nemSatisfeitoNemInsatisfeito = g.Count(x => GetPeso(x.rq.OpcaoId) == 3);
+                var satisfeito = g.Count(x => GetPeso(x.rq.OpcaoId) == 4);
+                var muitoSatisfeito = g.Count(x => GetPeso(x.rq.OpcaoId) == 5);
+                double media = total > 0 ? Math.Round((g.Select(x => GetPeso(x.rq.OpcaoId)).Where(p => p > 0).DefaultIfEmpty(0).Average()), 1) : 0;
+                return new
+                {
+                    curso = g.Key,
+                    total,
+                    muitoInsatisfeito,
+                    insatisfeito,
+                    nemSatisfeitoNemInsatisfeito,
+                    satisfeito,
+                    muitoSatisfeito,
+                    percentuais = new {
+                        muitoInsatisfeito = total > 0 ? Math.Round((double)muitoInsatisfeito / total * 100, 1) : 0,
+                        insatisfeito = total > 0 ? Math.Round((double)insatisfeito / total * 100, 1) : 0,
+                        nemSatisfeitoNemInsatisfeito = total > 0 ? Math.Round((double)nemSatisfeitoNemInsatisfeito / total * 100, 1) : 0,
+                        satisfeito = total > 0 ? Math.Round((double)satisfeito / total * 100, 1) : 0,
+                        muitoSatisfeito = total > 0 ? Math.Round((double)muitoSatisfeito / total * 100, 1) : 0
+                    },
+                    satisfacao = media
+                };
+            }).ToList();
+
+            // Comentários das questões 19 e 23
+            var comentariosQ19 = respostas
+                .SelectMany(r => r.RespostasQuestoes)
+                .Where(rq => rq.QuestaoId == 19 && !string.IsNullOrEmpty(rq.Valor))
+                .Select(rq => new {
+                    texto = rq.Valor,
+                    curso = rq.Resposta.Aluno.Curso.Nome,
+                    nota = rq.Resposta.RespostasQuestoes
+                        .Where(rq2 => rq2.Questao.Tipo == TipoQuestao.EscalaLinear && rq2.Valor != null)
+                        .Select(rq2 => int.Parse(rq2.Valor))
+                        .DefaultIfEmpty(0)
+                        .Average(),
+                    tipo = rq.Resposta.RespostasQuestoes
+                        .Where(rq2 => rq2.Questao.Tipo == TipoQuestao.EscalaLinear && rq2.Valor != null)
+                        .Select(rq2 => int.Parse(rq2.Valor))
+                        .DefaultIfEmpty(0)
+                        .Average() >= 9 ? "Promotor" : 
+                        rq.Resposta.RespostasQuestoes
+                        .Where(rq2 => rq2.Questao.Tipo == TipoQuestao.EscalaLinear && rq2.Valor != null)
+                        .Select(rq2 => int.Parse(rq2.Valor))
+                        .DefaultIfEmpty(0)
+                        .Average() <= 6 ? "Detrator" : "Passivo"
+                })
+                .ToList();
+
+            var comentariosQ23 = respostas
+                .SelectMany(r => r.RespostasQuestoes)
+                .Where(rq => rq.QuestaoId == 23 && !string.IsNullOrEmpty(rq.Valor))
+                .Select(rq => new {
+                    texto = rq.Valor,
+                    curso = rq.Resposta.Aluno.Curso.Nome,
+                    nota = rq.Resposta.RespostasQuestoes
+                        .Where(rq2 => rq2.Questao.Tipo == TipoQuestao.EscalaLinear && rq2.Valor != null)
+                        .Select(rq2 => int.Parse(rq2.Valor))
+                        .DefaultIfEmpty(0)
+                        .Average(),
+                    tipo = rq.Resposta.RespostasQuestoes
+                        .Where(rq2 => rq2.Questao.Tipo == TipoQuestao.EscalaLinear && rq2.Valor != null)
+                        .Select(rq2 => int.Parse(rq2.Valor))
+                        .DefaultIfEmpty(0)
+                        .Average() >= 9 ? "Promotor" : 
+                        rq.Resposta.RespostasQuestoes
+                        .Where(rq2 => rq2.Questao.Tipo == TipoQuestao.EscalaLinear && rq2.Valor != null)
+                        .Select(rq2 => int.Parse(rq2.Valor))
+                        .DefaultIfEmpty(0)
+                        .Average() <= 6 ? "Detrator" : "Passivo"
+                })
+                .ToList();
+
+            // Cálculo das médias das questões do tipo matriz (usando Peso)
+            var matrizMedias = questionario.QuestoesQuestionarios
+                .Where(qq => qq.Questao.Tipo == TipoQuestao.Matriz)
+                .Select(qq => {
+                    var colunas = qq.Questao.Opcoes.Where(o => o.EhColuna).OrderBy(o => o.Ordem).ToList();
+                    return new {
+                        questaoId = qq.Questao.Id,
+                        questaoTexto = qq.Questao.Texto,
+                        linhas = qq.Questao.Opcoes
+                            .Where(o => !o.EhColuna)
+                            .Select(linha => new {
+                                afirmacao = linha.Texto,
+                                media = Math.Round(
+                                    respostas
+                                        .SelectMany(r => r.RespostasQuestoes)
+                                        .Where(rq => rq.QuestaoId == qq.Questao.Id && rq.OpcaoId == linha.Id && rq.Valor != null)
+                                        .Select(rq => {
+                                            var col = colunas.FirstOrDefault(c => c.Texto == rq.Valor);
+                                            return col != null ? (double?)col.Peso : null;
+                                        })
+                                        .Where(v => v.HasValue)
+                                        .Select(v => v.Value)
+                                        .DefaultIfEmpty(0)
+                                        .Average(), 1)
+                            })
+                            .ToList()
+                    };
+                })
+                .ToList();
+
+            // Instanciar o serviço de sentimento
+            var sentimentService = new NpsPesquisa.Api.Services.SentimentAnalysisService();
+
+            // Respostas de texto da questão 19
+            var respostasQ19 = respostas
+                .SelectMany(r => r.RespostasQuestoes)
+                .Where(rq => rq.QuestaoId == 19 && !string.IsNullOrEmpty(rq.Valor))
+                .Select(rq => rq.Valor)
+                .ToList();
+
+            var sentimentosQ19 = respostasQ19.Select(texto => sentimentService.Predict(texto)).ToList();
+            var analiseSentimentoQ19 = sentimentosQ19
+                .GroupBy(s => s)
+                .Select(g => new { sentimento = g.Key, quantidade = g.Count() })
+                .ToList();
+
+            // Respostas de texto da questão 23
+            var respostasQ23 = respostas
+                .SelectMany(r => r.RespostasQuestoes)
+                .Where(rq => rq.QuestaoId == 23 && !string.IsNullOrEmpty(rq.Valor))
+                .Select(rq => rq.Valor)
+                .ToList();
+
+            var sentimentosQ23 = respostasQ23.Select(texto => sentimentService.Predict(texto)).ToList();
+            var analiseSentimentoQ23 = sentimentosQ23
+                .GroupBy(s => s)
+                .Select(g => new { sentimento = g.Key, quantidade = g.Count() })
+                .ToList();
+
+            // Dicionário de categorias
+            var categorias = new Dictionary<string, string[]>
+            {
+                { "Ensino", new[] { "ensino", "professor", "aula", "didática", "conteúdo", "explicação", "pedagógico" } },
+                { "Melhoria", new[] { "melhorar", "melhoria", "sugestão", "precisa", "corrigir", "aperfeiçoar" } },
+                { "Financeiro", new[] { "preço", "mensalidade", "financeiro", "custo", "desconto", "bolsa", "parcelamento" } },
+                { "Infraestrutura", new[] { "estrutura", "sala", "laboratório", "equipamento", "biblioteca", "instalações", "cadeira", "ambiente" } },
+                { "Atendimento", new[] { "atendimento", "secretaria", "suporte", "resposta", "demora", "funcionário", "cordialidade" } },
+                { "Sistema", new[] { "sistema", "site", "plataforma", "portal", "erro", "login", "instabilidade", "tecnologia" } },
+                { "Empregabilidade", new[] { "emprego", "estágio", "carreira", "parceria", "networking", "empresa", "mercado" } },
+                { "Coordenação", new[] { "coordenação", "coordenador", "organização", "responsável", "gestão", "comunicação interna" } },
+                { "Horários", new[] { "horário", "turno", "grade", "incompatível", "tarde", "noite", "sábado" } },
+                { "Transporte e Acesso", new[] { "localização", "transporte", "ônibus", "metrô", "estacionamento", "acesso", "trânsito" } },
+                { "Ambiente Acadêmico", new[] { "clima", "ambiente", "amizade", "acolhimento", "respeito", "interação", "comunidade" } },
+                { "Reputação", new[] { "nome", "reputação", "ranking", "reconhecimento", "nota mec", "qualidade", "tradição" } },
+                { "Eventos e Atividades", new[] { "evento", "palestra", "semana acadêmica", "atividade", "projeto", "workshop", "intercâmbio" } },
+                { "EAD", new[] { "ead", "online", "plataforma", "vídeo aula", "remoto", "estudar em casa", "ambiente virtual", "atividade online", "fórum" } },
+                { "Presencial", new[] { "presencial", "em sala", "campus", "presença física", "aula prática", "frequência", "estrutura física" } }
+            };
+
+            // Função para análise por categoria
+            dynamic AnalisePorCategoria(List<string> respostas, NpsPesquisa.Api.Services.SentimentAnalysisService sentimentService)
+            {
+                var resultado = new List<object>();
+                foreach (var categoria in categorias)
+                {
+                    var respostasCategoria = respostas.Where(texto =>
+                        categoria.Value.Any(palavra => texto.ToLower().Contains(palavra))
+                    ).ToList();
+                    var sentimentos = respostasCategoria.Select(texto => sentimentService.Predict(texto)).ToList();
+                    var agrupado = sentimentos
+                        .GroupBy(s => s)
+                        .Select(g => new { sentimento = g.Key, quantidade = g.Count() })
+                        .ToList();
+                    resultado.Add(new
+                    {
+                        categoria = categoria.Key,
+                        total = respostasCategoria.Count,
+                        sentimentos = agrupado
+                    });
+                }
+                return resultado;
+            }
+
+            // Enunciados das questões 19 e 23
+            var enunciadoQ19 = _context.Questoes.FirstOrDefault(q => q.Id == 19)?.Texto ?? "";
+            var enunciadoQ23 = _context.Questoes.FirstOrDefault(q => q.Id == 23)?.Texto ?? "";
+
+            var analiseSentimentoPorCategoriaQ19 = AnalisePorCategoria(respostasQ19, sentimentService);
+            var analiseSentimentoPorCategoriaQ23 = AnalisePorCategoria(respostasQ23, sentimentService);
+
+            // Detalhamento geral da satisfação com o curso (questão 22)
+            var questoesSatisfacaoCursoMultipla = respostas
+                .SelectMany(r => r.RespostasQuestoes)
+                .Where(rq => rq.QuestaoId == 22 && rq.OpcaoId != null)
+                .ToList();
+
+            var respostasPorOpcaoSatisfacaoCurso = questoesSatisfacaoCursoMultipla
+                .GroupBy(rq => rq.OpcaoId)
+                .Select(g =>
+                {
+                    var opcao = opcoesSatisfacaoCurso.FirstOrDefault(o => o.Id == g.Key);
+                    var peso = opcao != null ? opcao.Peso : 0;
+                    return new
+                    {
+                        opcaoId = g.Key,
+                        opcaoNome = opcao?.Texto ?? "",
+                        peso = peso,
+                        quantidade = g.Count(),
+                        percentual = questoesSatisfacaoCursoMultipla.Count > 0 ? Math.Round((double)g.Count() / questoesSatisfacaoCursoMultipla.Count * 100, 1) : 0
+                    };
+                })
+                .OrderBy(x => x.peso)
+                .ToList();
+
+            var satisfacaoCursoDetalhamento = new
+            {
+                insatisfeito = respostasPorOpcaoSatisfacaoCurso.Where(x => x.peso == 2).Sum(x => x.percentual),
+                nemSatisfeitoNemInsatisfeito = respostasPorOpcaoSatisfacaoCurso.Where(x => x.peso == 3).Sum(x => x.percentual),
+                satisfeito = respostasPorOpcaoSatisfacaoCurso.Where(x => x.peso == 4).Sum(x => x.percentual),
+                muitoSatisfeito = respostasPorOpcaoSatisfacaoCurso.Where(x => x.peso == 5).Sum(x => x.percentual)
+            };
+
+            return Ok(new
+            {
+                totalRespostas = respostas.Count,
+                tendenciaRespostas = tendenciaRespostas,
+                npsGeral = npsGeral,
+                npsDetalhamento = new
+                {
+                    passivo = totalNPS > 0 ? Math.Round((double)passivos / totalNPS * 100, 0) : 0,
+                    promotor = totalNPS > 0 ? Math.Round((double)promotores / totalNPS * 100, 0) : 0,
+                    detrator = totalNPS > 0 ? Math.Round((double)detratores / totalNPS * 100, 0) : 0
+                },
+                satisfacao = mediaSatisfacao,
+                satisfacaoDetalhamento = new
+                {
+                    muitoInsatisfeito = respostasPorOpcaoSatisfacao.Where(x => x.peso == 1).Sum(x => x.percentual),
+                    insatisfeito = respostasPorOpcaoSatisfacao.Where(x => x.peso == 2).Sum(x => x.percentual),
+                    nemInsatisfeitoNemSatisfeito = respostasPorOpcaoSatisfacao.Where(x => x.peso == 3).Sum(x => x.percentual),
+                    satisfeito = respostasPorOpcaoSatisfacao.Where(x => x.peso == 4).Sum(x => x.percentual),
+                    muitoSatisfeito = respostasPorOpcaoSatisfacao.Where(x => x.peso == 5).Sum(x => x.percentual)
+                },
+                satisfacaoPorOpcao = respostasPorOpcaoSatisfacao,
+                satisfacaoCursoDetalhamento = satisfacaoCursoDetalhamento,
+                satisfacaoPorCurso = satisfacaoPorCurso,
+                comentariosQ19 = comentariosQ19,
+                comentariosQ23 = comentariosQ23,
+                matrizMedias = matrizMedias,
+                analiseSentimentoQ19 = analiseSentimentoQ19,
+                analiseSentimentoQ23 = analiseSentimentoQ23,
+                analiseSentimentoPorCategoriaQ19 = analiseSentimentoPorCategoriaQ19,
+                analiseSentimentoPorCategoriaQ23 = analiseSentimentoPorCategoriaQ23,
+                enunciadoQ19 = enunciadoQ19,
+                enunciadoQ23 = enunciadoQ23
+            });
+        }
+
         private bool QuestionarioExists(int id)
         {
             return _context.Questionarios.Any(e => e.Id == id);

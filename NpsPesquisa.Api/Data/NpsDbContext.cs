@@ -27,12 +27,28 @@ namespace NpsPesquisa.Api.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            // Configuração global para nomes de tabelas em minúsculo
+            modelBuilder.Entity<Curso>().ToTable("cursos");
+            modelBuilder.Entity<Aluno>().ToTable("alunos");
+            modelBuilder.Entity<Questionario>().ToTable("questionarios");
+            modelBuilder.Entity<Questao>().ToTable("questoes");
+            modelBuilder.Entity<QuestaoQuestionario>().ToTable("questoesquestionarios");
+            modelBuilder.Entity<OpcaoQuestao>().ToTable("opcoesquestao");
+            modelBuilder.Entity<Resposta>().ToTable("respostas");
+            modelBuilder.Entity<RespostaQuestao>().ToTable("respostasquestoes");
+            modelBuilder.Entity<Perfil>().ToTable("perfis");
+            modelBuilder.Entity<Usuario>().ToTable("usuarios");
+            modelBuilder.Entity<ConviteQuestionario>().ToTable("convitesquestionarios");
+            modelBuilder.Entity<ParticipanteQuestionario>().ToTable("participantesquestionarios");
+
             // Configuração do Usuario
-            modelBuilder.Entity<Usuario>()
-                .HasOne(u => u.Perfil)
-                .WithMany(p => p.Usuarios)
-                .HasForeignKey(u => u.PerfilId)
-                .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<Usuario>(entity =>
+            {
+                entity.HasOne(u => u.Perfil)
+                    .WithMany(p => p.Usuarios)
+                    .HasForeignKey(u => u.PerfilId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
 
             // Configuração do Aluno
             modelBuilder.Entity<Aluno>()
