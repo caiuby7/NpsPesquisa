@@ -1086,13 +1086,19 @@ namespace NpsPesquisa.Api.Controllers
             if (questionario == null)
                 return NotFound(new { message = "Questionário não encontrado" });
 
-            // Buscar todas as respostas do questionário
+            // Buscar todos os convites respondidos para este questionário
+            var convitesRespondidos = await _context.ConvitesQuestionarios
+                .Where(c => c.QuestionarioId == id && c.Respondido)
+                .Select(c => new { c.AlunoId, c.QuestionarioId })
+                .ToListAsync();
+
+            // Buscar todas as respostas do questionário APENAS de quem respondeu via convite
             var respostas = await _context.Respostas
                 .Include(r => r.RespostasQuestoes)
                     .ThenInclude(rq => rq.Questao)
                 .Include(r => r.Aluno)
                     .ThenInclude(a => a.Curso)
-                .Where(r => r.QuestionarioId == id)
+                .Where(r => r.QuestionarioId == id && convitesRespondidos.Any(c => c.AlunoId == r.AlunoId && c.QuestionarioId == r.QuestionarioId))
                 .OrderBy(r => r.DataResposta)
                 .ToListAsync();
 
@@ -1453,6 +1459,47 @@ namespace NpsPesquisa.Api.Controllers
                 enunciadoQ19 = enunciadoQ19,
                 enunciadoQ23 = enunciadoQ23
             });
+        }
+
+        [HttpGet("{id}/exportar-pendentes")]
+        [Authorize(Roles = "Administrador,Coordenacao")]
+        public async Task<IActionResult> ExportarPendentes(int id)
+        {
+            var convitesPendentes = await _context.ConvitesQuestionarios
+                .Include(c => c.Aluno)
+                .Where(c => c.QuestionarioId == id && !c.Respondido)
+                .ToListAsync();
+
+            if (!convitesPendentes.Any())
+                return NotFound(new { message = "Nenhum participante pendente para este questionário." });
+
+            using (var workbook = new ClosedXML.Excel.XLWorkbook())
+            {
+                var worksheet = workbook.Worksheets.Add("Pendentes");
+                worksheet.Cell(1, 1).Value = "Nome";
+                worksheet.Cell(1, 2).Value = "Chave";
+                worksheet.Cell(1, 3).Value = "Link";
+
+                for (int i = 0; i < convitesPendentes.Count; i++)
+                {
+                    worksheet.Cell(i + 2, 1).Value = convitesPendentes[i].Aluno.Nome;
+                    worksheet.Cell(i + 2, 2).Value = convitesPendentes[i].Chave;
+                    worksheet.Cell(i + 2, 3).Value = $"https://nps.catolicasc.org.br/questionario/{convitesPendentes[i].Chave}";
+                }
+
+                worksheet.Columns().AdjustToContents();
+
+                using (var stream = new System.IO.MemoryStream())
+                {
+                    workbook.SaveAs(stream);
+                    stream.Position = 0;
+                    return File(
+                        stream.ToArray(),
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        $"pendentes_questionario_{id}.xlsx"
+                    );
+                }
+            }
         }
 
         private bool QuestionarioExists(int id)
