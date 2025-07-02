@@ -17,4 +17,15 @@ export function useGetForms() {
       return response.data;
     },
   });
+}
+
+export function useGetDashboardData(formId: string) {
+  return useQuery({
+    queryKey: ["dashboard-data", formId],
+    queryFn: async () => {
+      const response = await api.get(`/Questionario/${formId}/dashboard`);
+      return response.data;
+    },
+    enabled: !!formId,
+  });
 } 

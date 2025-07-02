@@ -47,6 +47,7 @@ export interface QuestionResponse {
   opcoes?: OptionItem[];
   colunas?: OptionItem[];
   coluna?: OptionItem[];
+  obrigatorio?: boolean;
 }
 
 export interface OptionItem {

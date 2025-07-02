@@ -12,6 +12,7 @@ import {
   FormErrorMessage,
   Textarea,
   useToast,
+  Checkbox,
 } from "@chakra-ui/react";
 import {
   useGetQuestionById,
@@ -65,6 +66,8 @@ const CreateQuestionComponent: React.FC<CreateQuestionComponentProps> = ({ initi
   const toast = useToast();
   const navigate = useNavigate();
 
+  const [obrigatorio, setObrigatorio] = useState(false);
+
   useEffect(() => {
     if (question) {
       let formData: any = {
@@ -117,9 +120,13 @@ const CreateQuestionComponent: React.FC<CreateQuestionComponentProps> = ({ initi
     reset();
   };
 
-  const handleMutationError = () => {
+  const handleMutationError = (error?: any) => {
+    let message = "Erro ao salvar a questão. Tente novamente.";
+    if (error?.response?.data?.message) {
+      message = error.response.data.message;
+    }
     toast({
-      title: "Erro ao salvar a questão. Tente novamente.",
+      title: message,
       status: "error",
       duration: 3000,
       isClosable: true,
@@ -149,6 +156,7 @@ const CreateQuestionComponent: React.FC<CreateQuestionComponentProps> = ({ initi
     if (data.tipo === QuestionTypeEnum.LINEAR_SCALE) {
       const payloadLinearScale = {
         ...data,
+        obrigatorio,
         opcoes: [
           {
             texto: data.ratingLabels.minLabel,
@@ -176,6 +184,7 @@ const CreateQuestionComponent: React.FC<CreateQuestionComponentProps> = ({ initi
     if (data.tipo === QuestionTypeEnum.MATRIX) {
       const payloadArray = {
         ...data,
+        obrigatorio,
         opcoes: data.opcoes.concat(
           data.colunas.map((item) => {
             return { ...item, ehColuna: true };
@@ -193,6 +202,7 @@ const CreateQuestionComponent: React.FC<CreateQuestionComponentProps> = ({ initi
 
     // Para os outros tipos
     const payload: any = { ...data };
+    payload.obrigatorio = obrigatorio;
     if ('opcoes' in data && Array.isArray(data.opcoes)) {
       payload.opcoes = data.opcoes.map(toApiOption);
     }
@@ -235,6 +245,15 @@ const CreateQuestionComponent: React.FC<CreateQuestionComponentProps> = ({ initi
                 control={control as any}
               />
             )}
+            <FormControl isRequired mb={4}>
+              <Checkbox
+                isChecked={obrigatorio}
+                onChange={e => setObrigatorio(e.target.checked)}
+                colorScheme="blue"
+              >
+                Obrigatório?
+              </Checkbox>
+            </FormControl>
           </Stack>
         </Box>
         <Button mt={8} colorScheme="blue" type="submit" isLoading={isPending}>

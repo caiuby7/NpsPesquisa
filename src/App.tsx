@@ -26,6 +26,7 @@ const QuestionsPage = lazy(() => import("./pages/questions"));
 const LoginPage = lazy(() => import("./pages/login"));
 const HomePage = lazy(() => import("./pages/home"));
 const ResponderPage = lazy(() => import("./pages/responder"));
+const DashboardPage = lazy(() => import("./pages/dashboard"));
 
 const queryClient = new QueryClient();
 
@@ -74,6 +75,7 @@ function App() {
                   <Route path="/create-question" element={<ProtectedRoute><CreateQuestionPage /></ProtectedRoute>} />
                   <Route path="/create-question/:id" element={<ProtectedRoute><CreateQuestionWithIdPage /></ProtectedRoute>} />
                   <Route path="/questions" element={<ProtectedRoute><QuestionsPage /></ProtectedRoute>} />
+                  <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
                 </Routes>
               </Suspense>
             </Router>

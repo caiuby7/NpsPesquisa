@@ -13,6 +13,7 @@ export interface QuestionPostParams {
   tipo: QuestionTypeEnum;
   opcoes?: OptionItem[];
   colunas?: OptionItem[];
+  obrigatorio?: boolean;
 }
 
 export interface OptionItem {

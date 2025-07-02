@@ -15,10 +15,13 @@ export function AppHeader() {
     <Box bg="white" px={8} py={4} shadow="sm">
       <Flex justify="space-between" align="center" maxW="1200px" m="auto">
         <Heading size="md" color="#9d2235">Pesquisa NPS</Heading>
-        <HStack spacing={4}>
+        <HStack spacing={6}>
+          <Button variant="ghost" onClick={() => navigate("/home")}>Home</Button>
           <Button variant="ghost" onClick={() => navigate("/formularios")}>Formulários</Button>
+          <Button variant="ghost" onClick={() => navigate("/questions")}>Questões</Button>
           <Button variant="ghost" onClick={() => navigate("/cursos")}>Cursos</Button>
           <Button variant="ghost" onClick={() => navigate("/participantes")}>Participantes</Button>
+          <Button variant="ghost" onClick={() => navigate("/dashboard")}>Dashboard</Button>
           <Button colorScheme="red" variant="outline" onClick={handleLogout}>Sair</Button>
         </HStack>
       </Flex>

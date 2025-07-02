@@ -16,6 +16,7 @@ export default function ExecutionForm({ questionarioId, alunoId, chave }: Execut
   const [loading, setLoading] = useState(true);
   const [responses, setResponses] = useState<Record<number, any>>({});
   const [started, setStarted] = useState(false);
+  const [invalidRequired, setInvalidRequired] = useState<number[]>([]);
 
   useEffect(() => {
     async function loadQuestionario() {
@@ -44,16 +45,39 @@ export default function ExecutionForm({ questionarioId, alunoId, chave }: Execut
   };
 
   const handleSubmit = async () => {
+    // Validação manual de obrigatórios
+    const obrigatoriasNaoRespondidas = questoes.filter((q: QuestionResponse) =>
+      q.obrigatorio &&
+      (responses[q.id] === undefined || responses[q.id] === "" || responses[q.id] === null ||
+        (Array.isArray(responses[q.id]) && responses[q.id].length === 0))
+    );
+    if (obrigatoriasNaoRespondidas.length > 0) {
+      setInvalidRequired(obrigatoriasNaoRespondidas.map((q: QuestionResponse) => q.id));
+      alert("Por favor, responda todas as questões obrigatórias.");
+      return;
+    }
+    setInvalidRequired([]);
     try {
       const respostas = questoes.flatMap((questao: QuestionResponse) => {
         const resposta = responses[questao.id];
         if (questao.tipo === "MultiplaEscolha" || questao.tipo === "MenuSuspenso") {
           return resposta ? [{ questaoId: questao.id, opcaoId: resposta }] : [];
         }
-        if (questao.tipo === "EscalaLinear") {
-          // Procurar a opção correspondente ao valor selecionado
-          const opcao = questao.opcoes?.find((o: OptionItem) => o.valor == String(resposta));
-          return opcao ? [{ questaoId: questao.id, opcaoId: opcao.id }] : [];
+        if (
+          typeof questao.tipo === 'string' && (
+            questao.tipo.toLowerCase() === "escalalinear" ||
+            questao.tipo.toLowerCase() === "linear_scale"
+          )
+        ) {
+          const opcao = questao.opcoes?.find((o: OptionItem) => String(o.valor) === String(resposta));
+          if (resposta !== undefined && resposta !== null && resposta !== "") {
+            return [{
+              questaoId: questao.id,
+              opcaoId: opcao?.id,
+              valor: String(resposta)
+            }];
+          }
+          return [];
         }
         if (questao.tipo === "Matriz") {
           // resposta é um array: cada índice é uma linha, valor é colunaId
@@ -69,6 +93,8 @@ export default function ExecutionForm({ questionarioId, alunoId, chave }: Execut
         return resposta ? [{ questaoId: questao.id, valor: resposta }] : [];
       });
 
+      console.log("Respostas montadas:", respostas);
+
       await api.post(`/Questionario/responder/${chave}`, {
         questionarioId,
         alunoId,
@@ -76,6 +102,14 @@ export default function ExecutionForm({ questionarioId, alunoId, chave }: Execut
       });
 
       alert("Respostas enviadas com sucesso!");
+      // Tentar fechar a janela. Se não for possível, redirecionar para a home
+      setTimeout(() => {
+        if (window.opener) {
+          window.close();
+        } else {
+          window.location.href = "/responder";
+        }
+      }, 100);
     } catch (error) {
       console.error('Erro ao enviar respostas:', error);
       alert("Erro ao enviar respostas. Por favor, tente novamente.");
@@ -124,12 +158,19 @@ export default function ExecutionForm({ questionarioId, alunoId, chave }: Execut
     <Box>
       <Stack gap={8}>
         {questoes.map((questao: QuestionResponse) => (
-          <Box key={questao.id} p={4} borderWidth="1px" borderRadius="lg">
+          <Box
+            key={questao.id}
+            p={4}
+            borderWidth="1px"
+            borderRadius="lg"
+            borderColor={invalidRequired.includes(questao.id) ? "red.500" : undefined}
+          >
             <QuestionTypeExecution
               type={questao.tipo}
-              question={questao}
+              question={{ ...questao, obrigatorio: questao.obrigatorio }}
               value={responses[questao.id]}
               onChange={(value) => handleResponseChange(questao.id, value)}
+              requiredAsterisk={!!questao.obrigatorio}
             />
           </Box>
         ))}

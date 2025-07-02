@@ -134,8 +134,8 @@ const ParticipantesFormularioPage = () => {
       <Box p={8} maxW="900px" m="auto">
         <Stack spacing={4}>
           <Heading size="lg">Participantes do Formulário</Heading>
-          <Box mb={4} p={4} borderWidth="1px" borderRadius="md">
-            <Stack direction={{ base: "column", md: "row" }} gap={4} align="center">
+          <HStack spacing={4} mb={2} align="flex-end">
+            <Box minW="350px" flex={1}>
               <select
                 multiple
                 value={selecionados.map(String)}
@@ -143,7 +143,7 @@ const ParticipantesFormularioPage = () => {
                   const options = Array.from(e.target.selectedOptions).map(opt => Number(opt.value));
                   setSelecionados(options);
                 }}
-                style={{ minWidth: 220, minHeight: 80 }}
+                style={{ width: "100%", minHeight: 100 }}
               >
                 {alunosDisponiveis.map((aluno: any) => (
                   <option key={aluno.id} value={aluno.id}>
@@ -151,14 +151,30 @@ const ParticipantesFormularioPage = () => {
                   </option>
                 ))}
               </select>
-              <Button colorScheme="teal" onClick={handleAdd}>
-                <MdGroupAdd style={{ marginRight: 8 }} /> Adicionar Participante(s)
-              </Button>
-            </Stack>
-          </Box>
-          <Button colorScheme="teal" onClick={onOpen} mb={4}>
-            Importar XLS
-          </Button>
+            </Box>
+            <Button colorScheme="teal" onClick={handleAdd} minW="180px">
+              <MdGroupAdd style={{ marginRight: 8 }} /> Adicionar Participante(s)
+            </Button>
+            <Button colorScheme="teal" onClick={onOpen} minW="140px">
+              Importar XLS
+            </Button>
+            <Button colorScheme="blue" onClick={async () => {
+              try {
+                const response = await api.get(`/Questionario/${id}/exportar-pendentes`, { responseType: 'blob' });
+                const url = window.URL.createObjectURL(new Blob([response.data]));
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `pendentes_questionario_${id}.xlsx`);
+                document.body.appendChild(link);
+                link.click();
+                link.parentNode?.removeChild(link);
+              } catch (e) {
+                alert('Erro ao exportar pendentes.');
+              }
+            }} minW="200px">
+              Exportar Pendentes (Excel)
+            </Button>
+          </HStack>
           <Modal isOpen={isOpen} onClose={onClose}>
             <ModalOverlay />
             <ModalContent>
@@ -177,56 +193,38 @@ const ParticipantesFormularioPage = () => {
               </ModalFooter>
             </ModalContent>
           </Modal>
-          <Table>
-            <Thead>
-              <Tr>
-                <Th>Nome</Th>
-                <Th>Email</Th>
-                <Th>Status</Th>
-                <Th>Ações</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {(Array.isArray(participantes) ? participantes : []).map((participante: Participante) => (
-                <Tr key={participante.id}>
-                  <Td>{participante.nome}</Td>
-                  <Td>{participante.email}</Td>
-                  <Td>
-                    <Badge colorScheme={participante.respondeu ? "green" : "yellow"}>
-                      {participante.respondeu ? "Respondido" : "Pendente"}
-                    </Badge>
-                  </Td>
-                  <Td>
-                    <ButtonGroup>
-                      <IconButton
-                        aria-label="Ver respostas"
-                        icon={<MdVisibility />}
-                        colorScheme="blue"
-                        variant="ghost"
-                        onClick={() => handleViewResponses(participante.id)}
-                        isDisabled={!participante.respondeu}
-                      />
-                      <IconButton
-                        aria-label="Enviar lembrete"
-                        icon={<MdNotifications />}
-                        colorScheme="orange"
-                        variant="ghost"
-                        onClick={() => handleSendReminder(participante.id)}
-                        isDisabled={participante.respondeu}
-                      />
-                      <IconButton
-                        aria-label="Remover participante"
-                        icon={<MdDelete />}
-                        colorScheme="red"
-                        variant="ghost"
-                        onClick={() => handleRemoveParticipant(participante.id)}
-                      />
-                    </ButtonGroup>
-                  </Td>
+          <Box overflowX="auto">
+            <Table>
+              <Thead>
+                <Tr>
+                  <Th>Nome</Th>
+                  <Th>Email</Th>
+                  <Th>Status</Th>
+                  <Th>Ações</Th>
                 </Tr>
-              ))}
-            </Tbody>
-          </Table>
+              </Thead>
+              <Tbody>
+                {(Array.isArray(participantes) ? participantes : []).map((participante: Participante) => (
+                  <Tr key={participante.id}>
+                    <Td>{participante.nome}</Td>
+                    <Td>{participante.email}</Td>
+                    <Td>
+                      <Badge colorScheme={participante.respondeu ? "green" : "yellow"}>
+                        {participante.respondeu ? "RESPONDIDO" : "PENDENTE"}
+                      </Badge>
+                    </Td>
+                    <Td>
+                      <HStack spacing={2}>
+                        <IconButton aria-label="Visualizar" icon={<MdVisibility />} size="sm" onClick={() => handleViewResponses(participante.id)} title="Visualizar respostas" />
+                        <IconButton aria-label="Enviar lembrete" icon={<MdNotifications />} size="sm" onClick={() => handleSendReminder(participante.id)} title="Enviar lembrete" />
+                        <IconButton aria-label="Remover" icon={<MdDelete />} size="sm" onClick={() => handleRemoveParticipant(participante.id)} title="Remover participante" />
+                      </HStack>
+                    </Td>
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+          </Box>
         </Stack>
       </Box>
     </Box>
