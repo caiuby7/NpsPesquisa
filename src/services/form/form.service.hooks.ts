@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "../api";
 
 export interface Form {
-  id: string;
+  id: number;
   titulo: string;
   descricao: string;
   dataInicio: string;
@@ -19,7 +19,7 @@ export function useGetForms() {
   });
 }
 
-export function useGetDashboardData(formId: string) {
+export function useGetDashboardData(formId: number | null) {
   return useQuery({
     queryKey: ["dashboard-data", formId],
     queryFn: async () => {

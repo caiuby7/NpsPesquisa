@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, SimpleGrid, Heading, Text, Divider, List, ListItem, Badge, Select, Spinner, Alert, AlertIcon, Progress } from '@chakra-ui/react';
+import { Box, SimpleGrid, Heading, Text, Divider, List, ListItem, Badge, Select, Spinner, Alert, AlertIcon, Progress, Button, HStack } from '@chakra-ui/react';
 import { AppHeader } from '../../components/header/header.component';
 import { useGetForms, useGetDashboardData } from '../../services/form/form.service.hooks';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
@@ -16,6 +16,9 @@ import {
   Title
 } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
+import domtoimage from 'dom-to-image';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 ChartJS.register(
   CategoryScale,
@@ -71,12 +74,12 @@ const mockCursos = [
 
 // Função utilitária para cor por sentimento
 const sentimentoColor: Record<string, string> = {
-  'Very negative': '#e53935',
-  'Negative': '#ff8a80',
-  'Mixed': '#333',
-  'Positive': '#43a047',
-  'Very positive': '#00e676',
-  'Neutral': '#bdbdbd',
+  'Muito negativo': '#e53935',
+  'Negativo': '#ff8a80',
+  'Misto': '#333',
+  'Positivo': '#43a047',
+  'Muito positivo': '#00e676',
+  'Neutro': '#bdbdbd',
 };
 
 interface Sentimento {
@@ -167,21 +170,24 @@ function BubbleSegmentedChart({ data }: { data: CategoriaSentimento[] }) {
         ))}
       </Box>
       <Box mt={2} mb={4} display="flex" justifyContent="center" gap={4} flexWrap="wrap">
-        <Box display="flex" alignItems="center"><Box w="16px" h="16px" bg="#e53935" borderRadius="50%" mr={1} />Very negative</Box>
-        <Box display="flex" alignItems="center"><Box w="16px" h="16px" bg="#ff8a80" borderRadius="50%" mr={1} />Negative</Box>
-        <Box display="flex" alignItems="center"><Box w="16px" h="16px" bg="#333" borderRadius="50%" mr={1} />Mixed</Box>
-        <Box display="flex" alignItems="center"><Box w="16px" h="16px" bg="#43a047" borderRadius="50%" mr={1} />Positive</Box>
-        <Box display="flex" alignItems="center"><Box w="16px" h="16px" bg="#00e676" borderRadius="50%" mr={1} />Very positive</Box>
-        <Box display="flex" alignItems="center"><Box w="16px" h="16px" bg="#bdbdbd" borderRadius="50%" mr={1} />Neutral</Box>
+        <Box display="flex" alignItems="center"><Box w="16px" h="16px" bg="#e53935" borderRadius="50%" mr={1} />Muito negativo</Box>
+        <Box display="flex" alignItems="center"><Box w="16px" h="16px" bg="#ff8a80" borderRadius="50%" mr={1} />Negativo</Box>
+        <Box display="flex" alignItems="center"><Box w="16px" h="16px" bg="#333" borderRadius="50%" mr={1} />Misto</Box>
+        <Box display="flex" alignItems="center"><Box w="16px" h="16px" bg="#43a047" borderRadius="50%" mr={1} />Positivo</Box>
+        <Box display="flex" alignItems="center"><Box w="16px" h="16px" bg="#00e676" borderRadius="50%" mr={1} />Muito positivo</Box>
+        <Box display="flex" alignItems="center"><Box w="16px" h="16px" bg="#bdbdbd" borderRadius="50%" mr={1} />Neutro</Box>
       </Box>
     </>
-  );
+  ); 
 }
 
 export default function DashboardPage() {
   const { data: forms, isLoading: formsLoading } = useGetForms();
   const [selectedFormId, setSelectedFormId] = useState<string>('');
-  const { data: dashboardData, isLoading: dashboardLoading, error: dashboardError } = useGetDashboardData(selectedFormId);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const [isExcelLoading, setIsExcelLoading] = useState(false);
+  const dashboardFormId = selectedFormId ? Number(selectedFormId) : null;
+  const { data: dashboardData, isLoading: dashboardLoading, error: dashboardError } = useGetDashboardData(dashboardFormId);
 
   // Debug: verificar URL da API
   console.log('API Base URL:', process.env.REACT_APP_API_URL || 'https://apinps.catolicasc.org.br/api');
@@ -414,34 +420,185 @@ export default function DashboardPage() {
   // Renderização dos gráficos de matriz
   const matrizMedias = data.matrizMedias || [];
 
+  // Função de exportação PDF com html2canvas + jsPDF
+  const exportDashboardToPdf = async () => {
+    const dashboardElement = document.getElementById('dashboard-content');
+    if (!dashboardElement) {
+      alert('Elemento do dashboard não encontrado!');
+      return;
+    }
+
+    // Remove limites para capturar tudo
+    const oldMaxHeight = dashboardElement.style.maxHeight;
+    const oldOverflow = dashboardElement.style.overflow;
+    dashboardElement.style.maxHeight = 'none';
+    dashboardElement.style.overflow = 'visible';
+
+    await new Promise(resolve => setTimeout(resolve, 500)); // aguarda reflow
+
+    // Captura o dashboard como imagem
+    const canvas = await html2canvas(dashboardElement, {
+      backgroundColor: '#fff',
+      useCORS: true,
+      scale: 2,
+    });
+    const imgData = canvas.toDataURL('image/png');
+
+    // Log para depuração
+    console.log('imgData:', imgData);
+    console.log('imgData length:', imgData.length);
+    if (!imgData.startsWith('data:image/png')) {
+      alert('Falha ao capturar imagem do dashboard! O PDF não será gerado.');
+      return;
+    }
+
+    // Restaura estilos antigos
+    dashboardElement.style.maxHeight = oldMaxHeight;
+    dashboardElement.style.overflow = oldOverflow;
+
+    // Parâmetros do PDF
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+    });
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+
+    // Dimensões da imagem
+    const imgProps = pdf.getImageProperties(imgData);
+    const imgWidth = pdfWidth;
+    const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+
+    // Paginação
+    let position = 0;
+    let pageHeightLeft = imgHeight;
+
+    // Adiciona a primeira página
+    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+
+    // Adiciona páginas extras se necessário
+    while (pageHeightLeft > pdfHeight) {
+      position = position - pdfHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      pageHeightLeft -= pdfHeight;
+    }
+
+    pdf.save('dashboard.pdf');
+  };
+
+  // Função para exportar PDF via backend
+  const exportDashboardBackendPdf = async () => {
+    setIsPdfLoading(true);
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://apinps.catolicasc.org.br/api'}/report/dashboard-pdf`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+        },
+        body: JSON.stringify({ questionarioId: Number(selectedFormId) }),
+      });
+      if (!response.ok) {
+        alert('Erro ao gerar PDF no backend');
+        return;
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'dashboard.pdf';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      alert('Erro ao gerar PDF: ' + error);
+    } finally {
+      setIsPdfLoading(false);
+    }
+  };
+
+  // Função para exportar Excel via backend
+  const exportDashboardExcel = async () => {
+    setIsExcelLoading(true);
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://apinps.catolicasc.org.br/api'}/report/dashboard-excel`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+        },
+        body: JSON.stringify({ questionarioId: Number(selectedFormId) }),
+      });
+      if (!response.ok) {
+        alert('Erro ao gerar Excel no backend');
+        return;
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'dashboard.xlsx';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      alert('Erro ao gerar Excel: ' + error);
+    } finally {
+      setIsExcelLoading(false);
+    }
+  };
+
   return (
     <>
       <AppHeader />
       <Box p={3}>
-        <Box mb={4} maxW="600px" w="100%">
-          <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.600">
-            Selecione o formulário para visualizar o dashboard:
-          </Text>
-          <Select
-            placeholder="Escolha um formulário"
-            value={selectedFormId}
-            onChange={(e) => setSelectedFormId(e.target.value)}
-            width="100%"
-            bg="white"
-            isDisabled={formsLoading}
-          >
-            {forms?.map((form) => (
-              <option key={form.id} value={form.id}>
-                {form.descricao || form.titulo}
-              </option>
-            ))}
-          </Select>
+        <Box mb={4} maxW="1200px" w="100%">
+          <HStack spacing={4} alignItems="flex-end">
+            <Box flex={1}>
+              <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.600">
+                Selecione o formulário para visualizar o dashboard:
+              </Text>
+              <Select
+                placeholder="Escolha um formulário"
+                value={selectedFormId}
+                onChange={(e) => setSelectedFormId(e.target.value)}
+                width="100%"
+                bg="white"
+                isDisabled={formsLoading}
+              >
+                {forms?.map((form) => (
+                  <option key={form.id} value={form.id}>
+                    {form.descricao || form.titulo}
+                  </option>
+                ))}
+              </Select>
+            </Box>
+            {selectedFormId && (
+              <HStack spacing={2}>
+                <Button
+                  colorScheme="blue"
+                  onClick={exportDashboardBackendPdf}
+                  size="lg"
+                  isLoading={isPdfLoading}
+                  loadingText="Gerando PDF..."
+                  disabled={isPdfLoading || isExcelLoading}
+                >
+                  Exportar PDF
+                </Button>
+                <Button
+                  colorScheme="orange"
+                  onClick={exportDashboardExcel}
+                  size="lg"
+                  isLoading={isExcelLoading}
+                  loadingText="Gerando Excel..."
+                  disabled={isPdfLoading || isExcelLoading}
+                >
+                  Exportar Excel
+                </Button>
+              </HStack>
+            )}
+          </HStack>
         </Box>
-        {selectedFormId && (
-          <Heading size="md" mt={2} mb={4}>
-            {forms?.find(f => f.id === selectedFormId)?.descricao || forms?.find(f => f.id === selectedFormId)?.titulo}
-          </Heading>
-        )}
         
         <Heading mb={4}>Dashboard</Heading>
         
@@ -459,7 +616,7 @@ export default function DashboardPage() {
               <Text mt={4}>Carregando dados do dashboard...</Text>
             </Box>
           ) : (
-            <>
+            <Box id="dashboard-content" style={{ maxWidth: '1200px', width: '100%', maxHeight: '1800px', overflow: 'auto', background: '#fff' }}>
               {/* Tendência de Respostas */}
               <Box mb={6} bg="white" borderRadius="lg" boxShadow="md" p={6}>
                 <Text fontSize="lg" fontWeight="bold" mb={2}>Tendência de Respostas por Dia</Text>
@@ -713,7 +870,7 @@ export default function DashboardPage() {
                   </List>
                 </Box>
               )}
-            </>
+            </Box>
           )
         ) : (
           <Box textAlign="center" py={20}>

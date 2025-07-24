@@ -134,7 +134,7 @@ const ParticipantesFormularioPage = () => {
       <Box p={8} maxW="900px" m="auto">
         <Stack spacing={4}>
           <Heading size="lg">Participantes do Formulário</Heading>
-          <HStack spacing={4} mb={2} align="flex-end">
+          <HStack spacing={4} mb={2} align="flex-end" flexWrap="wrap">
             <Box minW="350px" flex={1}>
               <select
                 multiple
@@ -173,6 +173,22 @@ const ParticipantesFormularioPage = () => {
               }
             }} minW="200px">
               Exportar Pendentes (Excel)
+            </Button>
+            <Button colorScheme="green" onClick={async () => {
+              try {
+                const response = await api.get(`/Questionario/${id}/exportar-respondentes`, { responseType: 'blob' });
+                const url = window.URL.createObjectURL(new Blob([response.data]));
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `respondentes_questionario_${id}.xlsx`);
+                document.body.appendChild(link);
+                link.click();
+                link.parentNode?.removeChild(link);
+              } catch (e) {
+                alert('Erro ao exportar respondentes.');
+              }
+            }} minW="200px">
+              Exportar Respondentes (XLS)
             </Button>
           </HStack>
           <Modal isOpen={isOpen} onClose={onClose}>
