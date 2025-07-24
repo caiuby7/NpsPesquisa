@@ -12,8 +12,12 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configura licença Community do QuestPDF
+QuestPDF.Settings.License = LicenseType.Community;
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -113,6 +117,7 @@ builder.Services.AddDbContext<NpsDbContext>(options =>
 
 // Add Services
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ReportService>();
 
 // Registrar o EmailService
 var smtpServer = builder.Configuration["Email:SmtpServer"] ?? throw new InvalidOperationException("Email:SmtpServer não configurado");

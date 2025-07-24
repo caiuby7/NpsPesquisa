@@ -179,8 +179,18 @@ namespace NpsPesquisa.Api.Controllers
             var totalConvites = await _context.ConvitesQuestionarios
                 .CountAsync(c => c.QuestionarioId == id);
 
-            var convitesRespondidos = await _context.ConvitesQuestionarios
-                .CountAsync(c => c.QuestionarioId == id && c.Respondido);
+            // Buscar todos os convites respondidos para este questionário
+            var convitesRespondido = await _context.ConvitesQuestionarios
+                .Where(c => c.QuestionarioId == id && c.Respondido)
+                .Select(c => c.AlunoId)
+                .ToListAsync();
+
+            // Contar respostas APENAS de quem respondeu via convite
+            var convitesRespondidos = await _context.Respostas
+                 .Where(r => r.QuestionarioId == id && convitesRespondido.Contains(r.AlunoId))
+                 .Select(r => r.AlunoId)
+                    .Distinct()
+                    .CountAsync();
 
             var convitesPendentes = totalConvites - convitesRespondidos;
 
@@ -574,7 +584,7 @@ namespace NpsPesquisa.Api.Controllers
 
             }
 
-            
+
             return NoContent();
         }
 
@@ -1092,13 +1102,16 @@ namespace NpsPesquisa.Api.Controllers
                 .Select(c => new { c.AlunoId, c.QuestionarioId })
                 .ToListAsync();
 
+            // Extrair apenas os IDs dos alunos que responderam
+            var alunosRespondidos = convitesRespondidos.Select(c => c.AlunoId).ToList();
+
             // Buscar todas as respostas do questionário APENAS de quem respondeu via convite
             var respostas = await _context.Respostas
                 .Include(r => r.RespostasQuestoes)
                     .ThenInclude(rq => rq.Questao)
                 .Include(r => r.Aluno)
                     .ThenInclude(a => a.Curso)
-                .Where(r => r.QuestionarioId == id && convitesRespondidos.Any(c => c.AlunoId == r.AlunoId && c.QuestionarioId == r.QuestionarioId))
+                .Where(r => r.QuestionarioId == id && alunosRespondidos.Contains(r.AlunoId))
                 .OrderBy(r => r.DataResposta)
                 .ToListAsync();
 
@@ -1179,7 +1192,8 @@ namespace NpsPesquisa.Api.Controllers
                 .ToList();
 
             var valoresSatisfacao = questoesSatisfacaoMultipla
-                .Select(rq => {
+                .Select(rq =>
+                {
                     var opcao = opcoesSatisfacao.FirstOrDefault(o => o.Id == rq.OpcaoId);
                     return opcao != null ? (opcao.Peso != 0 ? opcao.Peso : (opcoesSatisfacao.IndexOf(opcao) + 1)) : (int?)null;
                 })
@@ -1205,7 +1219,8 @@ namespace NpsPesquisa.Api.Controllers
             var satisfacaoPorCurso = respostasPorCurso.Select(g =>
             {
                 var total = g.Count();
-                int GetPeso(int? opcaoId) {
+                int GetPeso(int? opcaoId)
+                {
                     var opcao = opcoesSatisfacaoCurso.FirstOrDefault(o => o.Id == opcaoId);
                     return opcao != null ? (opcao.Peso != 0 ? opcao.Peso : (opcoesSatisfacaoCurso.IndexOf(opcao) + 1)) : 0;
                 }
@@ -1224,7 +1239,8 @@ namespace NpsPesquisa.Api.Controllers
                     nemSatisfeitoNemInsatisfeito,
                     satisfeito,
                     muitoSatisfeito,
-                    percentuais = new {
+                    percentuais = new
+                    {
                         muitoInsatisfeito = total > 0 ? Math.Round((double)muitoInsatisfeito / total * 100, 1) : 0,
                         insatisfeito = total > 0 ? Math.Round((double)insatisfeito / total * 100, 1) : 0,
                         nemSatisfeitoNemInsatisfeito = total > 0 ? Math.Round((double)nemSatisfeitoNemInsatisfeito / total * 100, 1) : 0,
@@ -1239,7 +1255,8 @@ namespace NpsPesquisa.Api.Controllers
             var comentariosQ19 = respostas
                 .SelectMany(r => r.RespostasQuestoes)
                 .Where(rq => rq.QuestaoId == 19 && !string.IsNullOrEmpty(rq.Valor))
-                .Select(rq => new {
+                .Select(rq => new
+                {
                     texto = rq.Valor,
                     curso = rq.Resposta.Aluno.Curso.Nome,
                     nota = rq.Resposta.RespostasQuestoes
@@ -1251,7 +1268,7 @@ namespace NpsPesquisa.Api.Controllers
                         .Where(rq2 => rq2.Questao.Tipo == TipoQuestao.EscalaLinear && rq2.Valor != null)
                         .Select(rq2 => int.Parse(rq2.Valor))
                         .DefaultIfEmpty(0)
-                        .Average() >= 9 ? "Promotor" : 
+                        .Average() >= 9 ? "Promotor" :
                         rq.Resposta.RespostasQuestoes
                         .Where(rq2 => rq2.Questao.Tipo == TipoQuestao.EscalaLinear && rq2.Valor != null)
                         .Select(rq2 => int.Parse(rq2.Valor))
@@ -1263,7 +1280,8 @@ namespace NpsPesquisa.Api.Controllers
             var comentariosQ23 = respostas
                 .SelectMany(r => r.RespostasQuestoes)
                 .Where(rq => rq.QuestaoId == 23 && !string.IsNullOrEmpty(rq.Valor))
-                .Select(rq => new {
+                .Select(rq => new
+                {
                     texto = rq.Valor,
                     curso = rq.Resposta.Aluno.Curso.Nome,
                     nota = rq.Resposta.RespostasQuestoes
@@ -1275,7 +1293,7 @@ namespace NpsPesquisa.Api.Controllers
                         .Where(rq2 => rq2.Questao.Tipo == TipoQuestao.EscalaLinear && rq2.Valor != null)
                         .Select(rq2 => int.Parse(rq2.Valor))
                         .DefaultIfEmpty(0)
-                        .Average() >= 9 ? "Promotor" : 
+                        .Average() >= 9 ? "Promotor" :
                         rq.Resposta.RespostasQuestoes
                         .Where(rq2 => rq2.Questao.Tipo == TipoQuestao.EscalaLinear && rq2.Valor != null)
                         .Select(rq2 => int.Parse(rq2.Valor))
@@ -1287,20 +1305,24 @@ namespace NpsPesquisa.Api.Controllers
             // Cálculo das médias das questões do tipo matriz (usando Peso)
             var matrizMedias = questionario.QuestoesQuestionarios
                 .Where(qq => qq.Questao.Tipo == TipoQuestao.Matriz)
-                .Select(qq => {
+                .Select(qq =>
+                {
                     var colunas = qq.Questao.Opcoes.Where(o => o.EhColuna).OrderBy(o => o.Ordem).ToList();
-                    return new {
+                    return new
+                    {
                         questaoId = qq.Questao.Id,
                         questaoTexto = qq.Questao.Texto,
                         linhas = qq.Questao.Opcoes
                             .Where(o => !o.EhColuna)
-                            .Select(linha => new {
+                            .Select(linha => new
+                            {
                                 afirmacao = linha.Texto,
                                 media = Math.Round(
                                     respostas
                                         .SelectMany(r => r.RespostasQuestoes)
                                         .Where(rq => rq.QuestaoId == qq.Questao.Id && rq.OpcaoId == linha.Id && rq.Valor != null)
-                                        .Select(rq => {
+                                        .Select(rq =>
+                                        {
                                             var col = colunas.FirstOrDefault(c => c.Texto == rq.Valor);
                                             return col != null ? (double?)col.Peso : null;
                                         })
@@ -1446,8 +1468,6 @@ namespace NpsPesquisa.Api.Controllers
                     satisfeito = respostasPorOpcaoSatisfacao.Where(x => x.peso == 4).Sum(x => x.percentual),
                     muitoSatisfeito = respostasPorOpcaoSatisfacao.Where(x => x.peso == 5).Sum(x => x.percentual)
                 },
-                satisfacaoPorOpcao = respostasPorOpcaoSatisfacao,
-                satisfacaoCursoDetalhamento = satisfacaoCursoDetalhamento,
                 satisfacaoPorCurso = satisfacaoPorCurso,
                 comentariosQ19 = comentariosQ19,
                 comentariosQ23 = comentariosQ23,
@@ -1502,9 +1522,378 @@ namespace NpsPesquisa.Api.Controllers
             }
         }
 
+        [HttpGet("{id}/exportar-respondentes")]
+        [Authorize(Roles = "Administrador,Coordenacao")]
+        public async Task<IActionResult> ExportarRespondentes(int id)
+        {
+            var convitesRespondidos = await _context.ConvitesQuestionarios
+                .Include(c => c.Aluno)
+                .Where(c => c.QuestionarioId == id && c.Respondido)
+                .ToListAsync();
+
+            if (!convitesRespondidos.Any())
+                return NotFound(new { message = "Nenhum participante respondeu este questionário." });
+
+            using (var workbook = new ClosedXML.Excel.XLWorkbook())
+            {
+                var worksheet = workbook.Worksheets.Add("Respondentes");
+                worksheet.Cell(1, 1).Value = "Nome Completo";
+                worksheet.Cell(1, 2).Value = "E-mail";
+                worksheet.Cell(1, 3).Value = "Matrícula";
+
+                for (int i = 0; i < convitesRespondidos.Count; i++)
+                {
+                    worksheet.Cell(i + 2, 1).Value = convitesRespondidos[i].Aluno.Nome;
+                    worksheet.Cell(i + 2, 2).Value = convitesRespondidos[i].Aluno.EmailInstitucional ?? convitesRespondidos[i].Aluno.EmailPessoal ?? "";
+                    worksheet.Cell(i + 2, 3).Value = convitesRespondidos[i].Aluno.Matricula ?? "";
+                }
+
+                worksheet.Columns().AdjustToContents();
+
+                using (var stream = new System.IO.MemoryStream())
+                {
+                    workbook.SaveAs(stream);
+                    stream.Position = 0;
+                    return File(
+                        stream.ToArray(),
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        $"respondentes_questionario_{id}.xlsx"
+                    );
+                }
+            }
+        }
+
+        [HttpGet("{id}/relatorio-pdf")]
+        [Authorize(Roles = "Administrador,Coordenacao")]
+        public async Task<IActionResult> GerarRelatorioPdf(int id)
+        {
+            var questionario = await _context.Questionarios.FindAsync(id);
+            if (questionario == null)
+                return NotFound(new { message = "Questionário não encontrado" });
+
+            // Buscar dados do dashboard
+            var dashboardData = await GetDashboardDataInternal(id);
+            if (dashboardData == null)
+                return NotFound(new { message = "Nenhum dado encontrado para este questionário" });
+
+            // Gerar relatório PDF
+            var reportService = HttpContext.RequestServices.GetRequiredService<ReportService>();
+            var pdfBytes = reportService.GeneratePdfReport(dashboardData, questionario.Titulo);
+
+            return File(
+                pdfBytes,
+                "application/pdf",
+                $"dashboard-{id}-{DateTime.Now:yyyyMMdd}.pdf"
+            );
+        }
+
+        [HttpGet("{id}/relatorio-word")]
+        [Authorize(Roles = "Administrador,Coordenacao")]
+        public async Task<IActionResult> GerarRelatorioWord(int id)
+        {
+            var questionario = await _context.Questionarios.FindAsync(id);
+            if (questionario == null)
+                return NotFound(new { message = "Questionário não encontrado" });
+
+            // Buscar dados do dashboard
+            var dashboardData = await GetDashboardDataInternal(id);
+            if (dashboardData == null)
+                return NotFound(new { message = "Nenhum dado encontrado para este questionário" });
+
+            // Gerar relatório Word
+            var reportService = HttpContext.RequestServices.GetRequiredService<ReportService>();
+            var wordBytes = reportService.GenerateWordReport(dashboardData, questionario.Titulo);
+
+            return File(
+                wordBytes,
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                $"dashboard-{id}-{DateTime.Now:yyyyMMdd}.docx"
+            );
+        }
+
+        private async Task<object> GetDashboardDataInternal(int id)
+        {
+            var questionario = await _context.Questionarios
+                .Include(q => q.QuestoesQuestionarios)
+                    .ThenInclude(qq => qq.Questao)
+                        .ThenInclude(q => q.Opcoes)
+                .FirstOrDefaultAsync(q => q.Id == id);
+            if (questionario == null)
+                return null;
+
+            // Buscar todos os convites respondidos para este questionário
+            var convitesRespondidos = await _context.ConvitesQuestionarios
+                .Where(c => c.QuestionarioId == id && c.Respondido)
+                .Select(c => new { c.AlunoId, c.QuestionarioId })
+                .ToListAsync();
+
+            // Extrair apenas os IDs dos alunos que responderam
+            var alunosRespondidos = convitesRespondidos.Select(c => c.AlunoId).ToList();
+
+            // Buscar todas as respostas do questionário APENAS de quem respondeu via convite
+            var respostas = await _context.Respostas
+                .Include(r => r.RespostasQuestoes)
+                    .ThenInclude(rq => rq.Questao)
+                .Include(r => r.Aluno)
+                    .ThenInclude(a => a.Curso)
+                .Where(r => r.QuestionarioId == id && alunosRespondidos.Contains(r.AlunoId))
+                .OrderBy(r => r.DataResposta)
+                .ToListAsync();
+
+            if (!respostas.Any())
+                return null;
+
+            // Tendência de respostas por dia
+            var tendenciaRespostas = respostas
+                .GroupBy(r => r.DataResposta.Date)
+                .OrderBy(g => g.Key)
+                .Select(g => new
+                {
+                    data = g.Key.ToString("MMM dd"),
+                    quantidade = g.Count()
+                })
+                .ToList();
+
+            // Calcular NPS (Net Promoter Score)
+            var questoesNPS = respostas
+                .SelectMany(r => r.RespostasQuestoes)
+                .Where(rq => rq.Questao.Tipo == TipoQuestao.EscalaLinear && rq.Valor != null)
+                .ToList();
+
+            var npsScores = questoesNPS
+                .Select(rq => int.Parse(rq.Valor))
+                .ToList();
+
+            var promotores = npsScores.Count(s => s >= 9 && s <= 10);
+            var detratores = npsScores.Count(s => s >= 0 && s <= 6);
+            var passivos = npsScores.Count(s => s >= 7 && s <= 8);
+            var totalNPS = npsScores.Count;
+
+            var npsGeral = totalNPS > 0 ? Math.Round(((double)(promotores - detratores) / totalNPS) * 100, 0) : 0;
+
+            // Cálculo da média de satisfação para questão múltipla escolha (exemplo QuestaoId = 22)
+            var questaoSatisfacao = _context.Questoes
+                .Include(q => q.Opcoes)
+                .FirstOrDefault(q => q.Id == 21);
+
+            var opcoesSatisfacao = questaoSatisfacao?.Opcoes.OrderBy(o => o.Ordem).ToList() ?? new List<OpcaoQuestao>();
+
+            var questoesSatisfacaoMultipla = respostas
+                .SelectMany(r => r.RespostasQuestoes)
+                .Where(rq => rq.QuestaoId == 21 && rq.OpcaoId != null)
+                .ToList();
+
+            // Agrupa as respostas por opção para mostrar no gráfico
+            var respostasPorOpcaoSatisfacao = questoesSatisfacaoMultipla
+                .GroupBy(rq => rq.OpcaoId)
+                .Select(g =>
+                {
+                    var opcao = opcoesSatisfacao.FirstOrDefault(o => o.Id == g.Key);
+                    var peso = opcao != null ? opcao.Peso : 0;
+                    return new
+                    {
+                        opcaoId = g.Key,
+                        opcaoNome = opcao?.Texto ?? "",
+                        peso = peso,
+                        quantidade = g.Count(),
+                        percentual = questoesSatisfacaoMultipla.Count > 0 ? Math.Round((double)g.Count() / questoesSatisfacaoMultipla.Count * 100, 1) : 0
+                    };
+                })
+                .OrderBy(x => x.peso)
+                .ToList();
+
+            var valoresSatisfacao = questoesSatisfacaoMultipla
+                .Select(rq =>
+                {
+                    var opcao = opcoesSatisfacao.FirstOrDefault(o => o.Id == rq.OpcaoId);
+                    return opcao != null ? (opcao.Peso != 0 ? opcao.Peso : (opcoesSatisfacao.IndexOf(opcao) + 1)) : (int?)null;
+                })
+                .Where(v => v.HasValue)
+                .Select(v => v.Value)
+                .ToList();
+
+            double mediaSatisfacao = valoresSatisfacao.Count > 0 ? Math.Round(valoresSatisfacao.Average(), 1) : 0;
+
+            // Satisfação por curso (questão 22)
+            var questaoSatisfacaoCurso = _context.Questoes
+                .Include(q => q.Opcoes)
+                .FirstOrDefault(q => q.Id == 22);
+
+            var opcoesSatisfacaoCurso = questaoSatisfacaoCurso?.Opcoes.OrderBy(o => o.Ordem).ToList() ?? new List<OpcaoQuestao>();
+
+            var respostasPorCurso = respostas
+                .SelectMany(r => r.RespostasQuestoes, (r, rq) => new { r, rq })
+                .Where(x => x.rq.QuestaoId == 22 && x.rq.OpcaoId != null && x.r.Aluno?.Curso != null)
+                .GroupBy(x => x.r.Aluno.Curso.Nome)
+                .ToList();
+
+            var satisfacaoPorCurso = respostasPorCurso.Select(g =>
+            {
+                var total = g.Count();
+                int GetPeso(int? opcaoId)
+                {
+                    var opcao = opcoesSatisfacaoCurso.FirstOrDefault(o => o.Id == opcaoId);
+                    return opcao != null ? (opcao.Peso != 0 ? opcao.Peso : (opcoesSatisfacaoCurso.IndexOf(opcao) + 1)) : 0;
+                }
+                var muitoInsatisfeito = g.Count(x => GetPeso(x.rq.OpcaoId) == 1);
+                var insatisfeito = g.Count(x => GetPeso(x.rq.OpcaoId) == 2);
+                var nemSatisfeitoNemInsatisfeito = g.Count(x => GetPeso(x.rq.OpcaoId) == 3);
+                var satisfeito = g.Count(x => GetPeso(x.rq.OpcaoId) == 4);
+                var muitoSatisfeito = g.Count(x => GetPeso(x.rq.OpcaoId) == 5);
+                double media = total > 0 ? Math.Round((g.Select(x => GetPeso(x.rq.OpcaoId)).Where(p => p > 0).DefaultIfEmpty(0).Average()), 1) : 0;
+                return new
+                {
+                    curso = g.Key,
+                    total,
+                    muitoInsatisfeito,
+                    insatisfeito,
+                    nemSatisfeitoNemInsatisfeito,
+                    satisfeito,
+                    muitoSatisfeito,
+                    percentuais = new
+                    {
+                        muitoInsatisfeito = total > 0 ? Math.Round((double)muitoInsatisfeito / total * 100, 1) : 0,
+                        insatisfeito = total > 0 ? Math.Round((double)insatisfeito / total * 100, 1) : 0,
+                        nemSatisfeitoNemInsatisfeito = total > 0 ? Math.Round((double)nemSatisfeitoNemInsatisfeito / total * 100, 1) : 0,
+                        satisfeito = total > 0 ? Math.Round((double)satisfeito / total * 100, 1) : 0,
+                        muitoSatisfeito = total > 0 ? Math.Round((double)muitoSatisfeito / total * 100, 1) : 0
+                    },
+                    satisfacao = media
+                };
+            }).ToList();
+
+            // Comentários das questões 19 e 23
+            var comentariosQ19 = respostas
+                .SelectMany(r => r.RespostasQuestoes)
+                .Where(rq => rq.QuestaoId == 19 && !string.IsNullOrEmpty(rq.Valor))
+                .Select(rq => new
+                {
+                    texto = rq.Valor,
+                    curso = rq.Resposta.Aluno.Curso.Nome,
+                    nota = rq.Resposta.RespostasQuestoes
+                        .Where(rq2 => rq2.Questao.Tipo == TipoQuestao.EscalaLinear && rq2.Valor != null)
+                        .Select(rq2 => int.Parse(rq2.Valor))
+                        .DefaultIfEmpty(0)
+                        .Average(),
+                    tipo = rq.Resposta.RespostasQuestoes
+                        .Where(rq2 => rq2.Questao.Tipo == TipoQuestao.EscalaLinear && rq2.Valor != null)
+                        .Select(rq2 => int.Parse(rq2.Valor))
+                        .DefaultIfEmpty(0)
+                        .Average() >= 9 ? "Promotor" :
+                        rq.Resposta.RespostasQuestoes
+                        .Where(rq2 => rq2.Questao.Tipo == TipoQuestao.EscalaLinear && rq2.Valor != null)
+                        .Select(rq2 => int.Parse(rq2.Valor))
+                        .DefaultIfEmpty(0)
+                        .Average() <= 6 ? "Detrator" : "Passivo"
+                })
+                .ToList();
+
+            var comentariosQ23 = respostas
+                .SelectMany(r => r.RespostasQuestoes)
+                .Where(rq => rq.QuestaoId == 23 && !string.IsNullOrEmpty(rq.Valor))
+                .Select(rq => new
+                {
+                    texto = rq.Valor,
+                    curso = rq.Resposta.Aluno.Curso.Nome,
+                    nota = rq.Resposta.RespostasQuestoes
+                        .Where(rq2 => rq2.Questao.Tipo == TipoQuestao.EscalaLinear && rq2.Valor != null)
+                        .Select(rq2 => int.Parse(rq2.Valor))
+                        .DefaultIfEmpty(0)
+                        .Average(),
+                    tipo = rq.Resposta.RespostasQuestoes
+                        .Where(rq2 => rq2.Questao.Tipo == TipoQuestao.EscalaLinear && rq2.Valor != null)
+                        .Select(rq2 => int.Parse(rq2.Valor))
+                        .DefaultIfEmpty(0)
+                        .Average() >= 9 ? "Promotor" :
+                        rq.Resposta.RespostasQuestoes
+                        .Where(rq2 => rq2.Questao.Tipo == TipoQuestao.EscalaLinear && rq2.Valor != null)
+                        .Select(rq2 => int.Parse(rq2.Valor))
+                        .DefaultIfEmpty(0)
+                        .Average() <= 6 ? "Detrator" : "Passivo"
+                })
+                .ToList();
+
+            return new
+            {
+                totalRespostas = respostas.Count,
+                tendenciaRespostas = tendenciaRespostas,
+                npsGeral = npsGeral,
+                npsDetalhamento = new
+                {
+                    passivo = totalNPS > 0 ? Math.Round((double)passivos / totalNPS * 100, 0) : 0,
+                    promotor = totalNPS > 0 ? Math.Round((double)promotores / totalNPS * 100, 0) : 0,
+                    detrator = totalNPS > 0 ? Math.Round((double)detratores / totalNPS * 100, 0) : 0
+                },
+                satisfacao = mediaSatisfacao,
+                satisfacaoDetalhamento = new
+                {
+                    muitoInsatisfeito = respostasPorOpcaoSatisfacao.Where(x => x.peso == 1).Sum(x => x.percentual),
+                    insatisfeito = respostasPorOpcaoSatisfacao.Where(x => x.peso == 2).Sum(x => x.percentual),
+                    nemInsatisfeitoNemSatisfeito = respostasPorOpcaoSatisfacao.Where(x => x.peso == 3).Sum(x => x.percentual),
+                    satisfeito = respostasPorOpcaoSatisfacao.Where(x => x.peso == 4).Sum(x => x.percentual),
+                    muitoSatisfeito = respostasPorOpcaoSatisfacao.Where(x => x.peso == 5).Sum(x => x.percentual)
+                },
+                satisfacaoPorCurso = satisfacaoPorCurso,
+                comentariosQ19 = comentariosQ19,
+                comentariosQ23 = comentariosQ23
+            };
+        }
+
         private bool QuestionarioExists(int id)
         {
             return _context.Questionarios.Any(e => e.Id == id);
+        }
+
+        [HttpPost("{id}/relatorio-pdf-html")]
+        [Authorize(Roles = "Administrador,Coordenacao")]
+        public async Task<IActionResult> GerarRelatorioPdfHtml(int id)
+        {
+            var questionario = await _context.Questionarios.FindAsync(id);
+            if (questionario == null)
+                return NotFound(new { message = "Questionário não encontrado" });
+
+            var form = Request.Form;
+            var htmlContent = form["htmlContent"].FirstOrDefault();
+            var formTitle = form["formTitle"].FirstOrDefault() ?? questionario.Titulo;
+
+            if (string.IsNullOrEmpty(htmlContent))
+                return BadRequest(new { message = "Conteúdo HTML não fornecido" });
+
+            // Gerar relatório PDF com HTML
+            var reportService = HttpContext.RequestServices.GetRequiredService<ReportService>();
+            var pdfBytes = reportService.GeneratePdfReportFromHtml(htmlContent, formTitle);
+
+            return File(
+                pdfBytes,
+                "application/pdf",
+                $"dashboard-{id}-{DateTime.Now:yyyyMMdd}.pdf"
+            );
+        }
+
+        [HttpPost("{id}/relatorio-word-html")]
+        [Authorize(Roles = "Administrador,Coordenacao")]
+        public async Task<IActionResult> GerarRelatorioWordHtml(int id)
+        {
+            var questionario = await _context.Questionarios.FindAsync(id);
+            if (questionario == null)
+                return NotFound(new { message = "Questionário não encontrado" });
+
+            var form = Request.Form;
+            var htmlContent = form["htmlContent"].FirstOrDefault();
+            var formTitle = form["formTitle"].FirstOrDefault() ?? questionario.Titulo;
+
+            if (string.IsNullOrEmpty(htmlContent))
+                return BadRequest(new { message = "Conteúdo HTML não fornecido" });
+
+            // Gerar relatório Word com HTML
+            var reportService = HttpContext.RequestServices.GetRequiredService<ReportService>();
+            var wordBytes = reportService.GenerateWordReportFromHtml(htmlContent, formTitle);
+
+            return File(
+                wordBytes,
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                $"dashboard-{id}-{DateTime.Now:yyyyMMdd}.docx"
+            );
         }
     }
 }
