@@ -618,7 +618,7 @@ namespace NpsPesquisa.Api.Controllers
                                         legendRow.ConstantItem(16); // Espaço entre
 
                                         // Muito Satisfeito
-                                        legendRow.ConstantItem(12).Background(Colors.Blue.Medium).Height(12).AlignMiddle();
+                                        legendRow.ConstantItem(12).Background(Colors.Green.Medium).Height(12).AlignMiddle();
                                         legendRow.ConstantItem(4);
                                         legendRow.ConstantItem(50).Element(container =>
                                             container.AlignMiddle().Text("Muito Satisfeito").FontSize(8)
@@ -689,7 +689,7 @@ namespace NpsPesquisa.Api.Controllers
                                         legendRow.ConstantItem(16); // Espaço entre
 
                                         // Muito Satisfeito
-                                        legendRow.ConstantItem(12).Background(Colors.Blue.Medium).Height(12).AlignMiddle();
+                                        legendRow.ConstantItem(12).Background(Colors.Green.Medium).Height(12).AlignMiddle();
                                         legendRow.ConstantItem(4);
                                         legendRow.ConstantItem(50).Element(container =>
                                             container.AlignMiddle().Text("Muito Satisfeito").FontSize(8)
@@ -1308,7 +1308,9 @@ namespace NpsPesquisa.Api.Controllers
                 // Aba 5: Dados Satisfação
                 var satisfacaoSheet = workbook.Worksheets.Add("Satisfação Geral");
                 satisfacaoSheet.Cell(1, 1).Value = "Satisfação Geral";
-                satisfacaoSheet.Cell(1, 2).Value = dashboardData.Satisfacao;
+                // Converter para percentual igual ao frontend
+                double satisfacaoGeralPercentual = Math.Round((dashboardData.Satisfacao / 5) * 1000) / 10;
+                satisfacaoSheet.Cell(1, 2).Value = satisfacaoGeralPercentual;
                 satisfacaoSheet.Cell(1, 1).Style.Font.Bold = true;
                 satisfacaoSheet.Cell(1, 2).Style.Font.Bold = true;
                 
@@ -1363,7 +1365,9 @@ namespace NpsPesquisa.Api.Controllers
                     satisfacaoCursoSheet.Cell(i + 2, 5).Value = curso.NemSatisfeitoNemInsatisfeito;
                     satisfacaoCursoSheet.Cell(i + 2, 6).Value = curso.Satisfeito;
                     satisfacaoCursoSheet.Cell(i + 2, 7).Value = curso.MuitoSatisfeito;
-                    satisfacaoCursoSheet.Cell(i + 2, 8).Value = curso.Satisfacao;
+                    // Converter para percentual igual ao frontend
+                    double satisfacaoPercentual = Math.Round((curso.Satisfacao / 5) * 1000) / 10;
+                    satisfacaoCursoSheet.Cell(i + 2, 8).Value = satisfacaoPercentual;
                 }
 
                 satisfacaoCursoSheet.Columns().AdjustToContents();
@@ -1676,7 +1680,14 @@ namespace NpsPesquisa.Api.Controllers
 
             // Dados
             var valores = new[] { nps.MuitoInsatisfeito, nps.Insatisfeito, nps.NemInsatisfeitoNemSatisfeito, nps.Satisfeito, nps.MuitoSatisfeito };
-            var cores = new[] {  SKColors.Red, SKColors.Orange, SKColors.Yellow, SKColors.Green, SKColors.GreenYellow };
+            // Cores consistentes com o frontend
+            var cores = new[] { 
+                new SKColor(0xD3, 0x2F, 0x2F), // #d32f2f - Muito Insatisfeito
+                new SKColor(0xFF, 0x98, 0x00), // #ff9800 - Insatisfeito
+                new SKColor(0xFF, 0xEB, 0x3B), // #ffeb3b - Nem Satisfeito/Nem Insatisfeito
+                new SKColor(0x8B, 0xC3, 0x4A), // #8bc34a - Satisfeito
+                new SKColor(0x43, 0xA0, 0x47)  // #43a047 - Muito Satisfeito
+            };
             var labels = new[] { "MuitoInsatisfeito", "Insatisfeito", "Nem Insatisfeito / Nem Satisfeito", "Satisfeito", "Muito Satisfeito" };
 
             float x = 20;
@@ -1786,8 +1797,14 @@ namespace NpsPesquisa.Api.Controllers
             var rect = new SKRect(margin, margin, width - margin, height - margin);
             canvas.DrawArc(rect, 135, 270, false, arcoFundo);
 
-            // Cores do gauge (igual ao Chart.js)
-            var cores = new[] { SKColors.Red, SKColors.Orange, SKColors.Yellow, SKColors.LightGreen, SKColors.Green };
+            // Cores do gauge (consistentes com o frontend)
+            var cores = new[] { 
+                new SKColor(0xD3, 0x2F, 0x2F), // #d32f2f - Muito Insatisfeito
+                new SKColor(0xFF, 0x98, 0x00), // #ff9800 - Insatisfeito
+                new SKColor(0xFF, 0xEB, 0x3B), // #ffeb3b - Nem Satisfeito/Nem Insatisfeito
+                new SKColor(0x8B, 0xC3, 0x4A), // #8bc34a - Satisfeito
+                new SKColor(0x43, 0xA0, 0x47)  // #43a047 - Muito Satisfeito
+            };
             var faixas = new[] { 54, 54, 54, 54, 54 }; // 270/5 = 54 graus por faixa
 
             float startAngle = 135;
@@ -1956,8 +1973,11 @@ namespace NpsPesquisa.Api.Controllers
                 var bgPaint = new SKPaint { Color = barBgColor, IsAntialias = true };
                 canvas.DrawRect(leftMargin, y, width - leftMargin - rightMargin, barHeight, bgPaint);
 
-                // Barra de valor
-                float barW = (float)((curso.Satisfacao / maxValue) * (width - leftMargin - rightMargin));
+                // Converter para percentual igual ao frontend
+                double satisfacaoPercentual = Math.Round((curso.Satisfacao / 5) * 1000) / 10;
+                
+                // Barra de valor (usando percentual)
+                float barW = (float)((satisfacaoPercentual / 100.0) * (width - leftMargin - rightMargin));
                 var barPaint = new SKPaint { Color = barColor, IsAntialias = true };
                 canvas.DrawRect(leftMargin, y, barW, barHeight, barPaint);
 
@@ -1971,9 +1991,9 @@ namespace NpsPesquisa.Api.Controllers
                     canvas.DrawText(wrappedLines[l], 10, textY + l * textFontSize, textPaint);
                 }
 
-                // Valor (sem %)
+                // Valor em percentual
                 var valuePaint = new SKPaint { Color = valueColor, TextSize = 18, IsAntialias = true, TextAlign = SKTextAlign.Left, Typeface = font };
-                string valueText = curso.Satisfacao.ToString("0.0");
+                string valueText = satisfacaoPercentual.ToString("0.0") + "%";
                 canvas.DrawText(valueText, leftMargin + barW + 10, y + barHeight / 2 + 7, valuePaint);
             }
 

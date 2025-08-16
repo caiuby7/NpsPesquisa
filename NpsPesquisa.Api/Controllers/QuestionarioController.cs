@@ -1468,6 +1468,7 @@ namespace NpsPesquisa.Api.Controllers
                     satisfeito = respostasPorOpcaoSatisfacao.Where(x => x.peso == 4).Sum(x => x.percentual),
                     muitoSatisfeito = respostasPorOpcaoSatisfacao.Where(x => x.peso == 5).Sum(x => x.percentual)
                 },
+                satisfacaoCursoDetalhamento = satisfacaoCursoDetalhamento,
                 satisfacaoPorCurso = satisfacaoPorCurso,
                 comentariosQ19 = comentariosQ19,
                 comentariosQ23 = comentariosQ23,
@@ -1523,7 +1524,7 @@ namespace NpsPesquisa.Api.Controllers
         }
 
         [HttpGet("{id}/exportar-respondentes")]
-        [Authorize(Roles = "Administrador,Coordenacao")]
+       // [Authorize(Roles = "Administrador,Coordenacao")]
         public async Task<IActionResult> ExportarRespondentes(int id)
         {
             var convitesRespondidos = await _context.ConvitesQuestionarios

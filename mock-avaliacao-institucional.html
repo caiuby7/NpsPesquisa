@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avaliação Institucional - Católica SC</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1976d2, #1565c0);
+            color: white;
+            padding: 30px 0;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .progress-bar {
+            background: #e0e0e0;
+            border-radius: 10px;
+            height: 8px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #4caf50, #8bc34a);
+            height: 100%;
+            width: 35%;
+            transition: width 0.3s ease;
+        }
+
+        .question-section {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .question-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #1976d2;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e3f2fd;
+            padding-bottom: 10px;
+        }
+
+        .discipline-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .discipline-header {
+            background: #1976d2;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 6px;
+            margin: -20px -20px 20px -20px;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .matrix-table th {
+            background: #f5f5f5;
+            padding: 12px 8px;
+            text-align: center;
+            font-weight: 600;
+            border: 1px solid #ddd;
+            font-size: 0.9rem;
+        }
+
+        .matrix-table td {
+            padding: 12px 8px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        .matrix-table td:first-child {
+            text-align: left;
+            font-weight: 500;
+            background: #fafafa;
+            width: 200px;
+        }
+
+        .radio-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .radio-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .radio-option input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #1976d2;
+        }
+
+        .radio-option label {
+            font-size: 0.8rem;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #1976d2;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1565c0;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-box h3 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+
+        .discipline-count {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .question-section {
+                padding: 20px;
+            }
+            
+            .matrix-table {
+                font-size: 0.8rem;
+            }
+            
+            .radio-group {
+                gap: 8px;
+            }
+            
+            .radio-option label {
+                font-size: 0.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🎓 Avaliação Institucional</h1>
+            <p>Católica SC - 2024.1</p>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+        <p style="text-align: center; color: #666; margin-bottom: 30px;">
+            Progresso: 3 de 8 seções
+        </p>
+
+        <!-- Info Box -->
+        <div class="info-box">
+            <h3>📚 Suas Disciplinas</h3>
+            <p>Você está matriculado em <strong>7 disciplinas</strong>. Para cada disciplina, avalie os aspectos listados abaixo.</p>
+        </div>
+
+        <!-- Question Section -->
+        <div class="question-section">
+            <div class="question-title">
+                📊 Avaliação das Disciplinas
+            </div>
+            
+            <p style="margin-bottom: 20px; color: #666;">
+                Para cada disciplina, indique o grau de concordância com as seguintes afirmações:
+            </p>
+
+            <!-- Disciplina 1 -->
+            <div class="discipline-card">
+                <div class="discipline-header">
+                    📖 Programação Orientada a Objetos
+                </div>
+                
+                <table class="matrix-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 200px;">Aspectos</th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="poo_1" id="poo_1_5">
+                                    <label for="poo_1_5">Excelente</label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="poo_1" id="poo_1_4">
+                                    <label for="poo_1_4">Bom</label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="poo_1" id="poo_1_3">
+                                    <label for="poo_1_3">Regular</label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="poo_1" id="poo_1_2">
+                                    <label for="poo_1_2">Ruim</label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="poo_1" id="poo_1_1">
+                                    <label for="poo_1_1">Muito Ruim</label>
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Qualidade do conteúdo</td>
+                            <td><input type="radio" name="poo_conteudo"></td>
+                            <td><input type="radio" name="poo_conteudo"></td>
+                            <td><input type="radio" name="poo_conteudo"></td>
+                            <td><input type="radio" name="poo_conteudo"></td>
+                            <td><input type="radio" name="poo_conteudo"></td>
+                        </tr>
+                        <tr>
+                            <td>Metodologia de ensino</td>
+                            <td><input type="radio" name="poo_metodologia"></td>
+                            <td><input type="radio" name="poo_metodologia"></td>
+                            <td><input type="radio" name="poo_metodologia"></td>
+                            <td><input type="radio" name="poo_metodologia"></td>
+                            <td><input type="radio" name="poo_metodologia"></td>
+                        </tr>
+                        <tr>
+                            <td>Disponibilidade do professor</td>
+                            <td><input type="radio" name="poo_professor"></td>
+                            <td><input type="radio" name="poo_professor"></td>
+                            <td><input type="radio" name="poo_professor"></td>
+                            <td><input type="radio" name="poo_professor"></td>
+                            <td><input type="radio" name="poo_professor"></td>
+                        </tr>
+                        <tr>
+                            <td>Recursos disponíveis</td>
+                            <td><input type="radio" name="poo_recursos"></td>
+                            <td><input type="radio" name="poo_recursos"></td>
+                            <td><input type="radio" name="poo_recursos"></td>
+                            <td><input type="radio" name="poo_recursos"></td>
+                            <td><input type="radio" name="poo_recursos"></td>
+                        </tr>
+                        <tr>
+                            <td>Avaliação e feedback</td>
+                            <td><input type="radio" name="poo_avaliacao"></td>
+                            <td><input type="radio" name="poo_avaliacao"></td>
+                            <td><input type="radio" name="poo_avaliacao"></td>
+                            <td><input type="radio" name="poo_avaliacao"></td>
+                            <td><input type="radio" name="poo_avaliacao"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Disciplina 2 -->
+            <div class="discipline-card">
+                <div class="discipline-header">
+                    🗄️ Banco de Dados
+                </div>
+                
+                <table class="matrix-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 200px;">Aspectos</th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="bd_1" id="bd_1_5">
+                                    <label for="bd_1_5">Excelente</label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="bd_1" id="bd_1_4">
+                                    <label for="bd_1_4">Bom</label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="bd_1" id="bd_1_3">
+                                    <label for="bd_1_3">Regular</label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="bd_1" id="bd_1_2">
+                                    <label for="bd_1_2">Ruim</label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="bd_1" id="bd_1_1">
+                                    <label for="bd_1_1">Muito Ruim</label>
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Qualidade do conteúdo</td>
+                            <td><input type="radio" name="bd_conteudo"></td>
+                            <td><input type="radio" name="bd_conteudo"></td>
+                            <td><input type="radio" name="bd_conteudo"></td>
+                            <td><input type="radio" name="bd_conteudo"></td>
+                            <td><input type="radio" name="bd_conteudo"></td>
+                        </tr>
+                        <tr>
+                            <td>Metodologia de ensino</td>
+                            <td><input type="radio" name="bd_metodologia"></td>
+                            <td><input type="radio" name="bd_metodologia"></td>
+                            <td><input type="radio" name="bd_metodologia"></td>
+                            <td><input type="radio" name="bd_metodologia"></td>
+                            <td><input type="radio" name="bd_metodologia"></td>
+                        </tr>
+                        <tr>
+                            <td>Disponibilidade do professor</td>
+                            <td><input type="radio" name="bd_professor"></td>
+                            <td><input type="radio" name="bd_professor"></td>
+                            <td><input type="radio" name="bd_professor"></td>
+                            <td><input type="radio" name="bd_professor"></td>
+                            <td><input type="radio" name="bd_professor"></td>
+                        </tr>
+                        <tr>
+                            <td>Recursos disponíveis</td>
+                            <td><input type="radio" name="bd_recursos"></td>
+                            <td><input type="radio" name="bd_recursos"></td>
+                            <td><input type="radio" name="bd_recursos"></td>
+                            <td><input type="radio" name="bd_recursos"></td>
+                            <td><input type="radio" name="bd_recursos"></td>
+                        </tr>
+                        <tr>
+                            <td>Avaliação e feedback</td>
+                            <td><input type="radio" name="bd_avaliacao"></td>
+                            <td><input type="radio" name="bd_avaliacao"></td>
+                            <td><input type="radio" name="bd_avaliacao"></td>
+                            <td><input type="radio" name="bd_avaliacao"></td>
+                            <td><input type="radio" name="bd_avaliacao"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Disciplina 3 -->
+            <div class="discipline-card">
+                <div class="discipline-header">
+                    🌐 Desenvolvimento Web
+                </div>
+                
+                <table class="matrix-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 200px;">Aspectos</th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="web_1" id="web_1_5">
+                                    <label for="web_1_5">Excelente</label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="web_1" id="web_1_4">
+                                    <label for="web_1_4">Bom</label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="web_1" id="web_1_3">
+                                    <label for="web_1_3">Regular</label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="web_1" id="web_1_2">
+                                    <label for="web_1_2">Ruim</label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="web_1" id="web_1_1">
+                                    <label for="web_1_1">Muito Ruim</label>
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Qualidade do conteúdo</td>
+                            <td><input type="radio" name="web_conteudo"></td>
+                            <td><input type="radio" name="web_conteudo"></td>
+                            <td><input type="radio" name="web_conteudo"></td>
+                            <td><input type="radio" name="web_conteudo"></td>
+                            <td><input type="radio" name="web_conteudo"></td>
+                        </tr>
+                        <tr>
+                            <td>Metodologia de ensino</td>
+                            <td><input type="radio" name="web_metodologia"></td>
+                            <td><input type="radio" name="web_metodologia"></td>
+                            <td><input type="radio" name="web_metodologia"></td>
+                            <td><input type="radio" name="web_metodologia"></td>
+                            <td><input type="radio" name="web_metodologia"></td>
+                        </tr>
+                        <tr>
+                            <td>Disponibilidade do professor</td>
+                            <td><input type="radio" name="web_professor"></td>
+                            <td><input type="radio" name="web_professor"></td>
+                            <td><input type="radio" name="web_professor"></td>
+                            <td><input type="radio" name="web_professor"></td>
+                            <td><input type="radio" name="web_professor"></td>
+                        </tr>
+                        <tr>
+                            <td>Recursos disponíveis</td>
+                            <td><input type="radio" name="web_recursos"></td>
+                            <td><input type="radio" name="web_recursos"></td>
+                            <td><input type="radio" name="web_recursos"></td>
+                            <td><input type="radio" name="web_recursos"></td>
+                            <td><input type="radio" name="web_recursos"></td>
+                        </tr>
+                        <tr>
+                            <td>Avaliação e feedback</td>
+                            <td><input type="radio" name="web_avaliacao"></td>
+                            <td><input type="radio" name="web_avaliacao"></td>
+                            <td><input type="radio" name="web_avaliacao"></td>
+                            <td><input type="radio" name="web_avaliacao"></td>
+                            <td><input type="radio" name="web_avaliacao"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Disciplina 4 -->
+            <div class="discipline-card">
+                <div class="discipline-header">
+                    📱 Desenvolvimento Mobile
+                </div>
+                
+                <table class="matrix-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 200px;">Aspectos</th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="mobile_1" id="mobile_1_5">
+                                    <label for="mobile_1_5">Excelente</label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="mobile_1" id="mobile_1_4">
+                                    <label for="mobile_1_4">Bom</label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="mobile_1" id="mobile_1_3">
+                                    <label for="mobile_1_3">Regular</label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="mobile_1" id="mobile_1_2">
+                                    <label for="mobile_1_2">Ruim</label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="mobile_1" id="mobile_1_1">
+                                    <label for="mobile_1_1">Muito Ruim</label>
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Qualidade do conteúdo</td>
+                            <td><input type="radio" name="mobile_conteudo"></td>
+                            <td><input type="radio" name="mobile_conteudo"></td>
+                            <td><input type="radio" name="mobile_conteudo"></td>
+                            <td><input type="radio" name="mobile_conteudo"></td>
+                            <td><input type="radio" name="mobile_conteudo"></td>
+                        </tr>
+                        <tr>
+                            <td>Metodologia de ensino</td>
+                            <td><input type="radio" name="mobile_metodologia"></td>
+                            <td><input type="radio" name="mobile_metodologia"></td>
+                            <td><input type="radio" name="mobile_metodologia"></td>
+                            <td><input type="radio" name="mobile_metodologia"></td>
+                            <td><input type="radio" name="mobile_metodologia"></td>
+                        </tr>
+                        <tr>
+                            <td>Disponibilidade do professor</td>
+                            <td><input type="radio" name="mobile_professor"></td>
+                            <td><input type="radio" name="mobile_professor"></td>
+                            <td><input type="radio" name="mobile_professor"></td>
+                            <td><input type="radio" name="mobile_professor"></td>
+                            <td><input type="radio" name="mobile_professor"></td>
+                        </tr>
+                        <tr>
+                            <td>Recursos disponíveis</td>
+                            <td><input type="radio" name="mobile_recursos"></td>
+                            <td><input type="radio" name="mobile_recursos"></td>
+                            <td><input type="radio" name="mobile_recursos"></td>
+                            <td><input type="radio" name="mobile_recursos"></td>
+                            <td><input type="radio" name="mobile_recursos"></td>
+                        </tr>
+                        <tr>
+                            <td>Avaliação e feedback</td>
+                            <td><input type="radio" name="mobile_avaliacao"></td>
+                            <td><input type="radio" name="mobile_avaliacao"></td>
+                            <td><input type="radio" name="mobile_avaliacao"></td>
+                            <td><input type="radio" name="mobile_avaliacao"></td>
+                            <td><input type="radio" name="mobile_avaliacao"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Disciplina 5 -->
+            <div class="discipline-card">
+                <div class="discipline-header">
+                    🔒 Segurança da Informação
+                </div>
+                
+                <table class="matrix-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 200px;">Aspectos</th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="seg_1" id="seg_1_5">
+                                    <label for="seg_1_5">Excelente</label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="seg_1" id="seg_1_4">
+                                    <label for="seg_1_4">Bom</label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="seg_1" id="seg_1_3">
+                                    <label for="seg_1_3">Regular</label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="seg_1" id="seg_1_2">
+                                    <label for="seg_1_2">Ruim</label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="seg_1" id="seg_1_1">
+                                    <label for="seg_1_1">Muito Ruim</label>
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Qualidade do conteúdo</td>
+                            <td><input type="radio" name="seg_conteudo"></td>
+                            <td><input type="radio" name="seg_conteudo"></td>
+                            <td><input type="radio" name="seg_conteudo"></td>
+                            <td><input type="radio" name="seg_conteudo"></td>
+                            <td><input type="radio" name="seg_conteudo"></td>
+                        </tr>
+                        <tr>
+                            <td>Metodologia de ensino</td>
+                            <td><input type="radio" name="seg_metodologia"></td>
+                            <td><input type="radio" name="seg_metodologia"></td>
+                            <td><input type="radio" name="seg_metodologia"></td>
+                            <td><input type="radio" name="seg_metodologia"></td>
+                            <td><input type="radio" name="seg_metodologia"></td>
+                        </tr>
+                        <tr>
+                            <td>Disponibilidade do professor</td>
+                            <td><input type="radio" name="seg_professor"></td>
+                            <td><input type="radio" name="seg_professor"></td>
+                            <td><input type="radio" name="seg_professor"></td>
+                            <td><input type="radio" name="seg_professor"></td>
+                            <td><input type="radio" name="seg_professor"></td>
+                        </tr>
+                        <tr>
+                            <td>Recursos disponíveis</td>
+                            <td><input type="radio" name="seg_recursos"></td>
+                            <td><input type="radio" name="seg_recursos"></td>
+                            <td><input type="radio" name="seg_recursos"></td>
+                            <td><input type="radio" name="seg_recursos"></td>
+                            <td><input type="radio" name="seg_recursos"></td>
+                        </tr>
+                        <tr>
+                            <td>Avaliação e feedback</td>
+                            <td><input type="radio" name="seg_avaliacao"></td>
+                            <td><input type="radio" name="seg_avaliacao"></td>
+                            <td><input type="radio" name="seg_avaliacao"></td>
+                            <td><input type="radio" name="seg_avaliacao"></td>
+                            <td><input type="radio" name="seg_avaliacao"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Disciplina 6 -->
+            <div class="discipline-card">
+                <div class="discipline-header">
+                    🤖 Inteligência Artificial
+                </div>
+                
+                <table class="matrix-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 200px;">Aspectos</th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="ia_1" id="ia_1_5">
+                                    <label for="ia_1_5">Excelente</label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="ia_1" id="ia_1_4">
+                                    <label for="ia_1_4">Bom</label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="ia_1" id="ia_1_3">
+                                    <label for="ia_1_3">Regular</label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="ia_1" id="ia_1_2">
+                                    <label for="ia_1_2">Ruim</label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="ia_1" id="ia_1_1">
+                                    <label for="ia_1_1">Muito Ruim</label>
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Qualidade do conteúdo</td>
+                            <td><input type="radio" name="ia_conteudo"></td>
+                            <td><input type="radio" name="ia_conteudo"></td>
+                            <td><input type="radio" name="ia_conteudo"></td>
+                            <td><input type="radio" name="ia_conteudo"></td>
+                            <td><input type="radio" name="ia_conteudo"></td>
+                        </tr>
+                        <tr>
+                            <td>Metodologia de ensino</td>
+                            <td><input type="radio" name="ia_metodologia"></td>
+                            <td><input type="radio" name="ia_metodologia"></td>
+                            <td><input type="radio" name="ia_metodologia"></td>
+                            <td><input type="radio" name="ia_metodologia"></td>
+                            <td><input type="radio" name="ia_metodologia"></td>
+                        </tr>
+                        <tr>
+                            <td>Disponibilidade do professor</td>
+                            <td><input type="radio" name="ia_professor"></td>
+                            <td><input type="radio" name="ia_professor"></td>
+                            <td><input type="radio" name="ia_professor"></td>
+                            <td><input type="radio" name="ia_professor"></td>
+                            <td><input type="radio" name="ia_professor"></td>
+                        </tr>
+                        <tr>
+                            <td>Recursos disponíveis</td>
+                            <td><input type="radio" name="ia_recursos"></td>
+                            <td><input type="radio" name="ia_recursos"></td>
+                            <td><input type="radio" name="ia_recursos"></td>
+                            <td><input type="radio" name="ia_recursos"></td>
+                            <td><input type="radio" name="ia_recursos"></td>
+                        </tr>
+                        <tr>
+                            <td>Avaliação e feedback</td>
+                            <td><input type="radio" name="ia_avaliacao"></td>
+                            <td><input type="radio" name="ia_avaliacao"></td>
+                            <td><input type="radio" name="ia_avaliacao"></td>
+                            <td><input type="radio" name="ia_avaliacao"></td>
+                            <td><input type="radio" name="ia_avaliacao"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Disciplina 7 -->
+            <div class="discipline-card">
+                <div class="discipline-header">
+                    📊 Estatística Aplicada
+                </div>
+                
+                <table class="matrix-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 200px;">Aspectos</th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="estat_1" id="estat_1_5">
+                                    <label for="estat_1_5">Excelente</label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="estat_1" id="estat_1_4">
+                                    <label for="estat_1_4">Bom</label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="estat_1" id="estat_1_3">
+                                    <label for="estat_1_3">Regular</label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="estat_1" id="estat_1_2">
+                                    <label for="estat_1_2">Ruim</label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="radio-option">
+                                    <input type="radio" name="estat_1" id="estat_1_1">
+                                    <label for="estat_1_1">Muito Ruim</label>
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Qualidade do conteúdo</td>
+                            <td><input type="radio" name="estat_conteudo"></td>
+                            <td><input type="radio" name="estat_conteudo"></td>
+                            <td><input type="radio" name="estat_conteudo"></td>
+                            <td><input type="radio" name="estat_conteudo"></td>
+                            <td><input type="radio" name="estat_conteudo"></td>
+                        </tr>
+                        <tr>
+                            <td>Metodologia de ensino</td>
+                            <td><input type="radio" name="estat_metodologia"></td>
+                            <td><input type="radio" name="estat_metodologia"></td>
+                            <td><input type="radio" name="estat_metodologia"></td>
+                            <td><input type="radio" name="estat_metodologia"></td>
+                            <td><input type="radio" name="estat_metodologia"></td>
+                        </tr>
+                        <tr>
+                            <td>Disponibilidade do professor</td>
+                            <td><input type="radio" name="estat_professor"></td>
+                            <td><input type="radio" name="estat_professor"></td>
+                            <td><input type="radio" name="estat_professor"></td>
+                            <td><input type="radio" name="estat_professor"></td>
+                            <td><input type="radio" name="estat_professor"></td>
+                        </tr>
+                        <tr>
+                            <td>Recursos disponíveis</td>
+                            <td><input type="radio" name="estat_recursos"></td>
+                            <td><input type="radio" name="estat_recursos"></td>
+                            <td><input type="radio" name="estat_recursos"></td>
+                            <td><input type="radio" name="estat_recursos"></td>
+                            <td><input type="radio" name="estat_recursos"></td>
+                        </tr>
+                        <tr>
+                            <td>Avaliação e feedback</td>
+                            <td><input type="radio" name="estat_avaliacao"></td>
+                            <td><input type="radio" name="estat_avaliacao"></td>
+                            <td><input type="radio" name="estat_avaliacao"></td>
+                            <td><input type="radio" name="estat_avaliacao"></td>
+                            <td><input type="radio" name="estat_avaliacao"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Navigation -->
+            <div class="navigation">
+                <button class="btn btn-secondary">← Anterior</button>
+                <button class="btn btn-primary">Próximo →</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simular progresso
+        let progress = 35;
+        const progressBar = document.querySelector('.progress-fill');
+        
+        // Simular seleção de radio buttons
+        document.querySelectorAll('input[type="radio"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                // Aqui você pode adicionar lógica para salvar as respostas
+                console.log('Resposta selecionada:', this.name, this.value);
+            });
+        });
+
+        // Simular validação
+        document.querySelector('.btn-primary').addEventListener('click', function() {
+            const allRadios = document.querySelectorAll('input[type="radio"]:checked');
+            const requiredRadios = document.querySelectorAll('input[type="radio"]');
+            
+            // Verificar se pelo menos uma opção foi selecionada por linha
+            let isValid = true;
+            
+            // Aqui você pode adicionar validação mais específica
+            if (allRadios.length < 35) { // 7 disciplinas * 5 aspectos
+                alert('Por favor, responda todas as questões antes de continuar.');
+                isValid = false;
+            }
+            
+            if (isValid) {
+                alert('Respostas salvas! Redirecionando para próxima seção...');
+                // Aqui você redirecionaria para a próxima seção
+            }
+        });
+    </script>
+</body>
+</html> 

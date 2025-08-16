@@ -123,7 +123,7 @@ namespace NpsPesquisa.Api.Services
 
     <div class='metric'>
         <h3>Satisfação Geral</h3>
-        <div class='metric-value'>{dashboardData.satisfacao}/5</div>
+        <div class='metric-value'>{Math.Round((dashboardData.satisfacao / 5) * 1000) / 10}%</div>
         <p>Detalhamento: {dashboardData.satisfacaoDetalhamento.muitoInsatisfeito}% Muito Insatisfeito, {dashboardData.satisfacaoDetalhamento.insatisfeito}% Insatisfeito, {dashboardData.satisfacaoDetalhamento.nemInsatisfeitoNemSatisfeito}% Nem Satisfeito Nem Insatisfeito, {dashboardData.satisfacaoDetalhamento.satisfeito}% Satisfeito, {dashboardData.satisfacaoDetalhamento.muitoSatisfeito}% Muito Satisfeito</p>
     </div>";
 
@@ -133,7 +133,9 @@ namespace NpsPesquisa.Api.Services
                 html += "<h2>Satisfação por Curso</h2><table class='table'><tr><th>Curso</th><th>Total</th><th>Satisfação</th></tr>";
                 foreach (var curso in dashboardData.satisfacaoPorCurso)
                 {
-                    html += $"<tr><td>{curso.curso}</td><td>{curso.total}</td><td>{curso.satisfacao}/5</td></tr>";
+                        // Converter para percentual igual ao frontend
+                    double satisfacaoPercentual = Math.Round((curso.satisfacao / 5) * 1000) / 10;
+                    html += $"<tr><td>{curso.curso}</td><td>{curso.total}</td><td>{satisfacaoPercentual}%</td></tr>";
                 }
                 html += "</table>";
             }
