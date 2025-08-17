@@ -345,11 +345,16 @@ export default function DashboardPage() {
   };
   const satisfacaoCursoGaugeOptions = satisfacaoGaugeOptions;
 
-  // 3. Ajustar detalhamento de satisfação para 4 faixas
+  // 3. Ajustar detalhamento de satisfação para 5 faixas (igual ao gauge)
   const satisfacaoDetalhamentoStacked = [
     {
+      tipo: 'Muito Insatisfeito',
+      percentual: data.satisfacaoDetalhamento.muitoInsatisfeito ?? 0,
+      color: '#d32f2f',
+    },
+    {
       tipo: 'Insatisfeito',
-      percentual: (data.satisfacaoDetalhamento.insatisfeito ?? 0) + (data.satisfacaoDetalhamento.muitoInsatisfeito ?? 0),
+      percentual: data.satisfacaoDetalhamento.insatisfeito ?? 0,
       color: '#ff9800',
     },
     {
@@ -393,8 +398,13 @@ export default function DashboardPage() {
     }],
   };
 
-  // Barra de detalhamento para Satisfação com curso
+  // Barra de detalhamento para Satisfação com curso (5 faixas igual ao gauge)
   const satisfacaoCursoDetalhamentoStacked = [
+    {
+      tipo: 'Muito Insatisfeito',
+      percentual: data.satisfacaoCursoDetalhamento?.muitoInsatisfeito ?? 0,
+      color: '#d32f2f',
+    },
     {
       tipo: 'Insatisfeito',
       percentual: data.satisfacaoCursoDetalhamento?.insatisfeito ?? 0,
