@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using NpsPesquisa.Api.Models;
 using NpsPesquisa.Api.Data;
@@ -11,7 +10,6 @@ namespace NpsPesquisa.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
     public class CursoController : ControllerBase
     {
         private readonly NpsDbContext _context;
@@ -22,17 +20,21 @@ namespace NpsPesquisa.Api.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Administrador,Coordenacao")]
         public async Task<ActionResult<IEnumerable<Curso>>> GetAll()
         {
-            return await _context.Cursos.ToListAsync();
+            return await _context.Cursos
+                .Include(c => c.Instituicao)
+                .Where(c => c.Ativo)
+                .OrderBy(c => c.Codigo)
+                .ToListAsync();
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "Administrador,Coordenacao")]
         public async Task<ActionResult<Curso>> GetById(int id)
         {
-            var curso = await _context.Cursos.FindAsync(id);
+            var curso = await _context.Cursos
+                .Include(c => c.Instituicao)
+                .FirstOrDefaultAsync(c => c.Id == id);
 
             if (curso == null) return NotFound();
 
@@ -40,59 +42,179 @@ namespace NpsPesquisa.Api.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Administrador")]
         public async Task<ActionResult<Curso>> Create(CursoViewModel cursoViewModel)
         {
-            var curso = new Curso
+            try
             {
-                Nome = cursoViewModel.Nome
-            };
+                // Validar se já existe um curso com o mesmo código
+                var cursoExistente = await _context.Cursos
+                    .FirstOrDefaultAsync(c => c.Codigo == cursoViewModel.Codigo);
 
-            _context.Cursos.Add(curso);
-            await _context.SaveChangesAsync();
+                if (cursoExistente != null)
+                {
+                    return BadRequest("Já existe um curso com este código");
+                }
 
-            return CreatedAtAction(nameof(GetById), new { id = curso.Id }, curso);
+                var curso = new Curso
+                {
+                    Nome = cursoViewModel.Nome,
+                    Descricao = cursoViewModel.Descricao,
+                    Codigo = cursoViewModel.Codigo,
+                    Modalidade = ConverterStringParaModalidade(cursoViewModel.Modalidade),
+                    TipoCurso = ConverterStringParaTipoCurso(cursoViewModel.TipoCurso),
+                    IntegracaoId = cursoViewModel.IntegracaoId,
+                    CodigoFilial = cursoViewModel.CodigoFilial,
+                    Ativo = cursoViewModel.Ativo,
+                    InstituicaoId = cursoViewModel.InstituicaoId,
+                    DataCadastro = System.DateTime.Now
+                };
+
+                _context.Cursos.Add(curso);
+                await _context.SaveChangesAsync();
+
+                return CreatedAtAction(nameof(GetById), new { id = curso.Id }, curso);
+            }
+            catch (System.Exception ex)
+            {
+                return StatusCode(500, new { message = "Erro ao criar curso", error = ex.Message });
+            }
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Update(int id, CursoViewModel cursoViewModel)
         {
-            var curso = await _context.Cursos.FindAsync(id);
-            if (curso == null) return NotFound();
-
-            curso.Nome = cursoViewModel.Nome;
-
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CursoExists(id))
-                    return NotFound();
-                throw;
-            }
+                var curso = await _context.Cursos.FindAsync(id);
+                if (curso == null) return NotFound();
 
-            return NoContent();
+                // Validar se já existe outro curso com o mesmo código
+                var cursoComCodigo = await _context.Cursos
+                    .FirstOrDefaultAsync(c => c.Codigo == cursoViewModel.Codigo && c.Id != id);
+
+                if (cursoComCodigo != null)
+                {
+                    return BadRequest("Já existe outro curso com este código");
+                }
+
+                curso.Nome = cursoViewModel.Nome;
+                curso.Descricao = cursoViewModel.Descricao;
+                curso.Codigo = cursoViewModel.Codigo;
+                curso.Modalidade = ConverterStringParaModalidade(cursoViewModel.Modalidade);
+                curso.TipoCurso = ConverterStringParaTipoCurso(cursoViewModel.TipoCurso);
+                curso.IntegracaoId = cursoViewModel.IntegracaoId;
+                curso.CodigoFilial = cursoViewModel.CodigoFilial;
+                curso.Ativo = cursoViewModel.Ativo;
+                curso.InstituicaoId = cursoViewModel.InstituicaoId;
+                curso.DataAtualizacao = System.DateTime.Now;
+
+                try
+                {
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!CursoExists(id))
+                        return NotFound();
+                    throw;
+                }
+
+                return NoContent();
+            }
+            catch (System.Exception ex)
+            {
+                return StatusCode(500, new { message = "Erro ao atualizar curso", error = ex.Message });
+            }
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Delete(int id)
         {
-            var curso = await _context.Cursos.FindAsync(id);
-            if (curso == null) return NotFound();
+            try
+            {
+                var curso = await _context.Cursos.FindAsync(id);
+                if (curso == null) return NotFound();
 
-            // Verifica se existem alunos vinculados
-            var alunosVinculados = await _context.Alunos.AnyAsync(a => a.CursoId == id);
-            if (alunosVinculados)
-                return BadRequest("Não é possível excluir um curso que possui alunos vinculados.");
+                // Verificar se o curso está sendo usado em algum lugar
+                var alunosVinculados = await _context.Alunos.AnyAsync(a => a.CursoId == id);
+                var turmasVinculadas = await _context.Turmas.AnyAsync(t => t.CursoId == id);
+                // var coordenacoesVinculadas = await _context.CoordenadorCursos.AnyAsync(cc => cc.CursoId == id);
+                var disciplinasVinculadas = await _context.Disciplinas.AnyAsync(d => d.InstituicaoId == curso.InstituicaoId);
 
-            _context.Cursos.Remove(curso);
-            await _context.SaveChangesAsync();
+                if (alunosVinculados || turmasVinculadas || disciplinasVinculadas)
+                {
+                    return BadRequest("Não é possível excluir este curso pois está sendo usado por alunos, turmas, coordenações ou disciplinas. Use a opção de desativar.");
+                }
 
-            return NoContent();
+                _context.Cursos.Remove(curso);
+                await _context.SaveChangesAsync();
+
+                return NoContent();
+            }
+            catch (System.Exception ex)
+            {
+                return StatusCode(500, new { message = "Erro ao excluir curso", error = ex.Message });
+            }
+        }
+
+        [HttpPatch("{id}/ativar")]
+        public async Task<IActionResult> AtivarCurso(int id)
+        {
+            try
+            {
+                var curso = await _context.Cursos.FindAsync(id);
+                if (curso == null) return NotFound();
+
+                curso.Ativo = true;
+                curso.DataAtualizacao = System.DateTime.Now;
+                await _context.SaveChangesAsync();
+
+                return NoContent();
+            }
+            catch (System.Exception ex)
+            {
+                return StatusCode(500, new { message = "Erro ao ativar curso", error = ex.Message });
+            }
+        }
+
+        [HttpPatch("{id}/desativar")]
+        public async Task<IActionResult> DesativarCurso(int id)
+        {
+            try
+            {
+                var curso = await _context.Cursos.FindAsync(id);
+                if (curso == null) return NotFound();
+
+                curso.Ativo = false;
+                curso.DataAtualizacao = System.DateTime.Now;
+                await _context.SaveChangesAsync();
+
+                return NoContent();
+            }
+            catch (System.Exception ex)
+            {
+                return StatusCode(500, new { message = "Erro ao desativar curso", error = ex.Message });
+            }
+        }
+
+        private static Modalidade ConverterStringParaModalidade(string modalidade)
+        {
+            return modalidade.ToUpper() switch
+            {
+                "PRESENCIAL" => Modalidade.PRESENCIAL,
+                "EAD" => Modalidade.EAD,
+                _ => Modalidade.PRESENCIAL // Valor padrão
+            };
+        }
+
+        private static TipoCurso ConverterStringParaTipoCurso(string tipoCurso)
+        {
+            return tipoCurso.ToUpper() switch
+            {
+                "GRADUACAO" => TipoCurso.GRADUACAO,
+                "POSGRADUACAO" or "PÓS-GRADUAÇÃO" or "PÓSGRADUAÇÃO" => TipoCurso.POSGRADUACAO,
+                _ => TipoCurso.GRADUACAO // Valor padrão
+            };
         }
 
         private bool CursoExists(int id)

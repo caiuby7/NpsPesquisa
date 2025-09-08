@@ -2,69 +2,19 @@ using System.ComponentModel.DataAnnotations;
 
 namespace NpsPesquisa.Api.Models
 {
-    public class LoginDto
+    public class AuthDto
     {
-        [Required]
-        public string Email { get; set; } = null!;
+        [Required(ErrorMessage = "O nome é obrigatório")]
+        [StringLength(200, ErrorMessage = "O nome deve ter no máximo 200 caracteres")]
+        public string Nome { get; set; } = string.Empty;
 
-        [Required]
-        public string Senha { get; set; } = null!;
-    }
+        [Required(ErrorMessage = "O email é obrigatório")]
+        [EmailAddress(ErrorMessage = "O email deve ser um email válido")]
+        [StringLength(200, ErrorMessage = "O email deve ter no máximo 200 caracteres")]
+        public string Email { get; set; } = string.Empty;
 
-    public class RegistroDto
-    {
-        public string Nome { get; set; }
-        public string Email { get; set; }
-        public string Senha { get; set; }
-        public int PerfilId { get; set; }
-    }
-
-    public class TrocaSenhaDto
-    {
-        [Required]
-        public string SenhaAtual { get; set; } = null!;
-
-        [Required]
-        [MinLength(6)]
-        public string NovaSenha { get; set; } = null!;
-
-        [Required]
-        [Compare("NovaSenha")]
-        public string ConfirmacaoNovaSenha { get; set; } = null!;
-    }
-
-    public class AuthResponseDto
-    {
-        public string Token { get; set; } = null!;
-        public string Nome { get; set; } = null!;
-        public string Email { get; set; } = null!;
-        public string Perfil { get; set; } = null!;
-    }
-
-    public class EsqueciSenhaDto
-    {
-        [Required]
-        [EmailAddress]
-        public string Email { get; set; } = null!;
-    }
-
-    public class ValidarHashSenhaDto
-    {
-        [Required]
-        public string Hash { get; set; } = null!;
-    }
-
-    public class RedefinirSenhaDto
-    {
-        [Required]
-        public string Hash { get; set; } = null!;
-
-        [Required]
-        [MinLength(6)]
-        public string NovaSenha { get; set; } = null!;
-
-        [Required]
-        [Compare("NovaSenha")]
-        public string ConfirmacaoNovaSenha { get; set; } = null!;
+        [Required(ErrorMessage = "A senha é obrigatória")]
+        [StringLength(100, ErrorMessage = "A senha deve ter no máximo 100 caracteres")]
+        public string Senha { get; set; } = string.Empty;
     }
 } 

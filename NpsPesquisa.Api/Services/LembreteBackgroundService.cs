@@ -41,7 +41,8 @@ namespace NpsPesquisa.Api.Services
                     foreach (var questionario in questionarios)
                     {
                         var convitesQuery = context.ConvitesQuestionarios
-                            .Include(c => c.Aluno)
+                            .Include(c => c.Participante)
+                            .ThenInclude(p => p.Aluno)
                             .Where(c => c.QuestionarioId == questionario.Id);
 
                         if (!questionario.EnviarLembreteParaTodos)
@@ -94,15 +95,16 @@ namespace NpsPesquisa.Api.Services
                                 continue; // ainda não chegou o tempo de enviar novo lembrete
                             }
 
-                            var aluno = convite.Aluno;
+                            var participante = convite.Participante;
+                            var aluno = participante.Aluno;
                             var link = urlBase + $"questionario/{convite.Chave}";
        
                             var emailBody = template
-    .Replace("{{nome}}", aluno.Nome)
+    .Replace("{{nome}}", participante.Nome)
     .Replace("{{titulo}}", questionario.Titulo).Replace("{titulo}", questionario.Titulo)
     .Replace("{{link}}", link).Replace("{link}", link);
 
-                            await emailService.SendEmailAsync(aluno.EmailInstitucional, "Lembrete: Questionário pendente", emailBody);
+                            await emailService.SendEmailAsync(participante.Email, "Lembrete: Questionário pendente", emailBody);
 
                             convite.DataUltimoLembrete = agora;
                         }

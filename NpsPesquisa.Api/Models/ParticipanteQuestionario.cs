@@ -12,12 +12,17 @@ namespace NpsPesquisa.Api.Models
         public int QuestionarioId { get; set; }
 
         [Required]
-        public int AlunoId { get; set; }
+        public int ParticipanteId { get; set; }
 
         [ForeignKey("QuestionarioId")]
-        public Questionario Questionario { get; set; }
+        public virtual Questionario Questionario { get; set; } = null!;
 
-        [ForeignKey("AlunoId")]
-        public Aluno Aluno { get; set; }
+        [ForeignKey("ParticipanteId")]
+        public virtual Participante Participante { get; set; } = null!;
+
+        public DateTime DataConvite { get; set; } = DateTime.UtcNow!;
+        public DateTime? DataResposta { get; set; } 
+
+        public string Status { get; set; }
     }
 } 

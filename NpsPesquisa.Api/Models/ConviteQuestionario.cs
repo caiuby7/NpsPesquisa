@@ -13,10 +13,10 @@ namespace NpsPesquisa.Api.Models
         public int QuestionarioId { get; set; }
 
         [Required]
-        public int AlunoId { get; set; }
+        public int ParticipanteId { get; set; }
 
         [Required]
-        public string Chave { get; set; }
+        public string Chave { get; set; } = string.Empty;
 
         [Required]
         public DateTime DataEnvio { get; set; }
@@ -28,9 +28,17 @@ namespace NpsPesquisa.Api.Models
         public DateTime? DataUltimoLembrete { get; set; }
 
         [ForeignKey("QuestionarioId")]
-        public Questionario Questionario { get; set; }
+        public virtual Questionario Questionario { get; set; } = null!;
 
-        [ForeignKey("AlunoId")]
-        public Aluno Aluno { get; set; }
+        [ForeignKey("ParticipanteId")]
+        public virtual Participante Participante { get; set; } = null!;
+
+        // Propriedade Aluno para compatibilidade (através do Participante)
+        [NotMapped]
+        public Aluno? Aluno => Participante?.Aluno;
+
+        // Propriedade AlunoId para compatibilidade
+        [NotMapped]
+        public int? AlunoId => Participante?.AlunoId;
     }
 } 

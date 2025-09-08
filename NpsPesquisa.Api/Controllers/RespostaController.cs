@@ -33,15 +33,17 @@ namespace NpsPesquisa.Api.Controllers
                 return NotFound("Questionário não encontrado");
             }
 
-            var aluno = await _context.Alunos.FindAsync(respostaDto.AlunoId);
-            if (aluno == null)
+            var participante = await _context.Participantes
+                .Include(p => p.Aluno)
+                .FirstOrDefaultAsync(p => p.Id == respostaDto.ParticipanteId);
+            if (participante == null)
             {
-                return NotFound("Aluno não encontrado");
+                return NotFound("Participante não encontrado");
             }
 
-            // Verifica se o aluno já respondeu o questionário
+            // Verifica se o participante já respondeu o questionário
             var respostaExistente = await _context.Respostas
-                .FirstOrDefaultAsync(r => r.QuestionarioId == respostaDto.QuestionarioId && r.AlunoId == respostaDto.AlunoId);
+                .FirstOrDefaultAsync(r => r.QuestionarioId == respostaDto.QuestionarioId && r.ParticipanteId == respostaDto.ParticipanteId);
 
             if (respostaExistente != null)
             {
@@ -75,7 +77,7 @@ namespace NpsPesquisa.Api.Controllers
             var resposta = new Resposta
             {
                 QuestionarioId = respostaDto.QuestionarioId,
-                AlunoId = respostaDto.AlunoId,
+                ParticipanteId = respostaDto.ParticipanteId,
                 DataResposta = DateTime.UtcNow,
                 RespostasQuestoes = respostaDto.RespostasQuestoes.Select(rq => new RespostaQuestao
                 {
@@ -128,14 +130,14 @@ namespace NpsPesquisa.Api.Controllers
                 .ToListAsync();
         }
 
-        [HttpGet("aluno/{alunoId}")]
+        [HttpGet("participante/{participanteId}")]
         [Authorize(Roles = "Administrador,Coordenacao")]
-        public async Task<ActionResult<IEnumerable<Resposta>>> GetRespostasPorAluno(int alunoId)
+        public async Task<ActionResult<IEnumerable<Resposta>>> GetRespostasPorParticipante(int participanteId)
         {
             return await _context.Respostas
                 .Include(r => r.RespostasQuestoes)
                 .ThenInclude(rq => rq.Questao)
-                .Where(r => r.AlunoId == alunoId)
+                .Where(r => r.ParticipanteId == participanteId)
                 .ToListAsync();
         }
 
@@ -168,9 +170,10 @@ namespace NpsPesquisa.Api.Controllers
                         {
                             try
                             {
-                                var filial = worksheet.Cell(row, 1).GetValue<string>()?.Trim();
-                                var nivelEnsino = worksheet.Cell(row, 2).GetValue<string>()?.Trim();
-                                var periodoLetivo = worksheet.Cell(row, 3).GetValue<string>()?.Trim();
+                                // TODO: Implementar mapeamento correto para filial, nível de ensino e período letivo
+                                // var filial = worksheet.Cell(row, 1).GetValue<string>()?.Trim();
+                                // var nivelEnsino = worksheet.Cell(row, 2).GetValue<string>()?.Trim();
+                                // var periodoLetivo = worksheet.Cell(row, 3).GetValue<string>()?.Trim();
                                 var nome = worksheet.Cell(row, 4).GetValue<string>()?.Trim();
                                 var matricula = worksheet.Cell(row, 5).GetValue<string>()?.Trim();
                                 var cursoNome = worksheet.Cell(row, 6).GetValue<string>()?.Trim();
@@ -194,14 +197,13 @@ namespace NpsPesquisa.Api.Controllers
                                 }
 
                                 // Validar/obter Aluno
+                                var turnoEnum = ConverterStringParaTurno(turno);
+                                
                                 var aluno = await _context.Alunos.FirstOrDefaultAsync(a =>
                                     a.Nome == nome &&
-                                    a.Filial == filial &&
-                                    a.NivelEnsino == nivelEnsino &&
-                                    a.PeriodoLetivo == periodoLetivo &&
                                     a.Matricula == matricula &&
                                     a.CursoId == curso.Id &&
-                                    a.Turno == turno
+                                    a.Turno == turnoEnum
                                 );
 
                                 bool novoAluno = false;
@@ -210,40 +212,62 @@ namespace NpsPesquisa.Api.Controllers
                                     aluno = new Aluno
                                     {
                                         Nome = nome,
-                                        Filial = filial,
-                                        NivelEnsino = nivelEnsino,
-                                        PeriodoLetivo = periodoLetivo,
                                         Matricula = matricula,
                                         CursoId = curso.Id,
-                                        Turno = turno,
-                                        EmailInstitucional = emailInstitucional,
+                                        Turno = ConverterStringParaTurno(turno),
+                                        Email = emailInstitucional,
                                         EmailPessoal = emailPessoal,
-                                        Fone = fone,
-                                        StatusNoPeriodoLetivo = statusNoPeriodoLetivo
+                                        Telefone = fone,
+                                        StatusNoPeriodoLetivo = statusNoPeriodoLetivo,
+                                        PeriodoLetivoId = 1, // TODO: Mapear corretamente
+                                        InstituicaoId = 1, // TODO: Mapear corretamente
+                                        Ativo = true,
+                                        DataCadastro = DateTime.Now
                                     };
                                     _context.Alunos.Add(aluno);
                                     await _context.SaveChangesAsync();
                                     novoAluno = true;
                                 }
 
-                                // Adicionar como participante se ainda não for
+                                // Verificar se já existe um Participante para este Aluno
+                                var participanteExistente = await _context.Participantes
+                                    .FirstOrDefaultAsync(p => p.AlunoId == aluno.AlunoId);
+                                
+                                if (participanteExistente == null)
+                                {
+                                    // Criar novo Participante
+                                    participanteExistente = new Participante
+                                    {
+                                        Nome = aluno.Nome,
+                                        Email = aluno.Email ?? aluno.EmailPessoal,
+                                        Tipo = TipoParticipante.Aluno,
+                                        AlunoId = aluno.AlunoId,
+                                        CursoId = aluno.CursoId,
+                                        Ativo = true
+                                    };
+                                    _context.Participantes.Add(participanteExistente);
+                                    await _context.SaveChangesAsync();
+                                }
+
+                                // Adicionar como participante do questionário se ainda não for
                                 var jaParticipante = await _context.ParticipantesQuestionarios
-                                    .AnyAsync(p => p.QuestionarioId == id && p.AlunoId == aluno.Id);
+                                    .AnyAsync(p => p.QuestionarioId == id && p.ParticipanteId == participanteExistente.Id);
                                 
                                 if (!jaParticipante)
                                 {
-                                    var participante = new ParticipanteQuestionario
+                                    var participanteQuestionario = new ParticipanteQuestionario
                                     {
                                         QuestionarioId = id,
-                                        AlunoId = aluno.Id
+                                        ParticipanteId = participanteExistente.Id,
+                                        Status = "Pendente" // Status padrão para novos participantes
                                     };
-                                    _context.ParticipantesQuestionarios.Add(participante);
+                                    _context.ParticipantesQuestionarios.Add(participanteQuestionario);
                                     await _context.SaveChangesAsync();
                                 }
 
                                 participantesInseridos.Add(new
                                 {
-                                    alunoId = aluno.Id,
+                                    participanteId = participanteExistente.Id,
                                     nome = aluno.Nome,
                                     curso = curso.Nome,
                                     novoAluno
@@ -331,6 +355,25 @@ namespace NpsPesquisa.Api.Controllers
             {
                 return BadRequest(new { message = $"Erro ao gerar template: {ex.Message}" });
             }
+        }
+
+        /// <summary>
+        /// Converte uma string para o enum Turno correspondente
+        /// </summary>
+        /// <param name="turno">String representando o turno</param>
+        /// <returns>Enum Turno correspondente ou null se não reconhecido</returns>
+        private static Turno? ConverterStringParaTurno(string? turno)
+        {
+            if (string.IsNullOrEmpty(turno))
+                return null;
+
+            return turno.Trim().ToLower() switch
+            {
+                "matutino" => Turno.Matutino,
+                "vespertino" => Turno.Vespertino,
+                "noturno" => Turno.Noturno,
+                _ => null
+            };
         }
     }
 } 

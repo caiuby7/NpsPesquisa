@@ -21,12 +21,12 @@ namespace NpsPesquisa.Api.Models
         public int? OpcaoId { get; set; }
 
         [ForeignKey("RespostaId")]
-        public Resposta Resposta { get; set; }
+        public virtual Resposta Resposta { get; set; } = null!;
 
         [ForeignKey("QuestaoId")]
-        public Questao Questao { get; set; }
+        public virtual Questao Questao { get; set; } = null!;
 
         [ForeignKey("OpcaoId")]
-        public OpcaoQuestao Opcao { get; set; }
+        public virtual OpcaoQuestao? Opcao { get; set; }
     }
 } 

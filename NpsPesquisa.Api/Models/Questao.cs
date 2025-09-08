@@ -9,7 +9,7 @@ namespace NpsPesquisa.Api.Models
         public int Id { get; set; }
 
         [Required(ErrorMessage = "O campo Texto é obrigatório")]
-        public string Texto { get; set; }
+        public string Texto { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "O campo Tipo é obrigatório")]
         [JsonConverter(typeof(JsonStringEnumConverter))]
@@ -18,6 +18,8 @@ namespace NpsPesquisa.Api.Models
         public int Ordem { get; set; }
 
         public bool Obrigatorio { get; set; } = true;
+
+        public bool IsCondicional { get; set; } = false;
 
         [JsonIgnore]
         public virtual ICollection<QuestaoQuestionario>? QuestoesQuestionarios { get; set; }

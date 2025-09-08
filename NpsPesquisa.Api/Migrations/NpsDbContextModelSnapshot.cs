@@ -19,72 +19,166 @@ namespace NpsPesquisa.Api.Migrations
                 .HasAnnotation("ProductVersion", "8.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
+            modelBuilder.Entity("AlunoTurmaDisciplina", b =>
+                {
+                    b.Property<int>("AlunosAlunoId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TurmasDisciplinasId")
+                        .HasColumnType("int");
+
+                    b.HasKey("AlunosAlunoId", "TurmasDisciplinasId");
+
+                    b.HasIndex("TurmasDisciplinasId");
+
+                    b.ToTable("AlunoTurmaDisciplina");
+                });
+
+            modelBuilder.Entity("DisciplinaProfessor", b =>
+                {
+                    b.Property<int>("DisciplinasId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProfessoresId")
+                        .HasColumnType("int");
+
+                    b.HasKey("DisciplinasId", "ProfessoresId");
+
+                    b.HasIndex("ProfessoresId");
+
+                    b.ToTable("DisciplinaProfessor");
+                });
+
             modelBuilder.Entity("NpsPesquisa.Api.Models.Aluno", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("AlunoId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
                     b.Property<bool>("AceitaContato")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Cpf")
+                        .HasMaxLength(14)
+                        .HasColumnType("varchar(14)");
+
                     b.Property<int>("CursoId")
                         .HasColumnType("int");
 
-                    b.Property<string>("EmailInstitucional")
+                    b.Property<string>("CursoIntegracaoId")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<DateTime?>("DataAtualizacao")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("DataCadastro")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DataIngressoCurso")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DataMatricula")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DataNascimento")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
 
                     b.Property<string>("EmailPessoal")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
 
-                    b.Property<string>("Filial")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                    b.Property<int?>("Fase")
+                        .HasColumnType("int");
 
-                    b.Property<string>("Fone")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                    b.Property<string>("Grade")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Habilitacao")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<int>("InstituicaoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("InstituicaoIntegracaoId")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("IntegracaoId")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
                     b.Property<string>("Matricula")
                         .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("NivelEnsino")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("Nome")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
 
-                    b.Property<string>("PeriodoLetivo")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                    b.Property<int>("PeriodoLetivoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PeriodoLetivoIntegracaoId")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<int?>("Sexo")
+                        .HasColumnType("int");
 
                     b.Property<string>("StatusNoPeriodoLetivo")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
-                    b.Property<string>("Turno")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                    b.Property<string>("Telefone")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
 
-                    b.HasKey("Id");
+                    b.Property<int?>("TipoMatricula")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("TurmaAtiva")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int?>("TurmaId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TurmaIntegracaoId")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<int?>("Turno")
+                        .HasColumnType("int");
+
+                    b.HasKey("AlunoId");
 
                     b.HasIndex("CursoId");
 
-                    b.ToTable("Alunos");
+                    b.HasIndex("InstituicaoId");
+
+                    b.HasIndex("PeriodoLetivoId");
+
+                    b.HasIndex("TurmaId");
+
+                    b.ToTable("alunos", (string)null);
                 });
 
             modelBuilder.Entity("NpsPesquisa.Api.Models.ConviteQuestionario", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<int>("AlunoId")
                         .HasColumnType("int");
 
                     b.Property<string>("Chave")
@@ -100,6 +194,9 @@ namespace NpsPesquisa.Api.Migrations
                     b.Property<DateTime?>("DataUltimoLembrete")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<int>("ParticipanteId")
+                        .HasColumnType("int");
+
                     b.Property<int>("QuestionarioId")
                         .HasColumnType("int");
 
@@ -108,14 +205,104 @@ namespace NpsPesquisa.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AlunoId");
-
                     b.HasIndex("Chave")
                         .IsUnique();
 
+                    b.HasIndex("ParticipanteId");
+
                     b.HasIndex("QuestionarioId");
 
-                    b.ToTable("ConvitesQuestionarios");
+                    b.ToTable("convitesquestionarios", (string)null);
+                });
+
+            modelBuilder.Entity("NpsPesquisa.Api.Models.Coordenador", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Cpf")
+                        .HasMaxLength(14)
+                        .HasColumnType("varchar(14)");
+
+                    b.Property<DateTime?>("DataAtualizacao")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("DataCadastro")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DataNascimento")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Departamento")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("Telefone")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("Titulacao")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("coordenadores", (string)null);
+                });
+
+            modelBuilder.Entity("NpsPesquisa.Api.Models.CoordenadorCurso", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("CoordenadorId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CursoId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DataAtualizacao")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("DataCadastro")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DataFim")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("DataInicio")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Observacao")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CursoId");
+
+                    b.HasIndex("CoordenadorId", "CursoId", "Ativo")
+                        .IsUnique();
+
+                    b.ToTable("coordenadorescursos", (string)null);
                 });
 
             modelBuilder.Entity("NpsPesquisa.Api.Models.Curso", b =>
@@ -124,13 +311,197 @@ namespace NpsPesquisa.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("CodigoFilial")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<DateTime?>("DataAtualizacao")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("DataCadastro")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Descricao")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<int?>("InstituicaoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("IntegracaoId")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<int>("Modalidade")
+                        .HasColumnType("int");
+
                     b.Property<string>("Nome")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<int>("TipoCurso")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Cursos");
+                    b.HasIndex("InstituicaoId");
+
+                    b.ToTable("cursos", (string)null);
+                });
+
+            modelBuilder.Entity("NpsPesquisa.Api.Models.Disciplina", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Codigo")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<int?>("CursoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Descricao")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<int>("InstituicaoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CursoId");
+
+                    b.HasIndex("InstituicaoId");
+
+                    b.ToTable("disciplinas", (string)null);
+                });
+
+            modelBuilder.Entity("NpsPesquisa.Api.Models.Instituicao", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("DataAtualizacao")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("DataCadastro")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Descricao")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<int>("IntegracaoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("instituicoes", (string)null);
+                });
+
+            modelBuilder.Entity("NpsPesquisa.Api.Models.ItemAvaliadoQuestionario", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int?>("CoordenadorId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CursoId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DataAtualizacao")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("DataCriacao")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("DescricaoItem")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<int?>("DisciplinaId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ItemAvaliadoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NomeItemEspecifico")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("Observacoes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<int>("OrdemApresentacao")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ProfessorId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("QuestionarioId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TipoItemAvaliado")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TurmaDisciplinaId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TurmaId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CoordenadorId");
+
+                    b.HasIndex("CursoId");
+
+                    b.HasIndex("DisciplinaId");
+
+                    b.HasIndex("ProfessorId");
+
+                    b.HasIndex("QuestionarioId");
+
+                    b.HasIndex("TurmaDisciplinaId");
+
+                    b.HasIndex("TurmaId");
+
+                    b.ToTable("itensavaliadosquestionarios", (string)null);
                 });
 
             modelBuilder.Entity("NpsPesquisa.Api.Models.OpcaoQuestao", b =>
@@ -139,6 +510,9 @@ namespace NpsPesquisa.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    b.Property<bool>("AtivaCondicao")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<bool>("EhColuna")
                         .HasColumnType("tinyint(1)");
 
@@ -146,6 +520,9 @@ namespace NpsPesquisa.Api.Migrations
                         .HasColumnType("int");
 
                     b.Property<int>("Peso")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("QuestaoCondicionalId")
                         .HasColumnType("int");
 
                     b.Property<int>("QuestaoId")
@@ -160,9 +537,98 @@ namespace NpsPesquisa.Api.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("QuestaoCondicionalId");
+
                     b.HasIndex("QuestaoId");
 
-                    b.ToTable("OpcoesQuestao");
+                    b.ToTable("opcoesquestao", (string)null);
+                });
+
+            modelBuilder.Entity("NpsPesquisa.Api.Models.Participante", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<int?>("AlunoId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Cargo")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<int?>("CoordenadorId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Cpf")
+                        .HasMaxLength(14)
+                        .HasColumnType("varchar(14)");
+
+                    b.Property<int?>("CursoId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DataAtualizacao")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("DataCadastro")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DataNascimento")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Departamento")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("Matricula")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<int?>("ProfessorId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Semestre")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Setor")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Telefone")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<int>("Tipo")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Titulacao")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AlunoId");
+
+                    b.HasIndex("CoordenadorId");
+
+                    b.HasIndex("CursoId");
+
+                    b.HasIndex("ProfessorId");
+
+                    b.ToTable("participantes", (string)null);
                 });
 
             modelBuilder.Entity("NpsPesquisa.Api.Models.ParticipanteQuestionario", b =>
@@ -171,19 +637,29 @@ namespace NpsPesquisa.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<int>("AlunoId")
+                    b.Property<DateTime>("DataConvite")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DataResposta")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("ParticipanteId")
                         .HasColumnType("int");
 
                     b.Property<int>("QuestionarioId")
                         .HasColumnType("int");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("AlunoId");
+                    b.HasIndex("ParticipanteId");
 
                     b.HasIndex("QuestionarioId");
 
-                    b.ToTable("ParticipantesQuestionarios");
+                    b.ToTable("participantesquestionarios", (string)null);
                 });
 
             modelBuilder.Entity("NpsPesquisa.Api.Models.Perfil", b =>
@@ -202,7 +678,128 @@ namespace NpsPesquisa.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Perfis");
+                    b.ToTable("perfis", (string)null);
+                });
+
+            modelBuilder.Entity("NpsPesquisa.Api.Models.PeriodoLetivo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime?>("DataAtualizacao")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("DataCadastro")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<int>("TipoCurso")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("periodosletivos", (string)null);
+                });
+
+            modelBuilder.Entity("NpsPesquisa.Api.Models.Professor", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Cpf")
+                        .HasMaxLength(14)
+                        .HasColumnType("varchar(14)");
+
+                    b.Property<string>("CursoIntegracaoId")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<DateTime?>("DataAtualizacao")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("DataCadastro")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DataNascimento")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Departamento")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("DisciplinaIntegracaoId")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<int?>("InstituicaoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("InstituicaoIntegracaoId")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("IntegracaoId")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Login")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("PeriodoLetivoIntegracaoId")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<int?>("Sexo")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Telefone")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<int?>("TipoProfessor")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Titulacao")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("TurmaIntegracaoId")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InstituicaoId");
+
+                    b.ToTable("professores", (string)null);
                 });
 
             modelBuilder.Entity("NpsPesquisa.Api.Models.Questao", b =>
@@ -210,6 +807,9 @@ namespace NpsPesquisa.Api.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    b.Property<bool>("IsCondicional")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<bool>("Obrigatorio")
                         .HasColumnType("tinyint(1)");
@@ -226,7 +826,7 @@ namespace NpsPesquisa.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Questoes");
+                    b.ToTable("questoes", (string)null);
                 });
 
             modelBuilder.Entity("NpsPesquisa.Api.Models.QuestaoQuestionario", b =>
@@ -250,7 +850,7 @@ namespace NpsPesquisa.Api.Migrations
 
                     b.HasIndex("QuestionarioId");
 
-                    b.ToTable("QuestoesQuestionarios");
+                    b.ToTable("questoesquestionarios", (string)null);
                 });
 
             modelBuilder.Entity("NpsPesquisa.Api.Models.Questionario", b =>
@@ -259,11 +859,10 @@ namespace NpsPesquisa.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("DataCriacao")
-                        .HasColumnType("datetime(6)");
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("tinyint(1)");
 
-                    b.Property<DateTime?>("DataExpiracao")
-                        .IsRequired()
+                    b.Property<DateTime>("DataCriacao")
                         .HasColumnType("datetime(6)");
 
                     b.Property<DateTime?>("DataFim")
@@ -286,8 +885,19 @@ namespace NpsPesquisa.Api.Migrations
                     b.Property<int?>("LembrarACadaXDias")
                         .HasColumnType("int");
 
-                    b.Property<bool>("OrdemAleatoria")
-                        .HasColumnType("tinyint(1)");
+                    b.Property<string>("NomeItemEspecifico")
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<bool>("PermitirComentarios")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("PermitirSalvarAndamento")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false);
 
                     b.Property<string>("TemplateEmailConvite")
                         .HasColumnType("longtext");
@@ -298,6 +908,14 @@ namespace NpsPesquisa.Api.Migrations
                     b.Property<string>("TextoBoasVindas")
                         .HasColumnType("longtext");
 
+                    b.Property<int>("Tipo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<int?>("TipoItemAvaliado")
+                        .HasColumnType("int");
+
                     b.Property<string>("Titulo")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -305,7 +923,7 @@ namespace NpsPesquisa.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Questionarios");
+                    b.ToTable("questionarios", (string)null);
                 });
 
             modelBuilder.Entity("NpsPesquisa.Api.Models.Resposta", b =>
@@ -314,22 +932,37 @@ namespace NpsPesquisa.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<int>("AlunoId")
+                    b.Property<int?>("AlunoId1")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("DataResposta")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<int?>("ItemAvaliadoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NomeItemEspecifico")
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<int>("ParticipanteId")
+                        .HasColumnType("int");
+
                     b.Property<int>("QuestionarioId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TipoItemAvaliado")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AlunoId");
+                    b.HasIndex("AlunoId1");
+
+                    b.HasIndex("ParticipanteId");
 
                     b.HasIndex("QuestionarioId");
 
-                    b.ToTable("Respostas");
+                    b.ToTable("respostas", (string)null);
                 });
 
             modelBuilder.Entity("NpsPesquisa.Api.Models.RespostaQuestao", b =>
@@ -361,7 +994,97 @@ namespace NpsPesquisa.Api.Migrations
 
                     b.HasIndex("RespostaId");
 
-                    b.ToTable("RespostasQuestoes");
+                    b.ToTable("respostasquestoes", (string)null);
+                });
+
+            modelBuilder.Entity("NpsPesquisa.Api.Models.Turma", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("CursoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Descricao")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("IntegracaoId")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<int>("PeriodoLetivoId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Turno")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CursoId");
+
+                    b.HasIndex("PeriodoLetivoId");
+
+                    b.ToTable("turmas", (string)null);
+                });
+
+            modelBuilder.Entity("NpsPesquisa.Api.Models.TurmaDisciplina", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("DataCriacao")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("DisciplinaId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Gerenciada")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int?>("IdTurmaDisciplinaGerenciada")
+                        .HasColumnType("int");
+
+                    b.Property<string>("IntegracaoId")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("PeriodoLetivoId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProfessorId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TurmaDisciplinaGerenciadaId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TurmaId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DisciplinaId");
+
+                    b.HasIndex("PeriodoLetivoId");
+
+                    b.HasIndex("ProfessorId");
+
+                    b.HasIndex("TurmaDisciplinaGerenciadaId");
+
+                    b.HasIndex("TurmaId");
+
+                    b.ToTable("turmasdisciplinas", (string)null);
                 });
 
             modelBuilder.Entity("NpsPesquisa.Api.Models.Usuario", b =>
@@ -398,7 +1121,37 @@ namespace NpsPesquisa.Api.Migrations
 
                     b.HasIndex("PerfilId");
 
-                    b.ToTable("Usuarios");
+                    b.ToTable("usuarios", (string)null);
+                });
+
+            modelBuilder.Entity("AlunoTurmaDisciplina", b =>
+                {
+                    b.HasOne("NpsPesquisa.Api.Models.Aluno", null)
+                        .WithMany()
+                        .HasForeignKey("AlunosAlunoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NpsPesquisa.Api.Models.TurmaDisciplina", null)
+                        .WithMany()
+                        .HasForeignKey("TurmasDisciplinasId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("DisciplinaProfessor", b =>
+                {
+                    b.HasOne("NpsPesquisa.Api.Models.Disciplina", null)
+                        .WithMany()
+                        .HasForeignKey("DisciplinasId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NpsPesquisa.Api.Models.Professor", null)
+                        .WithMany()
+                        .HasForeignKey("ProfessoresId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("NpsPesquisa.Api.Models.Aluno", b =>
@@ -409,14 +1162,37 @@ namespace NpsPesquisa.Api.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("NpsPesquisa.Api.Models.Instituicao", "Instituicao")
+                        .WithMany()
+                        .HasForeignKey("InstituicaoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NpsPesquisa.Api.Models.PeriodoLetivo", "PeriodoLetivo")
+                        .WithMany()
+                        .HasForeignKey("PeriodoLetivoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NpsPesquisa.Api.Models.Turma", "Turma")
+                        .WithMany("Alunos")
+                        .HasForeignKey("TurmaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Curso");
+
+                    b.Navigation("Instituicao");
+
+                    b.Navigation("PeriodoLetivo");
+
+                    b.Navigation("Turma");
                 });
 
             modelBuilder.Entity("NpsPesquisa.Api.Models.ConviteQuestionario", b =>
                 {
-                    b.HasOne("NpsPesquisa.Api.Models.Aluno", "Aluno")
+                    b.HasOne("NpsPesquisa.Api.Models.Participante", "Participante")
                         .WithMany()
-                        .HasForeignKey("AlunoId")
+                        .HasForeignKey("ParticipanteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -426,13 +1202,108 @@ namespace NpsPesquisa.Api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Aluno");
+                    b.Navigation("Participante");
 
                     b.Navigation("Questionario");
                 });
 
+            modelBuilder.Entity("NpsPesquisa.Api.Models.CoordenadorCurso", b =>
+                {
+                    b.HasOne("NpsPesquisa.Api.Models.Coordenador", "Coordenador")
+                        .WithMany("Coordenacoes")
+                        .HasForeignKey("CoordenadorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("NpsPesquisa.Api.Models.Curso", "Curso")
+                        .WithMany("Coordenacoes")
+                        .HasForeignKey("CursoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Coordenador");
+
+                    b.Navigation("Curso");
+                });
+
+            modelBuilder.Entity("NpsPesquisa.Api.Models.Curso", b =>
+                {
+                    b.HasOne("NpsPesquisa.Api.Models.Instituicao", "Instituicao")
+                        .WithMany("Cursos")
+                        .HasForeignKey("InstituicaoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Instituicao");
+                });
+
+            modelBuilder.Entity("NpsPesquisa.Api.Models.Disciplina", b =>
+                {
+                    b.HasOne("NpsPesquisa.Api.Models.Curso", null)
+                        .WithMany("Disciplinas")
+                        .HasForeignKey("CursoId");
+
+                    b.HasOne("NpsPesquisa.Api.Models.Instituicao", "Instituicao")
+                        .WithMany("Disciplinas")
+                        .HasForeignKey("InstituicaoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Instituicao");
+                });
+
+            modelBuilder.Entity("NpsPesquisa.Api.Models.ItemAvaliadoQuestionario", b =>
+                {
+                    b.HasOne("NpsPesquisa.Api.Models.Coordenador", "Coordenador")
+                        .WithMany()
+                        .HasForeignKey("CoordenadorId");
+
+                    b.HasOne("NpsPesquisa.Api.Models.Curso", "Curso")
+                        .WithMany()
+                        .HasForeignKey("CursoId");
+
+                    b.HasOne("NpsPesquisa.Api.Models.Disciplina", "Disciplina")
+                        .WithMany()
+                        .HasForeignKey("DisciplinaId");
+
+                    b.HasOne("NpsPesquisa.Api.Models.Professor", "Professor")
+                        .WithMany()
+                        .HasForeignKey("ProfessorId");
+
+                    b.HasOne("NpsPesquisa.Api.Models.Questionario", "Questionario")
+                        .WithMany("ItensAvaliados")
+                        .HasForeignKey("QuestionarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NpsPesquisa.Api.Models.TurmaDisciplina", "TurmaDisciplina")
+                        .WithMany()
+                        .HasForeignKey("TurmaDisciplinaId");
+
+                    b.HasOne("NpsPesquisa.Api.Models.Turma", "Turma")
+                        .WithMany()
+                        .HasForeignKey("TurmaId");
+
+                    b.Navigation("Coordenador");
+
+                    b.Navigation("Curso");
+
+                    b.Navigation("Disciplina");
+
+                    b.Navigation("Professor");
+
+                    b.Navigation("Questionario");
+
+                    b.Navigation("Turma");
+
+                    b.Navigation("TurmaDisciplina");
+                });
+
             modelBuilder.Entity("NpsPesquisa.Api.Models.OpcaoQuestao", b =>
                 {
+                    b.HasOne("NpsPesquisa.Api.Models.Questao", "QuestaoCondicional")
+                        .WithMany()
+                        .HasForeignKey("QuestaoCondicionalId");
+
                     b.HasOne("NpsPesquisa.Api.Models.Questao", "Questao")
                         .WithMany("Opcoes")
                         .HasForeignKey("QuestaoId")
@@ -440,13 +1311,43 @@ namespace NpsPesquisa.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("Questao");
+
+                    b.Navigation("QuestaoCondicional");
+                });
+
+            modelBuilder.Entity("NpsPesquisa.Api.Models.Participante", b =>
+                {
+                    b.HasOne("NpsPesquisa.Api.Models.Aluno", "Aluno")
+                        .WithMany()
+                        .HasForeignKey("AlunoId");
+
+                    b.HasOne("NpsPesquisa.Api.Models.Coordenador", "Coordenador")
+                        .WithMany()
+                        .HasForeignKey("CoordenadorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("NpsPesquisa.Api.Models.Curso", "Curso")
+                        .WithMany()
+                        .HasForeignKey("CursoId");
+
+                    b.HasOne("NpsPesquisa.Api.Models.Professor", "Professor")
+                        .WithMany()
+                        .HasForeignKey("ProfessorId");
+
+                    b.Navigation("Aluno");
+
+                    b.Navigation("Coordenador");
+
+                    b.Navigation("Curso");
+
+                    b.Navigation("Professor");
                 });
 
             modelBuilder.Entity("NpsPesquisa.Api.Models.ParticipanteQuestionario", b =>
                 {
-                    b.HasOne("NpsPesquisa.Api.Models.Aluno", "Aluno")
-                        .WithMany()
-                        .HasForeignKey("AlunoId")
+                    b.HasOne("NpsPesquisa.Api.Models.Participante", "Participante")
+                        .WithMany("Participacoes")
+                        .HasForeignKey("ParticipanteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -456,9 +1357,18 @@ namespace NpsPesquisa.Api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Aluno");
+                    b.Navigation("Participante");
 
                     b.Navigation("Questionario");
+                });
+
+            modelBuilder.Entity("NpsPesquisa.Api.Models.Professor", b =>
+                {
+                    b.HasOne("NpsPesquisa.Api.Models.Instituicao", "Instituicao")
+                        .WithMany()
+                        .HasForeignKey("InstituicaoId");
+
+                    b.Navigation("Instituicao");
                 });
 
             modelBuilder.Entity("NpsPesquisa.Api.Models.QuestaoQuestionario", b =>
@@ -482,9 +1392,13 @@ namespace NpsPesquisa.Api.Migrations
 
             modelBuilder.Entity("NpsPesquisa.Api.Models.Resposta", b =>
                 {
-                    b.HasOne("NpsPesquisa.Api.Models.Aluno", "Aluno")
+                    b.HasOne("NpsPesquisa.Api.Models.Aluno", null)
                         .WithMany("Respostas")
-                        .HasForeignKey("AlunoId")
+                        .HasForeignKey("AlunoId1");
+
+                    b.HasOne("NpsPesquisa.Api.Models.Participante", "Participante")
+                        .WithMany("Respostas")
+                        .HasForeignKey("ParticipanteId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -494,7 +1408,7 @@ namespace NpsPesquisa.Api.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Aluno");
+                    b.Navigation("Participante");
 
                     b.Navigation("Questionario");
                 });
@@ -524,6 +1438,66 @@ namespace NpsPesquisa.Api.Migrations
                     b.Navigation("Resposta");
                 });
 
+            modelBuilder.Entity("NpsPesquisa.Api.Models.Turma", b =>
+                {
+                    b.HasOne("NpsPesquisa.Api.Models.Curso", "Curso")
+                        .WithMany("Turmas")
+                        .HasForeignKey("CursoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("NpsPesquisa.Api.Models.PeriodoLetivo", "PeriodoLetivo")
+                        .WithMany("Turmas")
+                        .HasForeignKey("PeriodoLetivoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Curso");
+
+                    b.Navigation("PeriodoLetivo");
+                });
+
+            modelBuilder.Entity("NpsPesquisa.Api.Models.TurmaDisciplina", b =>
+                {
+                    b.HasOne("NpsPesquisa.Api.Models.Disciplina", "Disciplina")
+                        .WithMany("TurmasDisciplinas")
+                        .HasForeignKey("DisciplinaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("NpsPesquisa.Api.Models.PeriodoLetivo", "PeriodoLetivo")
+                        .WithMany()
+                        .HasForeignKey("PeriodoLetivoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NpsPesquisa.Api.Models.Professor", "Professor")
+                        .WithMany("TurmasDisciplinas")
+                        .HasForeignKey("ProfessorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("NpsPesquisa.Api.Models.TurmaDisciplina", "TurmaDisciplinaGerenciada")
+                        .WithMany()
+                        .HasForeignKey("TurmaDisciplinaGerenciadaId");
+
+                    b.HasOne("NpsPesquisa.Api.Models.Turma", "Turma")
+                        .WithMany("TurmasDisciplinas")
+                        .HasForeignKey("TurmaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Disciplina");
+
+                    b.Navigation("PeriodoLetivo");
+
+                    b.Navigation("Professor");
+
+                    b.Navigation("Turma");
+
+                    b.Navigation("TurmaDisciplinaGerenciada");
+                });
+
             modelBuilder.Entity("NpsPesquisa.Api.Models.Usuario", b =>
                 {
                     b.HasOne("NpsPesquisa.Api.Models.Perfil", "Perfil")
@@ -540,14 +1514,54 @@ namespace NpsPesquisa.Api.Migrations
                     b.Navigation("Respostas");
                 });
 
+            modelBuilder.Entity("NpsPesquisa.Api.Models.Coordenador", b =>
+                {
+                    b.Navigation("Coordenacoes");
+                });
+
             modelBuilder.Entity("NpsPesquisa.Api.Models.Curso", b =>
                 {
                     b.Navigation("Alunos");
+
+                    b.Navigation("Coordenacoes");
+
+                    b.Navigation("Disciplinas");
+
+                    b.Navigation("Turmas");
+                });
+
+            modelBuilder.Entity("NpsPesquisa.Api.Models.Disciplina", b =>
+                {
+                    b.Navigation("TurmasDisciplinas");
+                });
+
+            modelBuilder.Entity("NpsPesquisa.Api.Models.Instituicao", b =>
+                {
+                    b.Navigation("Cursos");
+
+                    b.Navigation("Disciplinas");
+                });
+
+            modelBuilder.Entity("NpsPesquisa.Api.Models.Participante", b =>
+                {
+                    b.Navigation("Participacoes");
+
+                    b.Navigation("Respostas");
                 });
 
             modelBuilder.Entity("NpsPesquisa.Api.Models.Perfil", b =>
                 {
                     b.Navigation("Usuarios");
+                });
+
+            modelBuilder.Entity("NpsPesquisa.Api.Models.PeriodoLetivo", b =>
+                {
+                    b.Navigation("Turmas");
+                });
+
+            modelBuilder.Entity("NpsPesquisa.Api.Models.Professor", b =>
+                {
+                    b.Navigation("TurmasDisciplinas");
                 });
 
             modelBuilder.Entity("NpsPesquisa.Api.Models.Questao", b =>
@@ -559,6 +1573,8 @@ namespace NpsPesquisa.Api.Migrations
 
             modelBuilder.Entity("NpsPesquisa.Api.Models.Questionario", b =>
                 {
+                    b.Navigation("ItensAvaliados");
+
                     b.Navigation("Participantes");
 
                     b.Navigation("QuestoesQuestionarios");
@@ -569,6 +1585,13 @@ namespace NpsPesquisa.Api.Migrations
             modelBuilder.Entity("NpsPesquisa.Api.Models.Resposta", b =>
                 {
                     b.Navigation("RespostasQuestoes");
+                });
+
+            modelBuilder.Entity("NpsPesquisa.Api.Models.Turma", b =>
+                {
+                    b.Navigation("Alunos");
+
+                    b.Navigation("TurmasDisciplinas");
                 });
 #pragma warning restore 612, 618
         }

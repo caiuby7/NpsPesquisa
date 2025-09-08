@@ -47,7 +47,8 @@ namespace NpsPesquisa.Api.Controllers
             {
                 Texto = questaoDto.Texto,
                 Tipo = questaoDto.Tipo,
-                Obrigatorio = questaoDto.Obrigatorio
+                Obrigatorio = questaoDto.Obrigatorio,
+                IsCondicional = questaoDto.IsCondicional
             };
 
             _context.Questoes.Add(questao);
@@ -64,7 +65,9 @@ namespace NpsPesquisa.Api.Controllers
                         Valor = opcaoDto.Valor,
                         Ordem = opcaoDto.Ordem,
                         Peso = opcaoDto.Peso,
-                        EhColuna = questaoDto.Tipo == TipoQuestao.Matriz ? opcaoDto.EhColuna : false
+                        EhColuna = questaoDto.Tipo == TipoQuestao.Matriz ? opcaoDto.EhColuna : false,
+                        AtivaCondicao = opcaoDto.AtivaCondicao,
+                        QuestaoCondicionalId = opcaoDto.QuestaoCondicionalId
                     };
                     _context.OpcoesQuestao.Add(opcao);
                 }
@@ -87,6 +90,7 @@ namespace NpsPesquisa.Api.Controllers
                     Texto = q.Texto,
                     Tipo = q.Tipo,
                     Obrigatorio = q.Obrigatorio,
+                    IsCondicional = q.IsCondicional,
                     Opcoes = q.Tipo == TipoQuestao.CaixaTexto ? new List<OpcaoQuestaoResponseDto>() : 
                         q.Opcoes.Where(o => o.EhColuna == false).Select(o => new OpcaoQuestaoResponseDto
                         {
@@ -95,7 +99,9 @@ namespace NpsPesquisa.Api.Controllers
                             Valor = o.Valor,
                             Ordem = o.Ordem,
                             Peso = o.Peso,
-                            EhColuna = o.EhColuna
+                            EhColuna = o.EhColuna,
+                            AtivaCondicao = o.AtivaCondicao,
+                            QuestaoCondicionalId = o.QuestaoCondicionalId
                         }).ToList(),
                     Colunas = q.Tipo == TipoQuestao.Matriz ? 
                         q.Opcoes.Where(o => o.EhColuna == true).Select(o => new OpcaoQuestaoResponseDto
@@ -105,7 +111,9 @@ namespace NpsPesquisa.Api.Controllers
                             Valor = o.Valor,
                             Ordem = o.Ordem,
                             Peso = o.Peso,
-                            EhColuna = o.EhColuna
+                            EhColuna = o.EhColuna,
+                            AtivaCondicao = o.AtivaCondicao,
+                            QuestaoCondicionalId = o.QuestaoCondicionalId
                         }).ToList() : new List<OpcaoQuestaoResponseDto>()
                 })
                 .FirstOrDefaultAsync();
@@ -129,6 +137,7 @@ namespace NpsPesquisa.Api.Controllers
                     Texto = q.Texto,
                     Tipo = q.Tipo,
                     Obrigatorio = q.Obrigatorio,
+                    IsCondicional = q.IsCondicional,
                     Opcoes = q.Tipo == TipoQuestao.CaixaTexto ? new List<OpcaoQuestaoResponseDto>() : 
                         q.Opcoes.Where(o => o.EhColuna == false).Select(o => new OpcaoQuestaoResponseDto
                         {
@@ -137,7 +146,9 @@ namespace NpsPesquisa.Api.Controllers
                             Valor = o.Valor,
                             Ordem = o.Ordem,
                             Peso = o.Peso,
-                            EhColuna = o.EhColuna
+                            EhColuna = o.EhColuna,
+                            AtivaCondicao = o.AtivaCondicao,
+                            QuestaoCondicionalId = o.QuestaoCondicionalId
                         }).ToList(),
                     Colunas = q.Tipo == TipoQuestao.Matriz ? 
                         q.Opcoes.Where(o => o.EhColuna == true).Select(o => new OpcaoQuestaoResponseDto
@@ -147,7 +158,9 @@ namespace NpsPesquisa.Api.Controllers
                             Valor = o.Valor,
                             Ordem = o.Ordem,
                             Peso = o.Peso,
-                            EhColuna = o.EhColuna
+                            EhColuna = o.EhColuna,
+                            AtivaCondicao = o.AtivaCondicao,
+                            QuestaoCondicionalId = o.QuestaoCondicionalId
                         }).ToList() : new List<OpcaoQuestaoResponseDto>()
                 })
                 .ToListAsync();
@@ -182,6 +195,7 @@ namespace NpsPesquisa.Api.Controllers
             questao.Texto = questaoDto.Texto;
             questao.Tipo = questaoDto.Tipo;
             questao.Obrigatorio = questaoDto.Obrigatorio;
+            questao.IsCondicional = questaoDto.IsCondicional;
 
             // Remove opções existentes (agora seguro pois verificamos que não estão em uso)
             _context.OpcoesQuestao.RemoveRange(questao.Opcoes);
@@ -198,7 +212,9 @@ namespace NpsPesquisa.Api.Controllers
                         Valor = opcaoDto.Valor,
                         Ordem = opcaoDto.Ordem,
                         Peso = opcaoDto.Peso,
-                        EhColuna = questaoDto.Tipo == TipoQuestao.Matriz ? opcaoDto.EhColuna : false
+                        EhColuna = questaoDto.Tipo == TipoQuestao.Matriz ? opcaoDto.EhColuna : false,
+                        AtivaCondicao = opcaoDto.AtivaCondicao,
+                        QuestaoCondicionalId = opcaoDto.QuestaoCondicionalId
                     };
                     _context.OpcoesQuestao.Add(opcao);
                 }

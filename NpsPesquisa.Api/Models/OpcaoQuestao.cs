@@ -13,7 +13,7 @@ namespace NpsPesquisa.Api.Models
         public int QuestaoId { get; set; }
 
         [Required]
-        public string Texto { get; set; }
+        public string Texto { get; set; } = string.Empty;
 
         //[Required]
         public string? Valor { get; set; }
@@ -26,8 +26,16 @@ namespace NpsPesquisa.Api.Models
 
         public bool EhColuna { get; set; } = false;
 
+        public bool AtivaCondicao { get; set; } = false;
+
+        public int? QuestaoCondicionalId { get; set; }
+
         [JsonIgnore]
         [ForeignKey("QuestaoId")]
-        public Questao Questao { get; set; }
+        public virtual Questao Questao { get; set; } = null!;
+
+        [JsonIgnore]
+        [ForeignKey("QuestaoCondicionalId")]
+        public virtual Questao? QuestaoCondicional { get; set; }
     }
 } 

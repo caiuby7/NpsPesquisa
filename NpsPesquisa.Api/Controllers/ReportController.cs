@@ -109,7 +109,7 @@ namespace NpsPesquisa.Api.Controllers
             var promotores = npsScores.Count(s => s >= 9 && s <= 10);
             var detratores = npsScores.Count(s => s >= 0 && s <= 6);
             var passivos = npsScores.Count(s => s >= 7 && s <= 8);
-            var totalNPS = npsScores.Count;
+            var totalNPS = npsScores.Count();
 
             var npsGeral = totalNPS > 0 ? Math.Round(((double)(promotores - detratores) / totalNPS) * 100, 0) : 0;
 
@@ -138,7 +138,7 @@ namespace NpsPesquisa.Api.Controllers
                         OpcaoNome = opcao?.Texto ?? "",
                         Peso = peso,
                         Quantidade = g.Count(),
-                        Percentual = questoesSatisfacaoMultipla.Count > 0 ? Math.Round((double)g.Count() / questoesSatisfacaoMultipla.Count * 100, 1) : 0
+                        Percentual = questoesSatisfacaoMultipla.Count() > 0 ? Math.Round((double)g.Count() / questoesSatisfacaoMultipla.Count * 100, 1) : 0
                     };
                 })
                 .OrderBy(x => x.Peso)
@@ -154,7 +154,7 @@ namespace NpsPesquisa.Api.Controllers
                 .Select(v => v.Value)
                 .ToList();
 
-            double mediaSatisfacao = valoresSatisfacao.Count > 0 ? Math.Round(valoresSatisfacao.Average(), 1) : 0;
+            double mediaSatisfacao = valoresSatisfacao.Count() > 0 ? Math.Round(valoresSatisfacao.Average(), 1) : 0;
 
             // Satisfação por curso (questão 22)
             var questaoSatisfacaoCurso = _context.Questoes
@@ -206,7 +206,7 @@ namespace NpsPesquisa.Api.Controllers
 
             // Calcular média de satisfação por curso igual ao frontend
             double satisfacaoCurso = 0;
-            if (satisfacaoPorCurso != null && satisfacaoPorCurso.Count > 0)
+            if (satisfacaoPorCurso != null && satisfacaoPorCurso.Count() > 0)
             {
                 satisfacaoCurso = Math.Round(
                     (satisfacaoPorCurso.Sum(x => x.Satisfacao) / satisfacaoPorCurso.Count) / 5 * 1000
@@ -396,7 +396,7 @@ namespace NpsPesquisa.Api.Controllers
                         OpcaoNome = opcao?.Texto ?? "",
                         Peso = peso,
                         Quantidade = g.Count(),
-                        Percentual = questoesSatisfacaoCursoMultipla.Count > 0 ? Math.Round((double)g.Count() / questoesSatisfacaoCursoMultipla.Count * 100, 1) : 0
+                        Percentual = questoesSatisfacaoCursoMultipla.Count() > 0 ? Math.Round((double)g.Count() / questoesSatisfacaoCursoMultipla.Count * 100, 1) : 0
                     };
                 })
                 .OrderBy(x => x.Peso)
@@ -413,7 +413,7 @@ namespace NpsPesquisa.Api.Controllers
             // Criar DTO principal com todos os dados
             var dashboardData = new DashboardPdfDto
             {
-                TotalRespostas = respostas.Count,
+                TotalRespostas = respostas.Count(),
                 TendenciaRespostas = tendenciaRespostas,
                 NpsGeral = npsGeral,
                 NpsDetalhamento = new NpsDetalhamentoDto
@@ -847,7 +847,7 @@ namespace NpsPesquisa.Api.Controllers
             var promotores = npsScores.Count(s => s >= 9 && s <= 10);
             var detratores = npsScores.Count(s => s >= 0 && s <= 6);
             var passivos = npsScores.Count(s => s >= 7 && s <= 8);
-            var totalNPS = npsScores.Count;
+            var totalNPS = npsScores.Count();
 
             var npsGeral = totalNPS > 0 ? Math.Round(((double)(promotores - detratores) / totalNPS) * 100, 0) : 0;
 
@@ -876,7 +876,7 @@ namespace NpsPesquisa.Api.Controllers
                         OpcaoNome = opcao?.Texto ?? "",
                         Peso = peso,
                         Quantidade = g.Count(),
-                        Percentual = questoesSatisfacaoMultipla.Count > 0 ? Math.Round((double)g.Count() / questoesSatisfacaoMultipla.Count * 100, 1) : 0
+                        Percentual = questoesSatisfacaoMultipla.Count() > 0 ? Math.Round((double)g.Count() / questoesSatisfacaoMultipla.Count * 100, 1) : 0
                     };
                 })
                 .OrderBy(x => x.Peso)
@@ -892,7 +892,7 @@ namespace NpsPesquisa.Api.Controllers
                 .Select(v => v.Value)
                 .ToList();
 
-            double mediaSatisfacao = valoresSatisfacao.Count > 0 ? Math.Round(valoresSatisfacao.Average(), 1) : 0;
+            double mediaSatisfacao = valoresSatisfacao.Count() > 0 ? Math.Round(valoresSatisfacao.Average(), 1) : 0;
 
             // Satisfação por curso (questão 22)
             var questaoSatisfacaoCurso = _context.Questoes
@@ -944,7 +944,7 @@ namespace NpsPesquisa.Api.Controllers
 
             // Calcular média de satisfação por curso igual ao frontend
             double satisfacaoCurso = 0;
-            if (satisfacaoPorCurso != null && satisfacaoPorCurso.Count > 0)
+            if (satisfacaoPorCurso != null && satisfacaoPorCurso.Count() > 0)
             {
                 satisfacaoCurso = Math.Round(
                     (satisfacaoPorCurso.Sum(x => x.Satisfacao) / satisfacaoPorCurso.Count) / 5 * 1000
@@ -1134,7 +1134,7 @@ namespace NpsPesquisa.Api.Controllers
                         OpcaoNome = opcao?.Texto ?? "",
                         Peso = peso,
                         Quantidade = g.Count(),
-                        Percentual = questoesSatisfacaoCursoMultipla.Count > 0 ? Math.Round((double)g.Count() / questoesSatisfacaoCursoMultipla.Count * 100, 1) : 0
+                        Percentual = questoesSatisfacaoCursoMultipla.Count() > 0 ? Math.Round((double)g.Count() / questoesSatisfacaoCursoMultipla.Count * 100, 1) : 0
                     };
                 })
                 .OrderBy(x => x.Peso)
@@ -1151,7 +1151,7 @@ namespace NpsPesquisa.Api.Controllers
             // Criar DTO principal com todos os dados
             var dashboardData = new DashboardPdfDto
             {
-                TotalRespostas = respostas.Count,
+                TotalRespostas = respostas.Count(),
                 TendenciaRespostas = tendenciaRespostas,
                 NpsGeral = npsGeral,
                 NpsDetalhamento = new NpsDetalhamentoDto
@@ -1191,8 +1191,8 @@ namespace NpsPesquisa.Api.Controllers
             };
 
             // Debug: Verificar se encontrou comentários
-            Console.WriteLine($"Comentários Q19 encontrados: {comentariosQ19.Count}");
-            Console.WriteLine($"Comentários Q23 encontrados: {comentariosQ23.Count}");
+            Console.WriteLine($"Comentários Q19 encontrados: {comentariosQ19.Count()}");
+            Console.WriteLine($"Comentários Q23 encontrados: {comentariosQ23.Count()}");
             
             // Debug: Verificar todas as questões de texto
             var todasQuestoesTexto = respostas
@@ -1200,7 +1200,7 @@ namespace NpsPesquisa.Api.Controllers
                 .Where(rq => rq.Questao.Tipo == TipoQuestao.CaixaTexto)
                 .ToList();
             
-            Console.WriteLine($"Total de questões de texto: {todasQuestoesTexto.Count}");
+            Console.WriteLine($"Total de questões de texto: {todasQuestoesTexto.Count()}");
             foreach (var q in todasQuestoesTexto.Take(5))
             {
                 Console.WriteLine($"Questão: {q.Questao.Texto}, Texto: {q.Texto}");
@@ -1228,7 +1228,7 @@ namespace NpsPesquisa.Api.Controllers
                 comentariosQ19Sheet.Cell(3, 3).Style.Font.Bold = true;
                 comentariosQ19Sheet.Cell(3, 4).Style.Font.Bold = true;
 
-                for (int i = 0; i < comentariosQ19.Count; i++)
+                for (int i = 0; i < comentariosQ19.Count(); i++)
                 {
                     comentariosQ19Sheet.Cell(i + 4, 1).Value = comentariosQ19[i].Texto;
                     comentariosQ19Sheet.Cell(i + 4, 2).Value = comentariosQ19[i].Nota;
@@ -1257,7 +1257,7 @@ namespace NpsPesquisa.Api.Controllers
                 comentariosQ23Sheet.Cell(3, 3).Style.Font.Bold = true;
                 comentariosQ23Sheet.Cell(3, 4).Style.Font.Bold = true;
 
-                for (int i = 0; i < comentariosQ23.Count; i++)
+                for (int i = 0; i < comentariosQ23.Count(); i++)
                 {
                     comentariosQ23Sheet.Cell(i + 4, 1).Value = comentariosQ23[i].Texto;
                     comentariosQ23Sheet.Cell(i + 4, 2).Value = comentariosQ23[i].Nota;
@@ -1274,7 +1274,7 @@ namespace NpsPesquisa.Api.Controllers
                 tendenciaSheet.Cell(1, 1).Style.Font.Bold = true;
                 tendenciaSheet.Cell(1, 2).Style.Font.Bold = true;
 
-                for (int i = 0; i < dashboardData.TendenciaRespostas.Count; i++)
+                for (int i = 0; i < dashboardData.TendenciaRespostas.Count(); i++)
                 {
                     tendenciaSheet.Cell(i + 2, 1).Value = dashboardData.TendenciaRespostas[i].Data;
                     tendenciaSheet.Cell(i + 2, 2).Value = dashboardData.TendenciaRespostas[i].Quantidade;
@@ -1355,7 +1355,7 @@ namespace NpsPesquisa.Api.Controllers
                 satisfacaoCursoSheet.Cell(1, 7).Style.Font.Bold = true;
                 satisfacaoCursoSheet.Cell(1, 8).Style.Font.Bold = true;
 
-                for (int i = 0; i < dashboardData.SatisfacaoPorCurso.Count; i++)
+                for (int i = 0; i < dashboardData.SatisfacaoPorCurso.Count(); i++)
                 {
                     var curso = dashboardData.SatisfacaoPorCurso[i];
                     satisfacaoCursoSheet.Cell(i + 2, 1).Value = curso.Curso;
@@ -1538,7 +1538,7 @@ namespace NpsPesquisa.Api.Controllers
             if (tendencia == null || tendencia.Count == 0)
                 return bitmap.Bytes;
 
-            int n = tendencia.Count;
+            int n = tendencia.Count();
             int maxY = tendencia.Max(t => t.Quantidade);
             maxY = Math.Max(maxY, 10);
             // Arredonda maxY para o próximo múltiplo de 100 para garantir folga
@@ -1860,7 +1860,7 @@ namespace NpsPesquisa.Api.Controllers
             int colWidth = (width - (int)margin * 2) / cols;
             int rowHeight = 170;
 
-            for (int i = 0; i < analiseSentimento.Count; i++)
+            for (int i = 0; i < analiseSentimento.Count(); i++)
             {
                 var cat = analiseSentimento[i];
                 float raio = minRadius + (maxRadius - minRadius) * ((float)cat.Total / maxBubble);
@@ -1964,7 +1964,7 @@ namespace NpsPesquisa.Api.Controllers
             double maxValue = 5.0;
             float textFontSize = 15;
 
-            for (int i = 0; i < lista.Count; i++)
+            for (int i = 0; i < lista.Count(); i++)
             {
                 var curso = lista[i];
                 float y = topMargin + i * (barHeight + spacing);
@@ -1986,7 +1986,7 @@ namespace NpsPesquisa.Api.Controllers
                 float maxTextWidth = leftMargin - 20;
                 var wrappedLines = QuebrarTextoEmLinhas(curso.Curso, textPaint, maxTextWidth);
                 float textY = y + barHeight / 2 + (wrappedLines.Count == 1 ? 7 : -((wrappedLines.Count - 1) * textFontSize / 2) + 7);
-                for (int l = 0; l < wrappedLines.Count; l++)
+                for (int l = 0; l < wrappedLines.Count(); l++)
                 {
                     canvas.DrawText(wrappedLines[l], 10, textY + l * textFontSize, textPaint);
                 }
@@ -2030,7 +2030,7 @@ namespace NpsPesquisa.Api.Controllers
             double maxValue = 5.0;
             float textFontSize = 15;
 
-            for (int i = 0; i < matriz.Linhas.Count; i++)
+            for (int i = 0; i < matriz.Linhas.Count(); i++)
             {
                 var linha = matriz.Linhas[i];
                 float y = topMargin + i * (barHeight + spacing);
@@ -2049,7 +2049,7 @@ namespace NpsPesquisa.Api.Controllers
                 float maxTextWidth = leftMargin - 20;
                 var wrappedLines = QuebrarTextoEmLinhas(linha.Afirmacao, textPaint, maxTextWidth);
                 float textY = y + barHeight / 2 + (wrappedLines.Count == 1 ? 7 : -((wrappedLines.Count - 1) * textFontSize / 2) + 7);
-                for (int l = 0; l < wrappedLines.Count; l++)
+                for (int l = 0; l < wrappedLines.Count(); l++)
                 {
                     canvas.DrawText(wrappedLines[l], 10, textY + l * textFontSize, textPaint);
                 }

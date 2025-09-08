@@ -30,19 +30,24 @@ namespace NpsPesquisa.Api.Controllers
         public async Task<IActionResult> GerarConvite([FromBody] GerarConviteDto dto)
         {
             var questionario = await _context.Questionarios.FindAsync(dto.QuestionarioId);
-            var aluno = await _context.Alunos.FindAsync(dto.AlunoId);
-            if (questionario == null || aluno == null)
-                return BadRequest("Questionário ou aluno não encontrado.");
+            var participante = await _context.Participantes
+                .Include(p => p.Aluno)
+                .Include(p => p.Professor)
+                .Include(p => p.Coordenador)
+                .FirstOrDefaultAsync(p => p.Id == dto.ParticipanteId);
+                
+            if (questionario == null || participante == null)
+                return BadRequest("Questionário ou participante não encontrado.");
 
-            // Verifica se já existe convite para este aluno/questionário
+            // Verifica se já existe convite para este participante/questionário
             var conviteExistente = await _context.ConvitesQuestionarios
-                .FirstOrDefaultAsync(c => c.QuestionarioId == dto.QuestionarioId && c.AlunoId == dto.AlunoId);
+                .FirstOrDefaultAsync(c => c.QuestionarioId == dto.QuestionarioId && c.ParticipanteId == dto.ParticipanteId);
 
             if (conviteExistente != null)
             {
                 // Simula envio de e-mail
                 var linkExistente = urlBase + $"questionario/{conviteExistente.Chave}";
-                var textoEmailExistente = $"Olá {aluno.Nome},\n\nVocê já possui um convite para o questionário '{questionario.Titulo}'.\nAcesse o link abaixo para responder:\n{linkExistente}\n\nObrigado!";
+                var textoEmailExistente = $"Olá {participante.Nome},\n\nVocê já possui um convite para o questionário '{questionario.Titulo}'.\nAcesse o link abaixo para responder:\n{linkExistente}\n\nObrigado!";
                 return Ok(new { conviteExistente.Id, conviteExistente.Chave, Link = linkExistente, Email = textoEmailExistente });
             }
 
@@ -52,7 +57,7 @@ namespace NpsPesquisa.Api.Controllers
             var convite = new ConviteQuestionario
             {
                 QuestionarioId = dto.QuestionarioId,
-                AlunoId = dto.AlunoId,
+                ParticipanteId = dto.ParticipanteId,
                 Chave = chave,
                 DataEnvio = DateTime.UtcNow,
                 Respondido = false
@@ -61,12 +66,12 @@ namespace NpsPesquisa.Api.Controllers
             await _context.SaveChangesAsync();
 
             // Simula envio de e-mail
-            var link = urlBase + $"questionario/{conviteExistente.Chave}";
+            var link = urlBase + $"questionario/{chave}";
             var template = questionario.TemplateEmailConvite
                 ?? @"<h2>Olá, {{nome}}!</h2>\n<p>Você foi convidado para responder ao questionário: {{titulo}}</p>\n<p>Clique no link abaixo para acessar o questionário:</p>\n<p><a href='{{link}}'>{{link}}</a></p>\n<p>Este link é único e pessoal.</p>";
 
             var emailBody = template
-                .Replace("{{nome}}", aluno.Nome)
+                .Replace("{{nome}}", participante.Nome)
                 .Replace("{{titulo}}", questionario.Titulo)
                 .Replace("{{link}}", link);
 
@@ -78,7 +83,10 @@ namespace NpsPesquisa.Api.Controllers
         public async Task<IActionResult> ValidarChave(string chave)
         {
             var convite = await _context.ConvitesQuestionarios
-                .Include(c => c.Aluno)
+                .Include(c => c.Participante)
+                .Include(c => c.Participante.Aluno)
+                .Include(c => c.Participante.Professor)
+                .Include(c => c.Participante.Coordenador)
                 .Include(c => c.Questionario)
                 .FirstOrDefaultAsync(c => c.Chave == chave);
             if (convite == null)
@@ -87,8 +95,9 @@ namespace NpsPesquisa.Api.Controllers
             return Ok(new
             {
                 convite.Id,
-                convite.AlunoId,
-                Aluno = convite.Aluno.Nome,
+                convite.ParticipanteId,
+                Participante = convite.Participante.Nome,
+                TipoParticipante = convite.Participante.TipoDescricao,
                 convite.QuestionarioId,
                 Questionario = convite.Questionario.Titulo,
                 convite.Respondido
@@ -101,7 +110,7 @@ namespace NpsPesquisa.Api.Controllers
         {
             var convite = await _context.ConvitesQuestionarios
                 .Include(c => c.Questionario)
-                .Include(c => c.Aluno)
+                .Include(c => c.Participante)
                 .FirstOrDefaultAsync(c => c.Id == conviteId);
 
             if (convite == null)
@@ -111,7 +120,7 @@ namespace NpsPesquisa.Api.Controllers
                 return BadRequest("O participante já respondeu o questionário.");
 
             var questionario = convite.Questionario;
-            var aluno = convite.Aluno;
+            var participante = convite.Participante;
             var link = urlBase + $"questionario/{convite.Chave}";
             var template = @"<!DOCTYPE html>
 <html lang='pt-br'>
@@ -153,12 +162,12 @@ namespace NpsPesquisa.Api.Controllers
                      ?? @"<h2>Olá!</h2>\n<p>Este é um lembrete para responder ao questionário: {{titulo}}</p>\n<p>Clique no link abaixo para acessar o questionário:</p>\n<p><a href='{{link}}'>{{link}}</a></p>\n<p>Este link é único e pessoal.</p>";
             */
             var emailBody = template
-                .Replace("{{nome}}", aluno.Nome)
+                .Replace("{{nome}}", participante.Nome)
                 .Replace("{{titulo}}", questionario.Titulo).Replace("{titulo}", questionario.Titulo)
                 .Replace("{{link}}", link).Replace("{link}", link);
 
             // Enviar e-mail (simulado)
-            await _emailService.SendEmailAsync(aluno.EmailInstitucional, "Lembrete: SATISFAÇÃO COM A CATÓLICA SC | ESTAMOS ESPERANDO SUA RESPOSTA", emailBody);
+            await _emailService.SendEmailAsync(participante.Email, "Lembrete: SATISFAÇÃO COM A CATÓLICA SC | ESTAMOS ESPERANDO SUA RESPOSTA", emailBody);
 
             return Ok(new { convite.Id, convite.Chave, Link = link, Email = emailBody });
         }
@@ -172,7 +181,7 @@ namespace NpsPesquisa.Api.Controllers
                 return NotFound("Questionário não encontrado.");
 
             var convites = await _context.ConvitesQuestionarios
-                            .Include(c => c.Aluno)
+                            .Include(c => c.Participante)
                             .Where(c => c.QuestionarioId == questionarioId)
                             .ToListAsync();
             
@@ -223,14 +232,14 @@ namespace NpsPesquisa.Api.Controllers
 </html>";
             foreach (var convite in convites)
             {
-                var aluno = convite.Aluno;
+                var participante = convite.Participante;
                 var link = urlBase + $"questionario/{convite.Chave}";
                 var emailBody = template
-                    .Replace("{{nome}}", aluno.Nome)
+                    .Replace("{{nome}}", participante.Nome)
                     .Replace("{{titulo}}", questionario.Titulo).Replace("{titulo}", questionario.Titulo)
                     .Replace("{{link}}", link).Replace("{link}", link);
                 // Enviar e-mail (simulado)
-                await _emailService.SendEmailAsync(aluno.EmailInstitucional, "Lembrete: SATISFAÇÃO COM A CATÓLICA SC | ESTAMOS ESPERANDO SUA RESPOSTA", emailBody);
+                await _emailService.SendEmailAsync(participante.Email, "Lembrete: SATISFAÇÃO COM A CATÓLICA SC | ESTAMOS ESPERANDO SUA RESPOSTA", emailBody);
             }
 
             return Ok(new { message = $"Lembretes enviados para {convites.Count} participantes." });
@@ -250,6 +259,6 @@ namespace NpsPesquisa.Api.Controllers
     public class GerarConviteDto
     {
         public int QuestionarioId { get; set; }
-        public int AlunoId { get; set; }
+        public int ParticipanteId { get; set; } // Mudou de AlunoId para ParticipanteId
     }
 }

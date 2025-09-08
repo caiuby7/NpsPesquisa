@@ -4,42 +4,91 @@ namespace NpsPesquisa.Api.Models
 {
     public class AlunoViewModel
     {
-        [Required(ErrorMessage = "O nome é obrigatório")]
-        public string Nome { get; set; }
-
-        [Required(ErrorMessage = "A filial é obrigatória")]
-        public string Filial { get; set; }
-
-        [Required(ErrorMessage = "O nível de ensino é obrigatório")]
-        public string NivelEnsino { get; set; }
-
-        [Required(ErrorMessage = "O período letivo é obrigatório")]
-        public string PeriodoLetivo { get; set; }
+        // Dados Pessoais
+        [Required(ErrorMessage = "O nome do aluno é obrigatório")]
+        [StringLength(200, ErrorMessage = "O nome do aluno deve ter no máximo 200 caracteres")]
+        public string Nome { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "A matrícula é obrigatória")]
-        public string Matricula { get; set; }
+        [StringLength(50, ErrorMessage = "A matrícula deve ter no máximo 50 caracteres")]
+        public string Matricula { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "O nome do curso é obrigatório")]
-        public string NomeCurso { get; set; }
+        [StringLength(14, ErrorMessage = "O CPF deve ter no máximo 14 caracteres")]
+        public string? Cpf { get; set; }
 
-        [Required(ErrorMessage = "O turno é obrigatório")]
-        public string Turno { get; set; }
+        public DateTime? DataNascimento { get; set; }
 
-        [Required(ErrorMessage = "O email institucional é obrigatório")]
-        [EmailAddress(ErrorMessage = "Email institucional inválido")]
-        public string EmailInstitucional { get; set; }
+        public Sexo? Sexo { get; set; }
 
-        [Required(ErrorMessage = "O email pessoal é obrigatório")]
-        [EmailAddress(ErrorMessage = "Email pessoal inválido")]
-        public string EmailPessoal { get; set; }
+        [Required(ErrorMessage = "O email é obrigatório")]
+        [EmailAddress(ErrorMessage = "O email deve ser um email válido")]
+        [StringLength(200, ErrorMessage = "O email deve ter no máximo 200 caracteres")]
+        public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "O telefone é obrigatório")]
-        public string Fone { get; set; }
+        [EmailAddress(ErrorMessage = "O email pessoal deve ser um email válido")]
+        [StringLength(200, ErrorMessage = "O email pessoal deve ter no máximo 200 caracteres")]
+        public string? EmailPessoal { get; set; }
 
-        [Required(ErrorMessage = "O status no período letivo é obrigatório")]
-        public string StatusNoPeriodoLetivo { get; set; }
+        [StringLength(20, ErrorMessage = "O telefone deve ter no máximo 20 caracteres")]
+        public string? Telefone { get; set; }
 
-        [Required(ErrorMessage = "A aceitação de contato é obrigatória")]
-        public bool AceitaContato { get; set; }
+        // Dados Acadêmicos
+        [Required(ErrorMessage = "O curso é obrigatório")]
+        public int CursoId { get; set; }
+
+        public int? TurmaId { get; set; }
+
+        [Required(ErrorMessage = "O período letivo é obrigatório")]
+        public int PeriodoLetivoId { get; set; }
+
+        [Required(ErrorMessage = "A instituição é obrigatória")]
+        public int InstituicaoId { get; set; }
+
+        public Turno? Turno { get; set; }
+
+        public int? Fase { get; set; }
+
+        [StringLength(100, ErrorMessage = "A grade deve ter no máximo 100 caracteres")]
+        public string? Grade { get; set; }
+
+        [StringLength(100, ErrorMessage = "A habilitação deve ter no máximo 100 caracteres")]
+        public string? Habilitacao { get; set; }
+
+        public DateTime? DataIngressoCurso { get; set; }
+
+        public TipoMatricula? TipoMatricula { get; set; }
+
+        public DateTime? DataMatricula { get; set; }
+
+        [StringLength(100, ErrorMessage = "O status no período letivo deve ter no máximo 100 caracteres")]
+        public string? StatusNoPeriodoLetivo { get; set; }
+
+        public bool TurmaAtiva { get; set; } = true;
+
+        public bool AceitaContato { get; set; } = true;
+
+        public bool Ativo { get; set; } = true;
+
+        // Campos de Integração com Sistema Externo
+        [StringLength(100, ErrorMessage = "O ID de integração deve ter no máximo 100 caracteres")]
+        public string? IntegracaoId { get; set; }
+
+        [StringLength(100, ErrorMessage = "O ID de integração da turma-disciplina deve ter no máximo 100 caracteres")]
+        public string? TurmaDisciplinaIntegracaoId { get; set; }
+
+        [StringLength(100, ErrorMessage = "O ID de integração do curso deve ter no máximo 100 caracteres")]
+        public string? CursoIntegracaoId { get; set; }
+
+        [StringLength(100, ErrorMessage = "O ID de integração da turma deve ter no máximo 100 caracteres")]
+        public string? TurmaIntegracaoId { get; set; }
+
+        [StringLength(100, ErrorMessage = "O ID de integração do período letivo deve ter no máximo 100 caracteres")]
+        public string? PeriodoLetivoIntegracaoId { get; set; }
+
+        [StringLength(100, ErrorMessage = "O ID de integração da instituição deve ter no máximo 100 caracteres")]
+        public string? InstituicaoIntegracaoId { get; set; }
+
+        // Lista de IDs das turmas-disciplinas vinculadas ao aluno
+        public List<int> TurmaDisciplinaIds { get; set; } = new List<int>();
     }
 } 

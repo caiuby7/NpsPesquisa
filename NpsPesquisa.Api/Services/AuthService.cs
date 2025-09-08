@@ -56,26 +56,158 @@ namespace NpsPesquisa.Api.Services
 
         public async Task<AuthResponseDto> Login(LoginDto loginDto)
         {
-            var usuario = await _context.Usuarios
+            // Primeiro, tenta autenticar pelo Active Directory
+            if (await TryAuthenticateWithActiveDirectory(loginDto))
+            {
+                // Se autenticou pelo AD, busca ou cria o usuário no banco local
+                var usuario = await GetOrCreateUserFromAD(loginDto.Email);
+                
+                if (usuario != null)
+                {
+                    usuario.UltimoAcesso = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+
+                    var token = GenerateJwtToken(usuario);
+
+                    return new AuthResponseDto
+                    {
+                        Token = token,
+                        Nome = usuario.Nome,
+                        Email = usuario.Email,
+                        Perfil = usuario.Perfil?.Nome ?? "Usuário"
+                    };
+                }
+            }
+
+            // Se falhou no AD, tenta o método local existente
+            var usuarioLocal = await _context.Usuarios
                 .Include(u => u.Perfil)
-                .FirstOrDefaultAsync(u=>u.Ativo);
+                .FirstOrDefaultAsync(u => u.Email == loginDto.Email && u.Ativo);
 
-
-            if (usuario == null || !VerifyPassword(loginDto.Senha, usuario.Senha))
+            if (usuarioLocal == null || !VerifyPassword(loginDto.Senha, usuarioLocal.Senha))
                 throw new Exception("Email ou senha inválidos");
 
-            usuario.UltimoAcesso = DateTime.UtcNow;
+            usuarioLocal.UltimoAcesso = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            var token = GenerateJwtToken(usuario);
+            var tokenLocal = GenerateJwtToken(usuarioLocal);
 
             return new AuthResponseDto
             {
-                Token = token,
-                Nome = usuario.Nome,
-                Email = usuario.Email,
-                Perfil = usuario.Perfil.Nome
+                Token = tokenLocal,
+                Nome = usuarioLocal.Nome,
+                Email = usuarioLocal.Email,
+                Perfil = usuarioLocal.Perfil.Nome
             };
+        }
+
+        private async Task<bool> TryAuthenticateWithActiveDirectory(LoginDto loginDto)
+        {
+            try
+            {
+                // Verifica se o Active Directory está habilitado na configuração
+                var adEnabled = _configuration.GetValue<bool>("ActiveDirectory:Enabled", false);
+                if (!adEnabled)
+                {
+                    return false;
+                }
+
+                // Extrai o username do email (parte antes do @)
+                var username = loginDto.Email.Split('@')[0];
+                
+                // Tenta autenticar usando o método da classe ActiveDirectory
+                return ActiveDirectory.IsAuthenticated(username, loginDto.Senha);
+            }
+            catch (Exception)
+            {
+                // Se houver qualquer erro, retorna false para usar o método local
+                return false;
+            }
+        }
+
+        private async Task<Usuario> GetOrCreateUserFromAD(string email)
+        {
+            try
+            {
+                // Verifica se o usuário já existe no banco
+                var usuario = await _context.Usuarios
+                    .Include(u => u.Perfil)
+                    .FirstOrDefaultAsync(u => u.Email == email);
+
+                if (usuario != null)
+                {
+                    return usuario;
+                }
+
+                // Se não existe, tenta criar baseado nas informações do AD
+                var username = email.Split('@')[0];
+                var infoPerfil = ActiveDirectory.ConsultaPerfil(username, ""); // Não precisa da senha para consulta
+
+                if (infoPerfil != null && !string.IsNullOrEmpty(infoPerfil.nome))
+                {
+                    // Determina o perfil baseado na informação do AD
+                    var perfilId = await DeterminePerfilId(infoPerfil.perfil);
+                    
+                    // Cria o usuário
+                    var novoUsuario = new Usuario
+                    {
+                        Nome = infoPerfil.nome,
+                        Email = email,
+                        Senha = "", // Usuário do AD não tem senha local
+                        Ativo = true,
+                        DataCriacao = DateTime.UtcNow,
+                        PerfilId = perfilId,
+                        UltimoAcesso = DateTime.UtcNow
+                    };
+
+                    _context.Usuarios.Add(novoUsuario);
+                    await _context.SaveChangesAsync();
+
+                    // Recarrega com o perfil
+                    return await _context.Usuarios
+                        .Include(u => u.Perfil)
+                        .FirstOrDefaultAsync(u => u.Id == novoUsuario.Id);
+                }
+            }
+            catch (Exception)
+            {
+                // Se houver erro, retorna null para usar o método local
+            }
+
+            return null;
+        }
+
+        private async Task<int> DeterminePerfilId(string perfilAD)
+        {
+            try
+            {
+                // Mapeia os perfis do AD para os nomes dos perfis no banco
+                string nomePerfil = perfilAD?.ToLower() switch
+                {
+                    "funcionário" or "funcionario" => "Funcionário",
+                    "prof" or "professor" => "Professor",
+                    "aluno" => "Aluno",
+                    _ => "Funcionário" // Perfil padrão
+                };
+
+                // Busca o perfil no banco pelo nome
+                var perfil = await _context.Perfis
+                    .FirstOrDefaultAsync(p => p.Nome.ToLower() == nomePerfil.ToLower());
+
+                if (perfil != null)
+                {
+                    return perfil.Id;
+                }
+
+                // Se não encontrar, busca o primeiro perfil disponível
+                var primeiroPerfil = await _context.Perfis.FirstOrDefaultAsync();
+                return primeiroPerfil?.Id ?? 1;
+            }
+            catch (Exception)
+            {
+                // Em caso de erro, retorna 1 como padrão
+                return 1;
+            }
         }
 
         public async Task<AuthResponseDto> Register(RegistroDto registroDto)

@@ -67,10 +67,11 @@ namespace NpsPesquisa.Api.Controllers
             if (questionario == null)
                 return NotFound(new { message = "Questionário não encontrado" });
 
-            if (questionario.DataExpiracao < DateTime.UtcNow)
+            if (questionario.DataFim < DateTime.UtcNow)
                 return BadRequest(new { message = "Este questionário já expirou" });
 
             var questoes = questionario.QuestoesQuestionarios
+                .OrderBy(qq => qq.Ordem)
                 .Select(qq => new
                 {
                     qq.QuestaoId,
@@ -85,22 +86,17 @@ namespace NpsPesquisa.Api.Controllers
                     }).ToList()
                 });
 
-            if (questionario.OrdemAleatoria)
-            {
-                questoes = questoes.OrderBy(x => _random.Next());
-            }
-            else
-            {
-                questoes = questoes.OrderBy(q => questionario.QuestoesQuestionarios
-                    .First(qq => qq.QuestaoId == q.QuestaoId).Ordem);
-            }
+            // Sempre usar a ordem definida nas questões
+            questoes = questoes.OrderBy(q => questionario.QuestoesQuestionarios
+                .First(qq => qq.QuestaoId == q.QuestaoId).Ordem);
 
             return new
             {
                 questionario.Id,
                 questionario.Titulo,
                 questionario.Descricao,
-                questionario.DataExpiracao,
+                questionario.DataInicio,
+                questionario.DataFim,
                 Questoes = questoes
             };
         }
@@ -131,10 +127,37 @@ namespace NpsPesquisa.Api.Controllers
             return await _context.Respostas
                 .Include(r => r.RespostasQuestoes)
                     .ThenInclude(rq => rq.Questao)
-                .Include(r => r.Aluno)
+                .Include(r => r.Participante)
+                    .ThenInclude(p => p.Aluno)
                 .Where(r => r.QuestionarioId == id)
                 .OrderByDescending(r => r.DataResposta)
                 .ToListAsync();
+        }
+
+        [HttpGet("regras-avaliacao")]
+        [AllowAnonymous]
+        public ActionResult<object> GetRegrasAvaliacao()
+        {
+            var regras = RegrasAvaliacao.ObterTodasCombinacoesValidas();
+            var tiposParticipantes = Enum.GetValues<TipoParticipante>();
+            var tiposItens = Enum.GetValues<TipoItemAvaliado>();
+
+            return new
+            {
+                Regras = regras,
+                TiposParticipantes = tiposParticipantes.Select(tp => new
+                {
+                    Valor = tp,
+                    Nome = tp.ToString(),
+                    ItensValidos = RegrasAvaliacao.ObterItensValidosParaParticipante(tp)
+                }),
+                TiposItens = tiposItens.Select(ti => new
+                {
+                    Valor = ti,
+                    Nome = ti.ToString(),
+                    ParticipantesValidos = RegrasAvaliacao.ObterParticipantesValidosParaItem(ti)
+                })
+            };
         }
 
         [HttpGet("{id}/estatisticas")]
@@ -182,13 +205,13 @@ namespace NpsPesquisa.Api.Controllers
             // Buscar todos os convites respondidos para este questionário
             var convitesRespondido = await _context.ConvitesQuestionarios
                 .Where(c => c.QuestionarioId == id && c.Respondido)
-                .Select(c => c.AlunoId)
+                .Select(c => c.ParticipanteId)
                 .ToListAsync();
 
             // Contar respostas APENAS de quem respondeu via convite
             var convitesRespondidos = await _context.Respostas
-                 .Where(r => r.QuestionarioId == id && convitesRespondido.Contains(r.AlunoId))
-                 .Select(r => r.AlunoId)
+                 .Where(r => r.QuestionarioId == id && convitesRespondido.Contains(r.ParticipanteId))
+                 .Select(r => r.ParticipanteId)
                     .Distinct()
                     .CountAsync();
 
@@ -211,8 +234,18 @@ namespace NpsPesquisa.Api.Controllers
         [Authorize(Roles = "Administrador,Coordenacao")]
         public async Task<ActionResult<Questionario>> Create(Questionario questionario)
         {
-            if (questionario.DataExpiracao <= DateTime.UtcNow)
+            if (questionario.DataFim < DateTime.UtcNow)
                 return BadRequest(new { message = "A data de expiração deve ser maior que a data atual" });
+
+            // Validação das regras de avaliação institucional
+            if (questionario.Tipo == TipoQuestionario.AvaliacaoInstitucional)
+            {
+                if (questionario.TipoItemAvaliado == null)
+                    return BadRequest(new { message = "Para avaliação institucional, é obrigatório selecionar um tipo de item a ser avaliado" });
+
+                if (string.IsNullOrWhiteSpace(questionario.NomeItemEspecifico))
+                    return BadRequest(new { message = "Para avaliação institucional, é obrigatório informar o nome do item específico" });
+            }
 
             questionario.DataCriacao = DateTime.UtcNow;
             _context.Questionarios.Add(questionario);
@@ -232,8 +265,18 @@ namespace NpsPesquisa.Api.Controllers
             if (questionarioExistente == null)
                 return NotFound(new { message = "Questionário não encontrado" });
 
-            if (questionario.DataExpiracao <= DateTime.UtcNow)
+            if (questionario.DataFim < DateTime.UtcNow)
                 return BadRequest(new { message = "A data de expiração deve ser maior que a data atual" });
+
+            // Validação das regras de avaliação institucional
+            if (questionario.Tipo == TipoQuestionario.AvaliacaoInstitucional)
+            {
+                if (questionario.TipoItemAvaliado == null)
+                    return BadRequest(new { message = "Para avaliação institucional, é obrigatório selecionar um tipo de item a ser avaliado" });
+
+                if (string.IsNullOrWhiteSpace(questionario.NomeItemEspecifico))
+                    return BadRequest(new { message = "Para avaliação institucional, é obrigatório informar o nome do item específico" });
+            }
 
             questionario.DataCriacao = questionarioExistente.DataCriacao;
             _context.Entry(questionario).State = EntityState.Modified;
@@ -330,7 +373,7 @@ namespace NpsPesquisa.Api.Controllers
         [Authorize(Roles = "Administrador,Coordenacao")]
         public async Task<ActionResult<Questionario>> CreateComQuestoes(QuestionarioDto questionarioDto)
         {
-            if (questionarioDto.DataExpiracao <= DateTime.UtcNow)
+            if (questionarioDto.DataFim < DateTime.UtcNow)
                 return BadRequest(new { message = "A data de expiração deve ser maior que a data atual" });
 
             // Verifica se todas as questões existem
@@ -362,10 +405,13 @@ namespace NpsPesquisa.Api.Controllers
                 Titulo = questionarioDto.Titulo,
                 Descricao = questionarioDto.Descricao,
                 DataCriacao = DateTime.UtcNow,
-                DataExpiracao = questionarioDto.DataExpiracao,
                 DataInicio = questionarioDto.DataInicio,
                 DataFim = questionarioDto.DataFim,
-                OrdemAleatoria = questionarioDto.OrdemAleatoria,
+                Tipo = questionarioDto.Tipo,
+                PermitirComentarios = questionarioDto.PermitirComentarios,
+                PermitirSalvarAndamento = questionarioDto.PermitirSalvarAndamento,
+                TipoItemAvaliado = questionarioDto.TipoItemAvaliado,
+                NomeItemEspecifico = questionarioDto.NomeItemEspecifico,
                 TemplateEmailConvite = questionarioDto.TemplateEmailConvite,
                 TemplateEmailLembrete = questionarioDto.TemplateEmailLembrete,
                 EnviarLembreteAutomatico = questionarioDto.EnviarLembreteAutomatico,
@@ -395,7 +441,7 @@ namespace NpsPesquisa.Api.Controllers
             if (questionario == null)
                 return NotFound(new { message = "Questionário não encontrado" });
 
-            if (questionarioDto.DataExpiracao <= DateTime.UtcNow)
+            if (questionarioDto.DataFim < DateTime.UtcNow)
                 return BadRequest(new { message = "A data de expiração deve ser maior que a data atual" });
 
             // Verifica se todas as questões existem
@@ -425,8 +471,13 @@ namespace NpsPesquisa.Api.Controllers
             // Atualiza os dados básicos do questionário
             questionario.Titulo = questionarioDto.Titulo;
             questionario.Descricao = questionarioDto.Descricao;
-            questionario.DataExpiracao = questionarioDto.DataExpiracao;
-            questionario.OrdemAleatoria = questionarioDto.OrdemAleatoria;
+            questionario.DataInicio = questionarioDto.DataInicio;
+            questionario.DataFim = questionarioDto.DataFim;
+            questionario.Tipo = questionarioDto.Tipo;
+            questionario.PermitirComentarios = questionarioDto.PermitirComentarios;
+            questionario.PermitirSalvarAndamento = questionarioDto.PermitirSalvarAndamento;
+            questionario.TipoItemAvaliado = questionarioDto.TipoItemAvaliado;
+            questionario.NomeItemEspecifico = questionarioDto.NomeItemEspecifico;
             questionario.TemplateEmailConvite = questionarioDto.TemplateEmailConvite;
             questionario.TemplateEmailLembrete = questionarioDto.TemplateEmailLembrete;
             questionario.EnviarLembreteAutomatico = questionarioDto.EnviarLembreteAutomatico;
@@ -469,26 +520,27 @@ namespace NpsPesquisa.Api.Controllers
             if (questionario == null)
                 return NotFound(new { message = "Questionário não encontrado" });
 
-            // Verifica se os alunos existem
-            var alunosExistentes = await _context.Alunos
-                .Where(a => participantesIds.Contains(a.Id))
-                .Select(a => a.Id)
+            // Verifica se os participantes existem
+            var participantesExistentes = await _context.Participantes
+                .Where(p => participantesIds.Contains(p.Id))
+                .Select(p => p.Id)
                 .ToListAsync();
 
-            var alunosNaoEncontrados = participantesIds
-                .Except(alunosExistentes)
+            var participantesNaoEncontrados = participantesIds
+                .Except(participantesExistentes)
                 .ToList();
 
-            if (alunosNaoEncontrados.Any())
-                return BadRequest(new { message = $"Os seguintes alunos não foram encontrados: {string.Join(", ", alunosNaoEncontrados)}" });
+            if (participantesNaoEncontrados.Any())
+                return BadRequest(new { message = $"Os seguintes participantes não foram encontrados: {string.Join(", ", participantesNaoEncontrados)}" });
 
             // Adiciona os participantes
-            foreach (var alunoId in participantesIds)
+            foreach (var participanteId in participantesIds)
             {
                 var participante = new ParticipanteQuestionario
                 {
                     QuestionarioId = id,
-                    AlunoId = alunoId
+                    ParticipanteId = participanteId,
+                    Status = "Pendente" // Status padrão para novos participantes
                 };
                 _context.ParticipantesQuestionarios.Add(participante);
             }
@@ -504,6 +556,7 @@ namespace NpsPesquisa.Api.Controllers
         {
             var questionario = await _context.Questionarios
                 .Include(q => q.Participantes)
+                .ThenInclude(p => p.Participante)
                 .ThenInclude(p => p.Aluno)
                 .FirstOrDefaultAsync(q => q.Id == id);
 
@@ -515,9 +568,9 @@ namespace NpsPesquisa.Api.Controllers
 
             foreach (var participante in questionario.Participantes)
             {
-                // Verifica se já existe convite para este aluno/questionário
+                // Verifica se já existe convite para este participante/questionário
                 var conviteExistente = await _context.ConvitesQuestionarios
-                    .FirstOrDefaultAsync(c => c.QuestionarioId == id && c.AlunoId == participante.AlunoId);
+                    .FirstOrDefaultAsync(c => c.QuestionarioId == id && c.ParticipanteId == participante.ParticipanteId);
 
                 if (conviteExistente == null)
                 {
@@ -525,7 +578,7 @@ namespace NpsPesquisa.Api.Controllers
                     var convite = new ConviteQuestionario
                     {
                         QuestionarioId = id,
-                        AlunoId = participante.AlunoId,
+                        ParticipanteId = participante.ParticipanteId,
                         Chave = chave,
                         DataEnvio = DateTime.UtcNow
                     };
@@ -574,12 +627,23 @@ namespace NpsPesquisa.Api.Controllers
                     /* var template = questionario.TemplateEmailLembrete
                              ?? @"<h2>Olá!</h2>\n<p>Este é um lembrete para responder ao questionário: {{titulo}}</p>\n<p>Clique no link abaixo para acessar o questionário:</p>\n<p><a href='{{link}}'>{{link}}</a></p>\n<p>Este link é único e pessoal.</p>";
                     */
+                    // Obter nome e email baseado no tipo do participante
+                    string nome = participante.Participante.Nome;
+                    string email = participante.Participante.Email;
+                    
+                    // Se for aluno, usar dados específicos do aluno se disponíveis
+                    if (participante.Participante.Tipo == TipoParticipante.Aluno && participante.Participante.Aluno != null)
+                    {
+                        nome = participante.Participante.Aluno.Nome;
+                        email = participante.Participante.Aluno.Email;
+                    }
+                    
                     var emailBody = template
-                        .Replace("{{nome}}", participante.Aluno.Nome)
+                        .Replace("{{nome}}", nome)
                         .Replace("{{titulo}}", questionario.Titulo).Replace("{titulo}", questionario.Titulo)
                         .Replace("{{link}}", link).Replace("{link}", link);
 
-                    await _emailService.SendEmailAsync(participante.Aluno.EmailInstitucional, "QUAL A SUA SATISFAÇÃO COM A CATÓLICA SC?", emailBody);
+                    await _emailService.SendEmailAsync(email, "QUAL A SUA SATISFAÇÃO COM A CATÓLICA SC?", emailBody);
                 }
 
             }
@@ -596,45 +660,123 @@ namespace NpsPesquisa.Api.Controllers
                     .ThenInclude(q => q.QuestoesQuestionarios)
                         .ThenInclude(qq => qq.Questao)
                             .ThenInclude(q => q.Opcoes)
-                .Include(c => c.Aluno)
+                .Include(c => c.Participante)
+                    .ThenInclude(p => p.Aluno)
+                        .ThenInclude(a => a.Curso)
+                .Include(c => c.Participante)
+                    .ThenInclude(p => p.Professor)
+                        .ThenInclude(prof => prof.Instituicao)
+                .Include(c => c.Participante)
+                    .ThenInclude(p => p.Coordenador)
                 .FirstOrDefaultAsync(c => c.Chave == chave);
 
             if (convite == null)
                 return NotFound(new { message = "Convite não encontrado" });
 
-            if (convite.DataResposta.HasValue && convite.Respondido)
+            if (convite.DataResposta.HasValue)
                 return BadRequest(new { message = "Este questionário já foi respondido" });
-
-            var questionario = convite.Questionario;
 
             if (DateTime.UtcNow < convite.Questionario.DataInicio || DateTime.UtcNow > convite.Questionario.DataFim)
                 return BadRequest(new { message = "O período para responder este questionário está encerrado" });
 
-            var questoes = questionario.QuestoesQuestionarios
+            // Usar o questionário já carregado com Include
+            var questionario = convite.Questionario;
+            if (questionario == null)
+                return NotFound(new { message = "Questionário não encontrado" });
+
+            // Obter todas as questões principais do questionário
+            var questoesPrincipais = questionario.QuestoesQuestionarios
                 .OrderBy(qq => qq.Ordem)
-                .Select(qq => new QuestaoResponseDto
+                .Select(qq => qq.Questao)
+                .ToList();
+
+            // Obter IDs das questões condicionais referenciadas pelas opções
+            var questoesCondicionaisIds = questoesPrincipais
+                .SelectMany(q => q.Opcoes)
+                .Where(o => o.AtivaCondicao && o.QuestaoCondicionalId.HasValue)
+                .Select(o => o.QuestaoCondicionalId.Value)
+                .Distinct()
+                .ToList();
+
+            // Buscar as questões condicionais
+            var questoesCondicionais = await _context.Questoes
+                .Include(x=>x.Opcoes)
+                .Where(q => questoesCondicionaisIds.Contains(q.Id))
+                .ToListAsync();
+
+            // Criar dicionário para acesso rápido às questões condicionais
+            var questoesCondicionaisDict = questoesCondicionais.ToDictionary(q => q.Id);
+
+            var questoes = questoesPrincipais
+                .Select(q => new QuestaoResponseDto
                 {
-                    Id = qq.Questao.Id,
-                    Texto = qq.Questao.Texto,
-                    Tipo = qq.Questao.Tipo,
-                    Obrigatorio = qq.Questao.Obrigatorio,
-                    Opcoes = qq.Questao.Opcoes.Where(o => o.EhColuna == false).Select(o => new OpcaoQuestaoResponseDto
+                    Id = q.Id,
+                    Texto = q.Texto,
+                    Tipo = q.Tipo,
+                    Obrigatorio = q.Obrigatorio,
+                    IsCondicional = q.IsCondicional,
+                    Opcoes = (q.Opcoes ?? new List<OpcaoQuestao>()).Where(o => o.EhColuna == false).Select(o => 
                     {
-                        Id = o.Id,
-                        Texto = o.Texto,
-                        Valor = o.Valor,
-                        Ordem = o.Ordem,
-                        Peso = o.Peso,
-                        EhColuna = o.EhColuna
+                        var opcaoDto = new OpcaoQuestaoResponseDto
+                        {
+                            Id = o.Id,
+                            Texto = o.Texto,
+                            Valor = o.Valor,
+                            Ordem = o.Ordem,
+                            Peso = o.Peso,
+                            EhColuna = o.EhColuna,
+                            AtivaCondicao = o.AtivaCondicao,
+                            QuestaoCondicionalId = o.QuestaoCondicionalId
+                        };
+
+                        // Se a opção ativa condição, buscar e incluir a questão condicional
+                        if (o.AtivaCondicao && o.QuestaoCondicionalId.HasValue && 
+                            questoesCondicionaisDict.TryGetValue(o.QuestaoCondicionalId.Value, out var questaoCondicional))
+                        {
+                            opcaoDto.QuestaoCondicional = new QuestaoResponseDto
+                            {
+                                Id = questaoCondicional.Id,
+                                Texto = questaoCondicional.Texto,
+                                Tipo = questaoCondicional.Tipo,
+                                Obrigatorio = questaoCondicional.Obrigatorio,
+                                IsCondicional = questaoCondicional.IsCondicional,
+                                Opcoes = (questaoCondicional.Opcoes ?? new List<OpcaoQuestao>()).Where(oc => oc.EhColuna == false).Select(oc => new OpcaoQuestaoResponseDto
+                                {
+                                    Id = oc.Id,
+                                    Texto = oc.Texto,
+                                    Valor = oc.Valor,
+                                    Ordem = oc.Ordem,
+                                    Peso = oc.Peso,
+                                    EhColuna = oc.EhColuna,
+                                    AtivaCondicao = oc.AtivaCondicao,
+                                    QuestaoCondicionalId = oc.QuestaoCondicionalId
+                                }).ToList(),
+                                Colunas = (questaoCondicional.Opcoes ?? new List<OpcaoQuestao>()).Where(oc => oc.EhColuna == true).Select(oc => new OpcaoQuestaoResponseDto
+                                {
+                                    Id = oc.Id,
+                                    Texto = oc.Texto,
+                                    Valor = oc.Valor,
+                                    Ordem = oc.Ordem,
+                                    Peso = oc.Peso,
+                                    EhColuna = oc.EhColuna,
+                                    AtivaCondicao = oc.AtivaCondicao,
+                                    QuestaoCondicionalId = oc.QuestaoCondicionalId
+                                }).ToList()
+                            };
+                        }
+
+                        return opcaoDto;
                     }).ToList(),
-                    Colunas = qq.Questao.Opcoes.Where(o => o.EhColuna == true).Select(o => new OpcaoQuestaoResponseDto
+                    Colunas = (q.Opcoes ?? new List<OpcaoQuestao>()).Where(o => o.EhColuna == true).Select(o => new OpcaoQuestaoResponseDto
                     {
                         Id = o.Id,
                         Texto = o.Texto,
                         Valor = o.Valor,
                         Ordem = o.Ordem,
                         Peso = o.Peso,
-                        EhColuna = o.EhColuna
+                        EhColuna = o.EhColuna,
+                        AtivaCondicao = o.AtivaCondicao,
+                        QuestaoCondicionalId = o.QuestaoCondicionalId
                     }).ToList()
                 }).ToList();
 
@@ -649,19 +791,46 @@ namespace NpsPesquisa.Api.Controllers
                     dataFim = questionario.DataFim,
                     questoes = questoes
                 },
-                aluno = new
-                {
-                    id = convite.Aluno.Id,
-                    nome = convite.Aluno.Nome,
-                    email = convite.Aluno.EmailInstitucional
-                }
+        participante = new
+        {
+            id = convite.Participante.Id,
+            nome = convite.Participante.Nome,
+            email = convite.Participante.Email,
+            tipo = convite.Participante.TipoDescricao,
+            // Dados específicos baseados no tipo
+            aluno = convite.Participante.Tipo == TipoParticipante.Aluno && convite.Participante.Aluno != null ? new
+            {
+                id = convite.Participante.Aluno.Id,
+                nome = convite.Participante.Aluno.Nome,
+                email = convite.Participante.Aluno.Email,
+                matricula = convite.Participante.Aluno.Matricula,
+                curso = convite.Participante.Aluno.Curso?.Nome
+            } : null,
+            professor = convite.Participante.Tipo == TipoParticipante.Professor && convite.Participante.Professor != null ? new
+            {
+                id = convite.Participante.Professor.Id,
+                nome = convite.Participante.Professor.Nome,
+                email = convite.Participante.Professor.Email,
+                departamento = convite.Participante.Professor.Departamento,
+                titulacao = convite.Participante.Professor.Titulacao,
+                instituicao = convite.Participante.Professor.Instituicao?.Nome
+            } : null,
+            coordenador = convite.Participante.Tipo == TipoParticipante.Coordenador && convite.Participante.Coordenador != null ? new
+            {
+                id = convite.Participante.Coordenador.Id,
+                nome = convite.Participante.Coordenador.Nome,
+                email = convite.Participante.Coordenador.Email,
+                departamento = convite.Participante.Coordenador.Departamento,
+                titulacao = convite.Participante.Coordenador.Titulacao
+            } : null
+        }
             });
         }
 
         public class ResponderQuestionarioDto
         {
             public int QuestionarioId { get; set; }
-            public int AlunoId { get; set; }
+            public int ParticipanteId { get; set; } // Mudou de AlunoId para ParticipanteId
             public List<RespostaParaQuestionarioDto> Respostas { get; set; }
         }
 
@@ -679,7 +848,7 @@ namespace NpsPesquisa.Api.Controllers
         {
             var convite = await _context.ConvitesQuestionarios
                 .Include(c => c.Questionario)
-                .Include(c => c.Aluno)
+                .Include(c => c.Participante)
                 .FirstOrDefaultAsync(c => c.Chave == chave);
 
             if (convite == null)
@@ -691,10 +860,25 @@ namespace NpsPesquisa.Api.Controllers
             if (DateTime.UtcNow < convite.Questionario.DataInicio || DateTime.UtcNow > convite.Questionario.DataFim)
                 return BadRequest(new { message = "O período para responder este questionário está encerrado" });
 
-            var questoesQuestionario = await _context.QuestoesQuestionarios
+            // Obter questões principais do questionário
+            var questoesPrincipais = await _context.QuestoesQuestionarios
                 .Where(qq => qq.QuestionarioId == convite.QuestionarioId)
                 .Select(qq => qq.QuestaoId)
                 .ToListAsync();
+
+            // Obter questões condicionais referenciadas pelas opções das questões principais
+            var questoesCondicionais = await _context.QuestoesQuestionarios
+                .Where(qq => qq.QuestionarioId == convite.QuestionarioId)
+                .Include(qq => qq.Questao)
+                    .ThenInclude(q => q.Opcoes)
+                .SelectMany(qq => qq.Questao.Opcoes)
+                .Where(o => o.AtivaCondicao && o.QuestaoCondicionalId.HasValue)
+                .Select(o => o.QuestaoCondicionalId.Value)
+                .Distinct()
+                .ToListAsync();
+
+            // Combinar questões principais e condicionais
+            var questoesValidas = questoesPrincipais.Union(questoesCondicionais).ToList();
 
             var questoesRespondidas = dto.Respostas.Select(r => r.QuestaoId).ToList();
 
@@ -702,7 +886,7 @@ namespace NpsPesquisa.Api.Controllers
             var resposta = new Resposta
             {
                 QuestionarioId = convite.QuestionarioId,
-                AlunoId = convite.AlunoId,
+                ParticipanteId = convite.ParticipanteId,
                 DataResposta = DateTime.UtcNow
             };
             _context.Respostas.Add(resposta);
@@ -714,11 +898,9 @@ namespace NpsPesquisa.Api.Controllers
                 if (string.IsNullOrEmpty(respostaDto.Valor) && string.IsNullOrEmpty(respostaDto.Texto) && respostaDto.OpcaoId == null && respostaDto.ColunaId == null)
                     continue;
 
-                var questaoQuestionario = await _context.QuestoesQuestionarios
-                    .FirstOrDefaultAsync(qq => qq.QuestionarioId == convite.QuestionarioId && qq.QuestaoId == respostaDto.QuestaoId);
-
-                if (questaoQuestionario == null)
-                    return BadRequest(new { message = $"Questão {respostaDto.QuestaoId} não pertence ao questionário" });
+                // Verificar se a questão é válida (principal ou condicional)
+                if (!questoesValidas.Contains(respostaDto.QuestaoId))
+                    return BadRequest(new { message = $"Questão {respostaDto.QuestaoId} não pertence ao questionário ou não é uma questão condicional válida" });
 
                 var novaRespostaQuestao = new RespostaQuestao
                 {
@@ -744,25 +926,25 @@ namespace NpsPesquisa.Api.Controllers
         {
             var participantes = await _context.ParticipantesQuestionarios
                 .Where(p => p.QuestionarioId == id)
+                .Include(p => p.Participante)
+                .Include(p => p.Participante.Curso)
                 .Select(p => new
                 {
                     p.Id,
-                    p.AlunoId,
+                    p.ParticipanteId,
                     p.QuestionarioId,
-                    Aluno = new
+                    Participante = new
                     {
-                        p.Aluno.Id,
-                        p.Aluno.Nome,
-                        p.Aluno.EmailInstitucional,
-                        p.Aluno.EmailPessoal,
-                        p.Aluno.Matricula,
-                        p.Aluno.Turno,
-                        p.Aluno.CursoId,
-                        Curso = new
+                        p.Participante.Id,
+                        p.Participante.Nome,
+                        p.Participante.Email,
+                        p.Participante.Tipo,
+                        p.Participante.CursoId,
+                        Curso = p.Participante.Curso != null ? new
                         {
-                            p.Aluno.Curso.Id,
-                            p.Aluno.Curso.Nome
-                        }
+                            p.Participante.Curso.Id,
+                            p.Participante.Curso.Nome
+                        } : null
                     }
                 })
                 .ToListAsync();
@@ -775,11 +957,11 @@ namespace NpsPesquisa.Api.Controllers
             return participantes;
         }
 
-        [HttpDelete("{id}/participantes/{alunoId}")]
-        public async Task<IActionResult> DeleteParticipante(int id, int alunoId)
+        [HttpDelete("{id}/participantes/{participanteId}")]
+        public async Task<IActionResult> DeleteParticipante(int id, int participanteId)
         {
             var participante = await _context.ParticipantesQuestionarios
-                .FirstOrDefaultAsync(p => p.QuestionarioId == id && p.AlunoId == alunoId);
+                .FirstOrDefaultAsync(p => p.QuestionarioId == id && p.ParticipanteId == participanteId);
 
             if (participante == null)
             {
@@ -800,6 +982,8 @@ namespace NpsPesquisa.Api.Controllers
             {
                 var questionario = await _context.Questionarios
                     .Include(q => q.Participantes)
+                    .ThenInclude(p => p.Participante)
+                    .ThenInclude(p => p.Aluno)
                     .FirstOrDefaultAsync(q => q.Id == id);
 
                 if (questionario == null)
@@ -858,9 +1042,10 @@ namespace NpsPesquisa.Api.Controllers
                                                 continue; // Pular linhas completamente vazias
                                             }
 
-                                            var filial = worksheet.Cell(row, 1).GetValue<string>()?.Trim() ?? "";
-                                            var nivelEnsino = worksheet.Cell(row, 2).GetValue<string>()?.Trim() ?? "";
-                                            var periodoLetivo = worksheet.Cell(row, 3).GetValue<string>()?.Trim() ?? "";
+                                            // TODO: Implementar mapeamento correto para filial, nível de ensino e período letivo
+                                            // var filial = worksheet.Cell(row, 1).GetValue<string>()?.Trim() ?? "";
+                                            // var nivelEnsino = worksheet.Cell(row, 2).GetValue<string>()?.Trim() ?? "";
+                                            // var periodoLetivo = worksheet.Cell(row, 3).GetValue<string>()?.Trim() ?? "";
                                             var nome = worksheet.Cell(row, 4).GetValue<string>()?.Trim();
                                             var matricula = worksheet.Cell(row, 5).GetValue<string>()?.Trim();
                                             var cursoNome = worksheet.Cell(row, 6).GetValue<string>()?.Trim() ?? "";
@@ -899,14 +1084,13 @@ namespace NpsPesquisa.Api.Controllers
                                             }
 
                                             // Validar/obter Aluno
+                                            var turnoEnum = ConverterStringParaTurno(turno);
+                                            
                                             var aluno = await _context.Alunos.FirstOrDefaultAsync(a =>
                                                 a.Nome == nome &&
-                                                a.Filial == filial &&
-                                                a.NivelEnsino == nivelEnsino &&
-                                                a.PeriodoLetivo == periodoLetivo &&
                                                 a.Matricula == matricula &&
                                                 a.CursoId == curso.Id &&
-                                                a.Turno == turno
+                                                a.Turno == turnoEnum
                                             );
 
                                             bool novoAluno = false;
@@ -916,17 +1100,17 @@ namespace NpsPesquisa.Api.Controllers
                                                 {
                                                     Nome = nome,
                                                     Email = emailInstitucional,
-                                                    Filial = filial,
-                                                    NivelEnsino = nivelEnsino,
-                                                    PeriodoLetivo = periodoLetivo,
                                                     Matricula = matricula,
                                                     CursoId = curso.Id,
-                                                    Turno = turno,
-                                                    EmailInstitucional = emailInstitucional,
+                                                    Turno = ConverterStringParaTurno(turno),
                                                     EmailPessoal = emailPessoal,
-                                                    Fone = fone,
+                                                    Telefone = fone,
                                                     StatusNoPeriodoLetivo = statusNoPeriodoLetivo,
-                                                    AceitaContato = true
+                                                    AceitaContato = true,
+                                                    PeriodoLetivoId = 1, // TODO: Mapear corretamente
+                                                    InstituicaoId = 1, // TODO: Mapear corretamente
+                                                    Ativo = true,
+                                                    DataCadastro = DateTime.Now
                                                 };
                                                 _context.Alunos.Add(aluno);
                                                 await _context.SaveChangesAsync();
@@ -935,14 +1119,15 @@ namespace NpsPesquisa.Api.Controllers
 
                                             // Adicionar como participante se ainda não for
                                             var jaParticipante = await _context.ParticipantesQuestionarios
-                                                .AnyAsync(p => p.QuestionarioId == id && p.AlunoId == aluno.Id);
+                                                .AnyAsync(p => p.QuestionarioId == id && p.ParticipanteId == aluno.Id);
 
                                             if (!jaParticipante)
                                             {
                                                 var participante = new ParticipanteQuestionario
                                                 {
                                                     QuestionarioId = id,
-                                                    AlunoId = aluno.Id
+                                                    ParticipanteId = aluno.Id,
+                                                    Status = "Pendente" // Status padrão para novos participantes
                                                 };
                                                 _context.ParticipantesQuestionarios.Add(participante);
                                                 await _context.SaveChangesAsync();
@@ -1099,19 +1284,19 @@ namespace NpsPesquisa.Api.Controllers
             // Buscar todos os convites respondidos para este questionário
             var convitesRespondidos = await _context.ConvitesQuestionarios
                 .Where(c => c.QuestionarioId == id && c.Respondido)
-                .Select(c => new { c.AlunoId, c.QuestionarioId })
+                .Select(c => new { c.ParticipanteId, c.QuestionarioId })
                 .ToListAsync();
 
-            // Extrair apenas os IDs dos alunos que responderam
-            var alunosRespondidos = convitesRespondidos.Select(c => c.AlunoId).ToList();
+            // Extrair apenas os IDs dos participantes que responderam
+            var participantesRespondidos = convitesRespondidos.Select(c => c.ParticipanteId).ToList();
 
             // Buscar todas as respostas do questionário APENAS de quem respondeu via convite
             var respostas = await _context.Respostas
                 .Include(r => r.RespostasQuestoes)
                     .ThenInclude(rq => rq.Questao)
-                .Include(r => r.Aluno)
-                    .ThenInclude(a => a.Curso)
-                .Where(r => r.QuestionarioId == id && alunosRespondidos.Contains(r.AlunoId))
+                .Include(r => r.Participante)
+                    .ThenInclude(p => p.Curso)
+                .Where(r => r.QuestionarioId == id && participantesRespondidos.Contains(r.ParticipanteId))
                 .OrderBy(r => r.DataResposta)
                 .ToListAsync();
 
@@ -1487,7 +1672,8 @@ namespace NpsPesquisa.Api.Controllers
         public async Task<IActionResult> ExportarPendentes(int id)
         {
             var convitesPendentes = await _context.ConvitesQuestionarios
-                .Include(c => c.Aluno)
+                .Include(c => c.Participante)
+                    .ThenInclude(p => p.Aluno)
                 .Where(c => c.QuestionarioId == id && !c.Respondido)
                 .ToListAsync();
 
@@ -1501,9 +1687,10 @@ namespace NpsPesquisa.Api.Controllers
                 worksheet.Cell(1, 2).Value = "Chave";
                 worksheet.Cell(1, 3).Value = "Link";
 
-                for (int i = 0; i < convitesPendentes.Count; i++)
+                for (int i = 0; i < convitesPendentes.Count(); i++)
                 {
-                    worksheet.Cell(i + 2, 1).Value = convitesPendentes[i].Aluno.Nome;
+                    var participante = convitesPendentes[i].Participante;
+                    worksheet.Cell(i + 2, 1).Value = participante.Nome;
                     worksheet.Cell(i + 2, 2).Value = convitesPendentes[i].Chave;
                     worksheet.Cell(i + 2, 3).Value = $"https://nps.catolicasc.org.br/questionario/{convitesPendentes[i].Chave}";
                 }
@@ -1528,7 +1715,8 @@ namespace NpsPesquisa.Api.Controllers
         public async Task<IActionResult> ExportarRespondentes(int id)
         {
             var convitesRespondidos = await _context.ConvitesQuestionarios
-                .Include(c => c.Aluno)
+                .Include(c => c.Participante)
+                    .ThenInclude(p => p.Aluno)
                 .Where(c => c.QuestionarioId == id && c.Respondido)
                 .ToListAsync();
 
@@ -1542,11 +1730,21 @@ namespace NpsPesquisa.Api.Controllers
                 worksheet.Cell(1, 2).Value = "E-mail";
                 worksheet.Cell(1, 3).Value = "Matrícula";
 
-                for (int i = 0; i < convitesRespondidos.Count; i++)
+                for (int i = 0; i < convitesRespondidos.Count(); i++)
                 {
-                    worksheet.Cell(i + 2, 1).Value = convitesRespondidos[i].Aluno.Nome;
-                    worksheet.Cell(i + 2, 2).Value = convitesRespondidos[i].Aluno.EmailInstitucional ?? convitesRespondidos[i].Aluno.EmailPessoal ?? "";
-                    worksheet.Cell(i + 2, 3).Value = convitesRespondidos[i].Aluno.Matricula ?? "";
+                    var participante = convitesRespondidos[i].Participante;
+                    worksheet.Cell(i + 2, 1).Value = participante.Nome;
+                    worksheet.Cell(i + 2, 2).Value = participante.Email;
+                    
+                    // Se for aluno, mostrar matrícula, senão mostrar tipo
+                    if (participante.Tipo == TipoParticipante.Aluno && participante.Aluno != null)
+                    {
+                        worksheet.Cell(i + 2, 3).Value = participante.Aluno.Matricula ?? "";
+                    }
+                    else
+                    {
+                        worksheet.Cell(i + 2, 3).Value = participante.TipoDescricao;
+                    }
                 }
 
                 worksheet.Columns().AdjustToContents();
@@ -1618,6 +1816,9 @@ namespace NpsPesquisa.Api.Controllers
                 .Include(q => q.QuestoesQuestionarios)
                     .ThenInclude(qq => qq.Questao)
                         .ThenInclude(q => q.Opcoes)
+                .Include(q => q.Participantes)
+                    .ThenInclude(p => p.Participante)
+                    .ThenInclude(p => p.Aluno)
                 .FirstOrDefaultAsync(q => q.Id == id);
             if (questionario == null)
                 return null;
@@ -1625,19 +1826,19 @@ namespace NpsPesquisa.Api.Controllers
             // Buscar todos os convites respondidos para este questionário
             var convitesRespondidos = await _context.ConvitesQuestionarios
                 .Where(c => c.QuestionarioId == id && c.Respondido)
-                .Select(c => new { c.AlunoId, c.QuestionarioId })
+                .Select(c => new { c.ParticipanteId, c.QuestionarioId })
                 .ToListAsync();
 
-            // Extrair apenas os IDs dos alunos que responderam
-            var alunosRespondidos = convitesRespondidos.Select(c => c.AlunoId).ToList();
+            // Extrair apenas os IDs dos participantes que responderam
+            var participantesRespondidos = convitesRespondidos.Select(c => c.ParticipanteId).ToList();
 
             // Buscar todas as respostas do questionário APENAS de quem respondeu via convite
             var respostas = await _context.Respostas
                 .Include(r => r.RespostasQuestoes)
                     .ThenInclude(rq => rq.Questao)
-                .Include(r => r.Aluno)
-                    .ThenInclude(a => a.Curso)
-                .Where(r => r.QuestionarioId == id && alunosRespondidos.Contains(r.AlunoId))
+                .Include(r => r.Participante)
+                    .ThenInclude(p => p.Curso)
+                .Where(r => r.QuestionarioId == id && participantesRespondidos.Contains(r.ParticipanteId))
                 .OrderBy(r => r.DataResposta)
                 .ToListAsync();
 
@@ -1895,6 +2096,25 @@ namespace NpsPesquisa.Api.Controllers
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 $"dashboard-{id}-{DateTime.Now:yyyyMMdd}.docx"
             );
+        }
+
+        /// <summary>
+        /// Converte uma string para o enum Turno correspondente
+        /// </summary>
+        /// <param name="turno">String representando o turno</param>
+        /// <returns>Enum Turno correspondente ou null se não reconhecido</returns>
+        private static Turno? ConverterStringParaTurno(string? turno)
+        {
+            if (string.IsNullOrEmpty(turno))
+                return null;
+
+            return turno.Trim().ToLower() switch
+            {
+                "matutino" => Turno.Matutino,
+                "vespertino" => Turno.Vespertino,
+                "noturno" => Turno.Noturno,
+                _ => null
+            };
         }
     }
 }

@@ -1,0 +1,486 @@
+===============================================================================
+                    VIEWS NECESSÁRIAS PARA INTEGRAÇÃO
+                    TOTVS EDUCACIONAL → SISTEMA NPS
+===============================================================================
+
+Este documento contém todas as views que devem ser criadas no Oracle do TOTVS 
+Educacional para permitir a integração com o sistema de pesquisa NPS.
+
+===============================================================================
+                                ÍNDICE
+===============================================================================
+
+1. VIEW_ALUNOS
+2. VIEW_CURSOS  
+3. VIEW_PROFESSORES
+4. VIEW_COORDENADORES
+5. VIEW_TURMAS
+6. VIEW_DISCIPLINAS
+7. VIEW_FILIAIS
+8. VIEW_PROFESSOR_TURMAS_DISCIPLINAS
+9. VIEW_PROFESSOR_DISCIPLINAS
+10. VIEW_TURMA_DISCIPLINA_PROFESSOR
+11. VIEW_COORDENADOR_CURSOS
+12. VIEW_ALUNO_DISCIPLINAS
+13. VIEW_ALUNO_PROFESSORES
+
+===============================================================================
+                           1. VIEW_ALUNOS
+===============================================================================
+
+DESCRIÇÃO: View principal para integração de alunos
+OBJETIVO: Fornecer dados completos dos alunos para o sistema NPS
+
+CAMPOS OBRIGATÓRIOS:
+- ALUNO_ID           (NUMBER)     - ID único do aluno no TOTVS
+- NOME               (VARCHAR2)   - Nome completo do aluno
+- MATRICULA          (VARCHAR2)   - Número da matrícula
+- EMAIL              (VARCHAR2)   - Email principal do aluno
+- CURSO_ID           (NUMBER)     - ID do curso no TOTVS
+- CURSO_NOME         (VARCHAR2)   - Nome do curso
+- ATIVO              (NUMBER)     - Se o aluno está ativo (1) ou inativo (0)
+
+CAMPOS OPCIONAIS:
+- EMAIL_INSTITUCIONAL (VARCHAR2)  - Email institucional (se diferente)
+- EMAIL_PESSOAL       (VARCHAR2)  - Email pessoal (se disponível)
+- TELEFONE            (VARCHAR2)  - Telefone de contato
+- CPF                 (VARCHAR2)  - CPF do aluno
+- DATA_NASCIMENTO     (DATE)      - Data de nascimento
+- CURSO_CODIGO        (VARCHAR2)  - Código do curso
+- TURMA_ID            (NUMBER)    - ID da turma atual
+- TURMA_NOME          (VARCHAR2)  - Nome da turma
+- TURMA_ANO           (NUMBER)    - Ano da turma
+- TURMA_SEMESTRE      (NUMBER)    - Semestre atual
+- TURMA_PERIODO       (NUMBER)    - Período (1=Manhã, 2=Tarde, 3=Noite)
+- FILIAL              (VARCHAR2)  - Nome da filial/unidade
+- NIVEL_ENSINO        (VARCHAR2)  - Graduação, Pós, etc.
+- PERIODO_LETIVO      (VARCHAR2)  - Período letivo atual
+- STATUS_PERIODO      (VARCHAR2)  - Status no período letivo
+
+EXEMPLO DE SELECT:
+SELECT 
+    ALUNO_ID, NOME, MATRICULA, EMAIL, EMAIL_INSTITUCIONAL, EMAIL_PESSOAL,
+    TELEFONE, CPF, DATA_NASCIMENTO, CURSO_ID, CURSO_NOME, CURSO_CODIGO,
+    TURMA_ID, TURMA_NOME, TURMA_ANO, TURMA_SEMESTRE, TURMA_PERIODO,
+    FILIAL, NIVEL_ENSINO, PERIODO_LETIVO, STATUS_PERIODO, ATIVO
+FROM VIEW_ALUNOS;
+
+===============================================================================
+                           2. VIEW_CURSOS
+===============================================================================
+
+DESCRIÇÃO: View para integração de cursos
+OBJETIVO: Fornecer dados dos cursos para relacionamento com alunos e turmas
+
+CAMPOS OBRIGATÓRIOS:
+- CURSO_ID            (NUMBER)     - ID único do curso no TOTVS
+- CURSO_NOME          (VARCHAR2)   - Nome completo do curso
+- ATIVO               (NUMBER)     - Se o curso está ativo (1) ou inativo (0)
+
+CAMPOS OPCIONAIS:
+- CURSO_CODIGO        (VARCHAR2)   - Código do curso
+- CURSO_DESCRICAO     (VARCHAR2)   - Descrição do curso
+- CARGA_HORARIA       (NUMBER)     - Carga horária total
+- CREDITOS_TOTAL      (NUMBER)     - Total de créditos
+- DURACAO_SEMESTRES   (NUMBER)     - Duração em semestres
+- FILIAL_ID           (NUMBER)     - ID da filial
+- FILIAL_NOME         (VARCHAR2)   - Nome da filial
+- NIVEL_ENSINO        (VARCHAR2)   - Graduação, Pós, etc.
+
+EXEMPLO DE SELECT:
+SELECT 
+    CURSO_ID, CURSO_NOME, CURSO_CODIGO, CURSO_DESCRICAO, CARGA_HORARIA,
+    CREDITOS_TOTAL, DURACAO_SEMESTRES, FILIAL_ID, FILIAL_NOME, 
+    NIVEL_ENSINO, ATIVO
+FROM VIEW_CURSOS;
+
+===============================================================================
+                         3. VIEW_PROFESSORES
+===============================================================================
+
+DESCRIÇÃO: View para integração de professores
+OBJETIVO: Fornecer dados dos professores para relacionamento com turmas e disciplinas
+
+CAMPOS OBRIGATÓRIOS:
+- PROFESSOR_ID        (NUMBER)     - ID único do professor no TOTVS
+- NOME                (VARCHAR2)   - Nome completo do professor
+- EMAIL               (VARCHAR2)   - Email institucional
+- ATIVO               (NUMBER)     - Se o professor está ativo (1) ou inativo (0)
+
+CAMPOS OPCIONAIS:
+- DEPARTAMENTO        (VARCHAR2)   - Departamento de lotação
+- TITULACAO           (VARCHAR2)   - Titulação acadêmica
+- TELEFONE            (VARCHAR2)   - Telefone de contato
+- CPF                 (VARCHAR2)   - CPF do professor
+- DATA_NASCIMENTO     (DATE)       - Data de nascimento
+- FILIAL_ID           (NUMBER)     - ID da filial
+- FILIAL_NOME         (VARCHAR2)   - Nome da filial
+
+EXEMPLO DE SELECT:
+SELECT 
+    PROFESSOR_ID, NOME, EMAIL, DEPARTAMENTO, TITULACAO, TELEFONE,
+    CPF, DATA_NASCIMENTO, FILIAL_ID, FILIAL_NOME, ATIVO
+FROM VIEW_PROFESSORES;
+
+===============================================================================
+                        4. VIEW_COORDENADORES
+===============================================================================
+
+DESCRIÇÃO: View para integração de coordenadores
+OBJETIVO: Fornecer dados dos coordenadores para relacionamento com cursos
+
+CAMPOS OBRIGATÓRIOS:
+- COORDENADOR_ID      (NUMBER)     - ID único do coordenador no TOTVS
+- NOME                (VARCHAR2)   - Nome completo do coordenador
+- EMAIL               (VARCHAR2)   - Email institucional
+- ATIVO               (NUMBER)     - Se o coordenador está ativo (1) ou inativo (0)
+
+CAMPOS OPCIONAIS:
+- DEPARTAMENTO        (VARCHAR2)   - Departamento de lotação
+- TITULACAO           (VARCHAR2)   - Titulação acadêmica
+- TELEFONE            (VARCHAR2)   - Telefone de contato
+- CPF                 (VARCHAR2)   - CPF do coordenador
+- DATA_NASCIMENTO     (DATE)       - Data de nascimento
+- FILIAL_ID           (NUMBER)     - ID da filial
+- FILIAL_NOME         (VARCHAR2)   - Nome da filial
+
+EXEMPLO DE SELECT:
+SELECT 
+    COORDENADOR_ID, NOME, EMAIL, DEPARTAMENTO, TITULACAO, TELEFONE,
+    CPF, DATA_NASCIMENTO, FILIAL_ID, FILIAL_NOME, ATIVO
+FROM VIEW_COORDENADORES;
+
+===============================================================================
+                            5. VIEW_TURMAS
+===============================================================================
+
+DESCRIÇÃO: View para integração de turmas
+OBJETIVO: Fornecer dados das turmas para relacionamento com alunos e disciplinas
+
+CAMPOS OBRIGATÓRIOS:
+- TURMA_ID            (NUMBER)     - ID único da turma no TOTVS
+- TURMA_NOME          (VARCHAR2)   - Nome da turma
+- CURSO_ID            (NUMBER)     - ID do curso
+- ATIVO               (NUMBER)     - Se a turma está ativa (1) ou inativa (0)
+
+CAMPOS OPCIONAIS:
+- TURMA_DESCRICAO     (VARCHAR2)   - Descrição da turma
+- ANO                 (NUMBER)     - Ano da turma
+- SEMESTRE            (NUMBER)     - Semestre da turma
+- PERIODO             (NUMBER)     - Período (1=Manhã, 2=Tarde, 3=Noite)
+- FILIAL_ID           (NUMBER)     - ID da filial
+- FILIAL_NOME         (VARCHAR2)   - Nome da filial
+
+EXEMPLO DE SELECT:
+SELECT 
+    TURMA_ID, TURMA_NOME, TURMA_DESCRICAO, CURSO_ID, CURSO_NOME,
+    ANO, SEMESTRE, PERIODO, FILIAL_ID, FILIAL_NOME, ATIVO
+FROM VIEW_TURMAS;
+
+===============================================================================
+                          6. VIEW_DISCIPLINAS
+===============================================================================
+
+DESCRIÇÃO: View para integração de disciplinas
+OBJETIVO: Fornecer dados das disciplinas para relacionamento com professores e turmas
+
+CAMPOS OBRIGATÓRIOS:
+- DISCIPLINA_ID       (NUMBER)     - ID único da disciplina no TOTVS
+- DISCIPLINA_NOME     (VARCHAR2)   - Nome da disciplina
+- ATIVO               (NUMBER)     - Se a disciplina está ativa (1) ou inativa (0)
+
+CAMPOS OPCIONAIS:
+- DISCIPLINA_CODIGO   (VARCHAR2)   - Código da disciplina
+- DISCIPLINA_DESCRICAO (VARCHAR2)  - Descrição da disciplina
+- CARGA_HORARIA       (NUMBER)     - Carga horária da disciplina
+- CREDITOS            (NUMBER)     - Créditos da disciplina
+- CURSO_ID            (NUMBER)     - ID do curso
+- CURSO_NOME          (VARCHAR2)   - Nome do curso
+
+EXEMPLO DE SELECT:
+SELECT 
+    DISCIPLINA_ID, DISCIPLINA_NOME, DISCIPLINA_CODIGO, DISCIPLINA_DESCRICAO,
+    CARGA_HORARIA, CREDITOS, CURSO_ID, CURSO_NOME, ATIVO
+FROM VIEW_DISCIPLINAS;
+
+===============================================================================
+                            7. VIEW_FILIAIS
+===============================================================================
+
+DESCRIÇÃO: View para integração de filiais
+OBJETIVO: Fornecer dados das filiais para relacionamento com todas as entidades
+
+CAMPOS OBRIGATÓRIOS:
+- FILIAL_ID           (NUMBER)     - ID único da filial no TOTVS
+- FILIAL_NOME         (VARCHAR2)   - Nome da filial
+- ATIVO               (NUMBER)     - Se a filial está ativa (1) ou inativa (0)
+
+CAMPOS OPCIONAIS:
+- FILIAL_CODIGO       (VARCHAR2)   - Código da filial
+- FILIAL_ENDERECO     (VARCHAR2)   - Endereço da filial
+- FILIAL_CIDADE       (VARCHAR2)   - Cidade da filial
+- FILIAL_ESTADO       (VARCHAR2)   - Estado da filial
+- FILIAL_CEP          (VARCHAR2)   - CEP da filial
+
+EXEMPLO DE SELECT:
+SELECT 
+    FILIAL_ID, FILIAL_NOME, FILIAL_CODIGO, FILIAL_ENDERECO, FILIAL_CIDADE,
+    FILIAL_ESTADO, FILIAL_CEP, ATIVO
+FROM VIEW_FILIAIS;
+
+===============================================================================
+                  8. VIEW_PROFESSOR_TURMAS_DISCIPLINAS
+===============================================================================
+
+DESCRIÇÃO: Relacionamento entre professores, turmas e disciplinas
+OBJETIVO: Mapear quais turmas e disciplinas cada professor está lecionando
+
+CAMPOS OBRIGATÓRIOS:
+- PROFESSOR_ID        (NUMBER)     - ID do professor
+- TURMA_ID            (NUMBER)     - ID da turma
+- DISCIPLINA_ID       (NUMBER)     - ID da disciplina
+- ATIVO               (NUMBER)     - Se o relacionamento está ativo (1) ou inativo (0)
+
+CAMPOS OPCIONAIS:
+- PROFESSOR_NOME      (VARCHAR2)   - Nome do professor
+- TURMA_NOME          (VARCHAR2)   - Nome da turma
+- TURMA_ANO           (NUMBER)     - Ano da turma
+- TURMA_SEMESTRE      (NUMBER)     - Semestre da turma
+- TURMA_PERIODO       (NUMBER)     - Período da turma
+- DISCIPLINA_NOME     (VARCHAR2)   - Nome da disciplina
+- DISCIPLINA_CODIGO   (VARCHAR2)   - Código da disciplina
+- CURSO_ID            (NUMBER)     - ID do curso
+- CURSO_NOME          (VARCHAR2)   - Nome do curso
+- FILIAL_ID           (NUMBER)     - ID da filial
+- FILIAL_NOME         (VARCHAR2)   - Nome da filial
+- PERIODO_LETIVO      (VARCHAR2)   - Período letivo atual
+
+EXEMPLO DE SELECT:
+SELECT 
+    PROFESSOR_ID, PROFESSOR_NOME, TURMA_ID, TURMA_NOME, TURMA_ANO,
+    TURMA_SEMESTRE, TURMA_PERIODO, DISCIPLINA_ID, DISCIPLINA_NOME,
+    DISCIPLINA_CODIGO, CURSO_ID, CURSO_NOME, FILIAL_ID, FILIAL_NOME,
+    PERIODO_LETIVO, ATIVO
+FROM VIEW_PROFESSOR_TURMAS_DISCIPLINAS;
+
+===============================================================================
+                        9. VIEW_PROFESSOR_DISCIPLINAS
+===============================================================================
+
+DESCRIÇÃO: Disciplinas que cada professor pode lecionar
+OBJETIVO: Mapear as competências e especialidades de cada professor
+
+CAMPOS OBRIGATÓRIOS:
+- PROFESSOR_ID        (NUMBER)     - ID do professor
+- DISCIPLINA_ID       (NUMBER)     - ID da disciplina
+- ATIVO               (NUMBER)     - Se o professor está ativo na disciplina (1) ou inativo (0)
+
+CAMPOS OPCIONAIS:
+- PROFESSOR_NOME      (VARCHAR2)   - Nome do professor
+- DISCIPLINA_NOME     (VARCHAR2)   - Nome da disciplina
+- DISCIPLINA_CODIGO   (VARCHAR2)   - Código da disciplina
+- CURSO_ID            (NUMBER)     - ID do curso
+- CURSO_NOME          (VARCHAR2)   - Nome do curso
+- DEPARTAMENTO        (VARCHAR2)   - Departamento do professor
+- TITULACAO           (VARCHAR2)   - Titulação do professor
+- FILIAL_ID           (NUMBER)     - ID da filial
+- FILIAL_NOME         (VARCHAR2)   - Nome da filial
+
+EXEMPLO DE SELECT:
+SELECT 
+    PROFESSOR_ID, PROFESSOR_NOME, DISCIPLINA_ID, DISCIPLINA_NOME,
+    DISCIPLINA_CODIGO, CURSO_ID, CURSO_NOME, DEPARTAMENTO, TITULACAO,
+    FILIAL_ID, FILIAL_NOME, ATIVO
+FROM VIEW_PROFESSOR_DISCIPLINAS;
+
+===============================================================================
+                    10. VIEW_TURMA_DISCIPLINA_PROFESSOR
+===============================================================================
+
+DESCRIÇÃO: Matriz completa de turmas, disciplinas e professores
+OBJETIVO: Visão consolidada de todas as alocações acadêmicas
+
+CAMPOS OBRIGATÓRIOS:
+- TURMA_ID            (NUMBER)     - ID da turma
+- DISCIPLINA_ID       (NUMBER)     - ID da disciplina
+- PROFESSOR_ID        (NUMBER)     - ID do professor responsável
+- ATIVO               (NUMBER)     - Se o relacionamento está ativo (1) ou inativo (0)
+
+CAMPOS OPCIONAIS:
+- TURMA_NOME          (VARCHAR2)   - Nome da turma
+- TURMA_ANO           (NUMBER)     - Ano da turma
+- TURMA_SEMESTRE      (NUMBER)     - Semestre da turma
+- TURMA_PERIODO       (NUMBER)     - Período da turma
+- DISCIPLINA_NOME     (VARCHAR2)   - Nome da disciplina
+- DISCIPLINA_CODIGO   (VARCHAR2)   - Código da disciplina
+- PROFESSOR_NOME      (VARCHAR2)   - Nome do professor responsável
+- CURSO_ID            (NUMBER)     - ID do curso
+- CURSO_NOME          (VARCHAR2)   - Nome do curso
+- FILIAL_ID           (NUMBER)     - ID da filial
+- FILIAL_NOME         (VARCHAR2)   - Nome da filial
+- PERIODO_LETIVO      (VARCHAR2)   - Período letivo
+- CARGA_HORARIA       (NUMBER)     - Carga horária da disciplina na turma
+- CREDITOS            (NUMBER)     - Créditos da disciplina na turma
+
+EXEMPLO DE SELECT:
+SELECT 
+    TURMA_ID, TURMA_NOME, TURMA_ANO, TURMA_SEMESTRE, TURMA_PERIODO,
+    DISCIPLINA_ID, DISCIPLINA_NOME, DISCIPLINA_CODIGO, PROFESSOR_ID,
+    PROFESSOR_NOME, CURSO_ID, CURSO_NOME, FILIAL_ID, FILIAL_NOME,
+    PERIODO_LETIVO, CARGA_HORARIA, CREDITOS, ATIVO
+FROM VIEW_TURMA_DISCIPLINA_PROFESSOR;
+
+===============================================================================
+                        11. VIEW_COORDENADOR_CURSOS
+===============================================================================
+
+DESCRIÇÃO: Relacionamento entre coordenadores e cursos que coordenam
+OBJETIVO: Mapear a responsabilidade de cada coordenador
+
+CAMPOS OBRIGATÓRIOS:
+- COORDENADOR_ID      (NUMBER)     - ID do coordenador
+- CURSO_ID            (NUMBER)     - ID do curso
+- ATIVO               (NUMBER)     - Se o relacionamento está ativo (1) ou inativo (0)
+
+CAMPOS OPCIONAIS:
+- COORDENADOR_NOME    (VARCHAR2)   - Nome do coordenador
+- CURSO_NOME           (VARCHAR2)   - Nome do curso
+- CURSO_CODIGO         (VARCHAR2)   - Código do curso
+- DEPARTAMENTO         (VARCHAR2)   - Departamento do coordenador
+- FILIAL_ID            (NUMBER)     - ID da filial
+- FILIAL_NOME          (VARCHAR2)   - Nome da filial
+- DATA_INICIO          (DATE)       - Data de início da coordenação
+- DATA_FIM             (DATE)       - Data de fim da coordenação
+
+EXEMPLO DE SELECT:
+SELECT 
+    COORDENADOR_ID, COORDENADOR_NOME, CURSO_ID, CURSO_NOME, CURSO_CODIGO,
+    DEPARTAMENTO, FILIAL_ID, FILIAL_NOME, DATA_INICIO, DATA_FIM, ATIVO
+FROM VIEW_COORDENADOR_CURSOS;
+
+===============================================================================
+                        12. VIEW_ALUNO_DISCIPLINAS
+===============================================================================
+
+DESCRIÇÃO: Disciplinas que cada aluno está cursando
+OBJETIVO: Mapear o currículo atual de cada aluno
+
+CAMPOS OBRIGATÓRIOS:
+- ALUNO_ID            (NUMBER)     - ID do aluno
+- DISCIPLINA_ID       (NUMBER)     - ID da disciplina
+- ATIVO               (NUMBER)     - Se o relacionamento está ativo (1) ou inativo (0)
+
+CAMPOS OPCIONAIS:
+- ALUNO_NOME          (VARCHAR2)   - Nome do aluno
+- DISCIPLINA_NOME     (VARCHAR2)   - Nome da disciplina
+- DISCIPLINA_CODIGO   (VARCHAR2)   - Código da disciplina
+- CURSO_ID            (NUMBER)     - ID do curso
+- CURSO_NOME          (VARCHAR2)   - Nome do curso
+- TURMA_ID            (NUMBER)     - ID da turma
+- TURMA_NOME          (VARCHAR2)   - Nome da turma
+- PERIODO_LETIVO      (VARCHAR2)   - Período letivo
+- NOTA                (NUMBER)     - Nota atual na disciplina
+- STATUS              (VARCHAR2)   - Status na disciplina (Cursando, Aprovado, etc.)
+
+EXEMPLO DE SELECT:
+SELECT 
+    ALUNO_ID, ALUNO_NOME, DISCIPLINA_ID, DISCIPLINA_NOME, DISCIPLINA_CODIGO,
+    CURSO_ID, CURSO_NOME, TURMA_ID, TURMA_NOME, PERIODO_LETIVO, NOTA,
+    STATUS, ATIVO
+FROM VIEW_ALUNO_DISCIPLINAS;
+
+===============================================================================
+                        13. VIEW_ALUNO_PROFESSORES
+===============================================================================
+
+DESCRIÇÃO: Professores das disciplinas de cada aluno
+OBJETIVO: Mapear quais professores cada aluno tem contato
+
+CAMPOS OBRIGATÓRIOS:
+- ALUNO_ID            (NUMBER)     - ID do aluno
+- PROFESSOR_ID        (NUMBER)     - ID do professor
+- ATIVO               (NUMBER)     - Se o relacionamento está ativo (1) ou inativo (0)
+
+CAMPOS OPCIONAIS:
+- ALUNO_NOME          (VARCHAR2)   - Nome do aluno
+- PROFESSOR_NOME      (VARCHAR2)   - Nome do professor
+- DISCIPLINA_ID       (NUMBER)     - ID da disciplina
+- DISCIPLINA_NOME     (VARCHAR2)   - Nome da disciplina
+- CURSO_ID            (NUMBER)     - ID do curso
+- CURSO_NOME          (VARCHAR2)   - Nome do curso
+- TURMA_ID            (NUMBER)     - ID da turma
+- TURMA_NOME          (VARCHAR2)   - Nome da turma
+- PERIODO_LETIVO      (VARCHAR2)   - Período letivo
+
+EXEMPLO DE SELECT:
+SELECT 
+    ALUNO_ID, ALUNO_NOME, PROFESSOR_ID, PROFESSOR_NOME, DISCIPLINA_ID,
+    DISCIPLINA_NOME, CURSO_ID, CURSO_NOME, TURMA_ID, TURMA_NOME,
+    PERIODO_LETIVO, ATIVO
+FROM VIEW_ALUNO_PROFESSORES;
+
+===============================================================================
+                            RELACIONAMENTOS
+===============================================================================
+
+ALUNOS → CURSOS → TURMAS → FILIAIS
+PROFESSORES → DEPARTAMENTOS → FILIAIS
+COORDENADORES → DEPARTAMENTOS → FILIAIS
+DISCIPLINAS → CURSOS → FILIAIS
+TURMAS → DISCIPLINAS → PROFESSORES
+
+===============================================================================
+                         OBSERVAÇÕES TÉCNICAS
+===============================================================================
+
+1. CAMPOS OBRIGATÓRIOS:
+   - Nome, Email, Matrícula (para alunos), CPF
+   - IDs únicos para todas as entidades
+   - Campo de controle de ativo/inativo
+
+2. CAMPOS OPCIONAIS:
+   - Telefone, Data de Nascimento
+   - Departamentos, Titulações
+   - Informações de endereço para filiais
+
+3. TIPOS DE DADOS:
+   - IDs: NUMBER
+   - Nomes/Textos: VARCHAR2(200) para nomes, VARCHAR2(500) para descrições
+   - Datas: DATE ou TIMESTAMP
+   - Status: NUMBER(1) para campos booleanos (0=Inativo, 1=Ativo)
+
+4. ENCODING:
+   - UTF-8 para caracteres especiais
+   - Considerar acentuação em nomes brasileiros
+
+5. PERFORMANCE:
+   - Criar índices nas colunas de ID
+   - Considerar particionamento por filial se necessário
+   - Otimizar joins entre as views
+
+6. SEGURANÇA:
+   - Aplicar filtros de acesso por filial se necessário
+   - Considerar views materializadas para melhor performance
+   - Implementar controle de acesso por usuário do banco
+
+===============================================================================
+                           IMPLEMENTAÇÃO
+===============================================================================
+
+1. Criar as views na ordem de dependência (filiais primeiro, depois entidades)
+2. Testar cada view individualmente
+3. Validar relacionamentos entre as views
+4. Implementar índices para otimização
+5. Testar performance com volumes reais de dados
+6. Documentar dependências e manutenção
+
+===============================================================================
+                           CONTATO
+===============================================================================
+
+Para dúvidas sobre implementação ou ajustes nas views, 
+entre em contato com a equipe de desenvolvimento.
+
+Data de criação: [DATA_ATUAL]
+Versão: 1.0
+Status: Rascunho para implementação

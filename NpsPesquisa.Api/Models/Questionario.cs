@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
+using NpsPesquisa.Api.Models;
 
 namespace NpsPesquisa.Api.Models
 {
@@ -12,19 +13,13 @@ namespace NpsPesquisa.Api.Models
 
         [Required(ErrorMessage = "O título é obrigatório")]
         [StringLength(200, ErrorMessage = "O título deve ter no máximo 200 caracteres")]
-        public string Titulo { get; set; }
+        public string Titulo { get; set; } = string.Empty;
 
         [StringLength(1000, ErrorMessage = "A descrição deve ter no máximo 1000 caracteres")]
-        public string Descricao { get; set; }
+        public string Descricao { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "A data de criação é obrigatória")]
         public DateTime DataCriacao { get; set; }
-
-        [Required(ErrorMessage = "A data de expiração é obrigatória")]
-        public DateTime? DataExpiracao { get; set; }
-
-        [Required]
-        public bool OrdemAleatoria { get; set; }
 
         public DateTime? DataInicio { get; set; }
         public DateTime? DataFim { get; set; }
@@ -48,5 +43,28 @@ namespace NpsPesquisa.Api.Models
         public bool EnviarLembreteAutomatico { get; set; }
 
         public bool EnviarLembreteParaTodos { get; set; }
+
+        [Required]
+        public TipoQuestionario Tipo { get; set; } = TipoQuestionario.NPS; // Default para manter compatibilidade
+
+        public bool PermitirComentarios { get; set; } = false; // Habilita comentários adicionais nas questões
+
+        public bool PermitirSalvarAndamento { get; set; } = false; // Permite salvar respostas parcialmente
+
+        // Campos para Avaliação Institucional
+        public TipoItemAvaliado? TipoItemAvaliado { get; set; } // Nullable para manter compatibilidade com NPS
+        
+        // Lista de itens específicos a serem avaliados
+        public virtual ICollection<ItemAvaliadoQuestionario>? ItensAvaliados { get; set; } = new List<ItemAvaliadoQuestionario>();
+
+        // Campos mantidos para compatibilidade (deprecated)
+        [StringLength(200)]
+        public string? NomeItemEspecifico { get; set; } // Ex: "Direito", "Turma A", "Matemática"
+
+        // Propriedade ItemAvaliadoId para compatibilidade
+        [NotMapped]
+        public int? ItemAvaliadoId => null; // Não usado mais, mas mantido para compatibilidade
+
+        public bool Ativo { get; set; }
     }
 } 

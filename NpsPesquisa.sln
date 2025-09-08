@@ -10,6 +10,26 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
+Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "form-builder", "form-builder\", "{207EAD24-E3D6-4217-90D7-BEB2A2A3E2FE}"
+	ProjectSection(WebsiteProperties) = preProject
+		TargetFrameworkMoniker = ".NETFramework,Version%3Dv4.8.1"
+		Debug.AspNetCompiler.VirtualPath = "/localhost_59583"
+		Debug.AspNetCompiler.PhysicalPath = "form-builder\"
+		Debug.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_59583\"
+		Debug.AspNetCompiler.Updateable = "true"
+		Debug.AspNetCompiler.ForceOverwrite = "true"
+		Debug.AspNetCompiler.FixedNames = "false"
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.VirtualPath = "/localhost_59583"
+		Release.AspNetCompiler.PhysicalPath = "form-builder\"
+		Release.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_59583\"
+		Release.AspNetCompiler.Updateable = "true"
+		Release.AspNetCompiler.ForceOverwrite = "true"
+		Release.AspNetCompiler.FixedNames = "false"
+		Release.AspNetCompiler.Debug = "False"
+		VWDPort = "59583"
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,6 +40,10 @@ Global
 		{20BE417A-3B67-454B-B8C7-2C1183AE68FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{20BE417A-3B67-454B-B8C7-2C1183AE68FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{20BE417A-3B67-454B-B8C7-2C1183AE68FE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{207EAD24-E3D6-4217-90D7-BEB2A2A3E2FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{207EAD24-E3D6-4217-90D7-BEB2A2A3E2FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{207EAD24-E3D6-4217-90D7-BEB2A2A3E2FE}.Release|Any CPU.ActiveCfg = Debug|Any CPU
+		{207EAD24-E3D6-4217-90D7-BEB2A2A3E2FE}.Release|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
