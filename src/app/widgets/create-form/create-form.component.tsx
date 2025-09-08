@@ -17,8 +17,7 @@ import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import { QuestionTypeExecution } from "../../features/execution/QuestionTypeExecution/question-type-execution.component";
 import { FirstStepForm } from "../../features/create/FirstStepForm/first-step-form.component";
 import { useGetQuestions } from "../../services/question";
-import { FirstStepFormValues } from "../../features/create/FirstStepForm/validationSchema";
-import { useCreateForm } from "./useCreateQuestionForm";
+import { useCreateForm, CreateFormSchema } from "./useCreateQuestionForm";
 import { useFormPostMutate } from "../../services/form/form.service.hooks";
 import { useNavigate } from "react-router-dom";
 
@@ -64,14 +63,19 @@ export default function ExecutionQuestion() {
     formPost({
       titulo: values.titulo,
       descricao: values.descricao,
-      dataExpiracao: values.dataFim,
-      ordemAleatoria: true,
+      dataInicio: values.dataInicio,
+      dataFim: values.dataFim,
+      tipo: values.tipo,
+      permitirComentarios: values.permitirComentarios || false,
+      permitirSalvarAndamento: values.permitirSalvarAndamento || false,
+      tipoItemAvaliado: values.tipoItemAvaliado,
+      nomeItemEspecifico: values.nomeItemEspecifico,
       textoBoasVindas: values.textoBoasVindas,
       templateEmailConvite: values.templateEmailConvite,
       templateEmailLembrete: values.templateEmailLembrete,
       lembrarACadaXDias: values.lembrarACadaXDias,
-      enviarLembreteAutomatico: values.enviarLembreteAutomatico,
-      enviarLembreteParaTodos: values.enviarLembreteParaTodos,
+      enviarLembreteAutomatico: values.enviarLembreteAutomatico || false,
+      enviarLembreteParaTodos: values.enviarLembreteParaTodos || false,
       questoes: (values.questoes ?? []).map((item: number, index: number) => {
         return {
           questaoId: item,

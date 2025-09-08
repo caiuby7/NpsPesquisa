@@ -1,8 +1,10 @@
 import axios from 'axios'
 import Cookies from 'js-cookie'
+import { API_CONFIG } from '../../config/api.config'
 
 export const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'https://apinps.catolicasc.org.br/api',
+  baseURL: API_CONFIG.BASE_URL,
+  timeout: API_CONFIG.TIMEOUT,
 })
 
 // Adiciona o token a cada requisição automaticamente

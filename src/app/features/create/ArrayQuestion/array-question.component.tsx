@@ -51,8 +51,16 @@ interface FormSchemaType {
 interface MatrixSchemaType {
   tipo: QuestionTypeEnum.MATRIX;
   texto: string;
-  opcoes: OptionItem[];
-  colunas: OptionItem[];
+  obrigatorio: boolean;
+  isCondicional: boolean;
+  opcoes: Array<OptionItem & {
+    ativaCondicao?: boolean;
+    questaoCondicionalId?: number;
+  }>;
+  colunas: Array<OptionItem & {
+    ativaCondicao?: boolean;
+    questaoCondicionalId?: number;
+  }>;
 }
 
 export default function DualSortableFieldArray({

@@ -8,6 +8,7 @@ import { api } from "../../services/api";
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
+import Cookies from 'js-cookie';
 
 interface Participante {
   id: number;
@@ -46,7 +47,33 @@ const ParticipantesFormularioPage = () => {
 
   // Buscar alunos disponíveis ao montar o componente
   React.useEffect(() => {
-    api.get("/Aluno").then(res => setAlunosDisponiveis(res.data));
+    const fetchAlunos = async () => {
+      try {
+        console.log("🔄 Buscando alunos disponíveis...");
+        const response = await api.get("/Aluno");
+        console.log("✅ Alunos carregados:", response.data);
+        setAlunosDisponiveis(response.data);
+      } catch (error: any) {
+        console.error("❌ Erro ao carregar alunos:", error);
+        
+        let errorMessage = "Erro ao carregar lista de alunos";
+        if (error.response?.status === 401) {
+          errorMessage = "Não autorizado. Faça login novamente.";
+        } else if (error.response?.status === 500) {
+          errorMessage = "Erro interno do servidor.";
+        }
+        
+        toast({
+          title: "Erro ao carregar alunos",
+          description: errorMessage,
+          status: "error",
+          duration: 5000,
+          isClosable: true
+        });
+      }
+    };
+
+    fetchAlunos();
   }, []);
 
   const handleRemoveParticipant = async (participanteId: number) => {
@@ -86,7 +113,7 @@ const ParticipantesFormularioPage = () => {
     const formData = new FormData();
     formData.append("file", file);
     try {
-      const token = localStorage.getItem("token") || '';
+      const token = Cookies.get("token") || '';
       await api.post(`/Questionario/${id}/importar-participantes-xls`, formData, {
         headers: {
           Authorization: `Bearer ${token}`
@@ -97,7 +124,6 @@ const ParticipantesFormularioPage = () => {
         status: "success",
         duration: 4000,
         isClosable: true,
-        position: "top"
       });
       setFile(null);
       onClose();
@@ -108,23 +134,115 @@ const ParticipantesFormularioPage = () => {
         status: "error",
         duration: 4000,
         isClosable: true,
-        position: "top"
       });
     }
   };
 
   const handleAdd = async () => {
     if (selecionados.length === 0) {
-      toast({ title: "Selecione pelo menos um aluno", status: "warning" });
+      toast({ 
+        title: "Selecione pelo menos um aluno", 
+        status: "warning",
+        duration: 3000,
+        isClosable: true
+      });
       return;
     }
+
+    console.log("🔄 Adicionando participantes:", selecionados);
+    console.log("📝 ID do questionário:", id);
+    console.log("📊 Tipo de dados selecionados:", typeof selecionados, Array.isArray(selecionados));
+
+    // Validar se todos os IDs são números válidos
+    const idsInvalidos = selecionados.filter(id => !Number.isInteger(id) || id <= 0);
+    if (idsInvalidos.length > 0) {
+      console.error("❌ IDs inválidos encontrados:", idsInvalidos);
+      toast({
+        title: "IDs inválidos",
+        description: "Alguns IDs selecionados são inválidos",
+        status: "error",
+        duration: 5000,
+        isClosable: true
+      });
+      return;
+    }
+
     try {
-      await api.post(`/Questionario/${id}/participantes`, selecionados);
-      toast({ title: "Participantes adicionados!", status: "success" });
+      // Verificar se o token está presente
+      const token = Cookies.get("token");
+      if (!token) {
+        console.error("❌ Token não encontrado");
+        toast({ 
+          title: "Erro de autenticação", 
+          description: "Token não encontrado. Faça login novamente.",
+          status: "error",
+          duration: 5000,
+          isClosable: true
+        });
+        return;
+      }
+
+      // Preparar dados para envio
+      const dadosParaEnvio = selecionados.map(id => Number(id));
+      console.log("📤 Dados preparados para envio:", dadosParaEnvio);
+
+      // Fazer a requisição com headers explícitos
+      const response = await api.post(`/Questionario/${id}/participantes`, dadosParaEnvio, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      console.log("✅ Resposta da API:", response);
+      
+      toast({ 
+        title: "Participantes adicionados com sucesso!", 
+        description: `${selecionados.length} participante(s) adicionado(s)`,
+        status: "success",
+        duration: 4000,
+        isClosable: true
+      });
+      
       setSelecionados([]);
       queryClient.invalidateQueries({ queryKey: ['participantes', id] });
-    } catch (e) {
-      toast({ title: "Erro ao adicionar participantes", status: "error" });
+      
+    } catch (error: any) {
+      console.error("❌ Erro ao adicionar participantes:", error);
+      
+      let errorMessage = "Erro desconhecido ao adicionar participantes";
+      
+      if (error.response) {
+        // Erro da API
+        console.error("📡 Status da resposta:", error.response.status);
+        console.error("📡 Dados da resposta:", error.response.data);
+        
+        if (error.response.status === 401) {
+          errorMessage = "Não autorizado. Verifique suas permissões.";
+        } else if (error.response.status === 404) {
+          errorMessage = "Questionário não encontrado.";
+        } else if (error.response.status === 400) {
+          errorMessage = error.response.data?.message || "Dados inválidos enviados.";
+        } else if (error.response.status === 500) {
+          errorMessage = "Erro interno do servidor.";
+        }
+      } else if (error.request) {
+        // Erro de rede
+        console.error("🌐 Erro de rede:", error.request);
+        errorMessage = "Erro de conexão. Verifique sua internet.";
+      } else {
+        // Erro geral
+        console.error("⚠️ Erro geral:", error.message);
+        errorMessage = error.message || "Erro inesperado ocorreu.";
+      }
+      
+      toast({ 
+        title: "Erro ao adicionar participantes", 
+        description: errorMessage,
+        status: "error",
+        duration: 6000,
+        isClosable: true
+      });
     }
   };
 
@@ -189,6 +307,72 @@ const ParticipantesFormularioPage = () => {
               }
             }} minW="200px">
               Exportar Respondentes (XLS)
+            </Button>
+            <Button 
+              colorScheme="gray" 
+              onClick={() => {
+                const token = Cookies.get("token");
+                const user = Cookies.get("user");
+                console.log("🔍 DEBUG INFO:", {
+                  token: token ? "Presente" : "Ausente",
+                  user: user ? "Presente" : "Ausente",
+                  questionarioId: id,
+                  alunosDisponiveis: alunosDisponiveis.length,
+                  selecionados: selecionados,
+                  apiBaseUrl: process.env.REACT_APP_API_URL || 'http://localhost:5000/api'
+                });
+                
+                toast({
+                  title: "Informações de Debug",
+                  description: `Token: ${token ? "OK" : "NÃO"}, Alunos: ${alunosDisponiveis.length}, Selecionados: ${selecionados.length}`,
+                  status: "info",
+                  duration: 5000,
+                  isClosable: true
+                });
+              }}
+              minW="120px"
+            >
+              Debug
+            </Button>
+            <Button 
+              colorScheme="orange" 
+              onClick={async () => {
+                try {
+                  console.log("🧪 Testando conexão com a API...");
+                  const response = await api.get(`/Questionario/${id}`);
+                  console.log("✅ Teste de conexão bem-sucedido:", response.data);
+                  
+                  toast({
+                    title: "Teste de Conexão",
+                    description: "API está funcionando! Questionário encontrado.",
+                    status: "success",
+                    duration: 3000,
+                    isClosable: true
+                  });
+                } catch (error: any) {
+                  console.error("❌ Teste de conexão falhou:", error);
+                  
+                  let errorMessage = "Erro desconhecido";
+                  if (error.response?.status === 401) {
+                    errorMessage = "Não autorizado (401)";
+                  } else if (error.response?.status === 404) {
+                    errorMessage = "Questionário não encontrado (404)";
+                  } else if (error.response?.status === 500) {
+                    errorMessage = "Erro interno do servidor (500)";
+                  }
+                  
+                  toast({
+                    title: "Teste de Conexão Falhou",
+                    description: errorMessage,
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true
+                  });
+                }
+              }}
+              minW="140px"
+            >
+              Testar API
             </Button>
           </HStack>
           <Modal isOpen={isOpen} onClose={onClose}>

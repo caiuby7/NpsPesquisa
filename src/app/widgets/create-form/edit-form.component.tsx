@@ -9,7 +9,7 @@ import {
   Checkbox,
 } from "@chakra-ui/react";
 import { useForm } from "react-hook-form";
-import axios from "axios";
+import { api } from "../../services/api";
 import { ChangeEvent } from "react";
 
 // Tipos simplificados para exemplo
@@ -43,7 +43,7 @@ export default function EditForm({ formId }: { formId: number }) {
   // Buscar alunos com filtros
   useEffect(() => {
     const fetchAlunos = async () => {
-      const res = await axios.get("/api/aluno");
+      const res = await api.get("/Aluno");
       let data: Aluno[] = res.data;
       // Aplicar filtros
       Object.entries(filtros).forEach(([key, value]) => {

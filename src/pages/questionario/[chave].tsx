@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { Box, Button, Heading, Stack, Text } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
-import { api } from "../../app/services/api";
+import { api } from "../../services/api";
 import ExecutionForm from "../../app/widgets/execution-question/execution-question.component";
 import { QuestionResponse } from "../../app/services/form";
 
@@ -14,10 +14,14 @@ interface QuestionarioResponse {
     dataFim: string;
     questoes: QuestionResponse[];
   };
-  aluno: {
+  participante: {
     id: number;
     nome: string;
     email: string;
+    tipo: string;
+    aluno?: any;
+    professor?: any;
+    coordenador?: any;
   };
 }
 
@@ -77,7 +81,7 @@ export default function QuestionarioPorChavePage() {
           
           <ExecutionForm 
             questionarioId={data.questionario.id}
-            alunoId={data.aluno.id}
+            participanteId={data.participante.id}
             chave={chave as string}
           />
         </Stack>

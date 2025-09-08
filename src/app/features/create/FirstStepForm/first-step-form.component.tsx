@@ -1,10 +1,11 @@
-import { Box, Button, Heading, Input, VStack, Checkbox } from "@chakra-ui/react";
-import { FirstStepFormValues } from "./validationSchema";
+import { Box, Button, Heading, Input, VStack, Checkbox, Select, FormControl, FormLabel, FormHelperText } from "@chakra-ui/react";
 import React from 'react';
 import { EditorState, convertToRaw, ContentState, convertFromHTML } from 'draft-js';
 import { Editor } from 'react-draft-wysiwyg';
 import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
 import draftToHtml from 'draftjs-to-html';
+import { QUESTIONARIO_TYPES, ITEM_AVALIADO_TYPES, TipoQuestionarioEnum } from "../../../services/form/form.services.types";
+import { CreateFormSchema } from "../../../widgets/create-form/useCreateQuestionForm";
 
 export const FirstStepForm = ({
   onSubmit,
@@ -14,7 +15,7 @@ export const FirstStepForm = ({
   watch,
   errors
 }: {
-  onSubmit: (data: FirstStepFormValues) => void,
+  onSubmit: (data: CreateFormSchema) => void,
   register: any,
   handleSubmit: any,
   setValue: any,
@@ -24,6 +25,8 @@ export const FirstStepForm = ({
   const [editorState, setEditorState] = React.useState(() => EditorState.createEmpty());
   const [editorConvite, setEditorConvite] = React.useState(() => EditorState.createEmpty());
   const [editorLembrete, setEditorLembrete] = React.useState(() => EditorState.createEmpty());
+
+  const tipoQuestionario = watch("tipo");
 
   React.useEffect(() => {
     register("textoBoasVindas");
@@ -67,41 +70,102 @@ export const FirstStepForm = ({
       </Heading>
 
       <form onSubmit={e => e.preventDefault()}>
-        <VStack align="stretch">
-          <Box mb={2}>
-            <label htmlFor="titulo">Nome do formulário</label>
-            <Input id="titulo" placeholder="Digite o titulo" {...register("titulo")}/>
+        <VStack align="stretch" spacing={4}>
+          <FormControl isInvalid={!!errors.titulo}>
+            <FormLabel htmlFor="titulo">Nome do formulário *</FormLabel>
+            <Input id="titulo" placeholder="Digite o título" {...register("titulo")}/>
             {errors.titulo && (
-              <Box color="red.500" fontSize="sm">{errors.titulo.message}</Box>
+              <FormHelperText color="red.500">{errors.titulo.message}</FormHelperText>
             )}
-          </Box>
+          </FormControl>
 
-          <Box mb={2}>
-            <label htmlFor="descricao">Descrição do formulário</label>
+          <FormControl isInvalid={!!errors.descricao}>
+            <FormLabel htmlFor="descricao">Descrição do formulário *</FormLabel>
             <Input id="descricao" placeholder="Digite a descrição" {...register("descricao")}/>
             {errors.descricao && (
-              <Box color="red.500" fontSize="sm">{errors.descricao.message}</Box>
+              <FormHelperText color="red.500">{errors.descricao.message}</FormHelperText>
             )}
-          </Box>
+          </FormControl>
 
-          <Box mb={2}>
-            <label htmlFor="dataInicio">Data de início</label>
+          <FormControl isInvalid={!!errors.tipo}>
+            <FormLabel htmlFor="tipo">Tipo de Questionário *</FormLabel>
+            <Select 
+              id="tipo" 
+              placeholder="Selecione o tipo"
+              {...register("tipo")}
+            >
+              {QUESTIONARIO_TYPES.map((type) => (
+                <option key={type.value} value={type.value}>
+                  {type.label}
+                </option>
+              ))}
+            </Select>
+            {errors.tipo && (
+              <FormHelperText color="red.500">{errors.tipo.message}</FormHelperText>
+            )}
+          </FormControl>
+
+          {/* Campos específicos para Avaliação Institucional */}
+          {tipoQuestionario === TipoQuestionarioEnum.AVALIACAO_INSTITUCIONAL && (
+            <>
+              <FormControl>
+                <FormLabel htmlFor="tipoItemAvaliado">Item a ser Avaliado</FormLabel>
+                <Select 
+                  id="tipoItemAvaliado" 
+                  placeholder="Selecione o tipo de item"
+                  {...register("tipoItemAvaliado")}
+                >
+                  {ITEM_AVALIADO_TYPES.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControl>
+                <FormLabel htmlFor="nomeItemEspecifico">Nome Específico do Item</FormLabel>
+                <Input 
+                  id="nomeItemEspecifico" 
+                  placeholder="Ex: Direito, Matemática, etc."
+                  {...register("nomeItemEspecifico")}
+                />
+              </FormControl>
+            </>
+          )}
+
+          <FormControl isInvalid={!!errors.dataInicio}>
+            <FormLabel htmlFor="dataInicio">Data de início *</FormLabel>
             <Input id="dataInicio" type="date" {...register("dataInicio")}/>
             {errors.dataInicio && (
-              <Box color="red.500" fontSize="sm">{errors.dataInicio.message}</Box>
+              <FormHelperText color="red.500">{errors.dataInicio.message}</FormHelperText>
             )}
-          </Box>
+          </FormControl>
 
-          <Box mb={2}>
-            <label htmlFor="dataFim">Data de fim</label>
+          <FormControl isInvalid={!!errors.dataFim}>
+            <FormLabel htmlFor="dataFim">Data de fim *</FormLabel>
             <Input id="dataFim" type="date" {...register("dataFim")}/>
             {errors.dataFim && (
-              <Box color="red.500" fontSize="sm">{errors.dataFim.message}</Box>
+              <FormHelperText color="red.500">{errors.dataFim.message}</FormHelperText>
             )}
-          </Box>
+          </FormControl>
 
-          <Box mb={2}>
-            <label>Texto de boas-vindas (aceita HTML)</label>
+          <FormControl>
+            <FormLabel>Permitir comentários nas questões</FormLabel>
+            <Checkbox {...register("permitirComentarios")}>
+              Permitir que participantes adicionem comentários
+            </Checkbox>
+          </FormControl>
+
+          <FormControl>
+            <FormLabel>Permitir salvar andamento</FormLabel>
+            <Checkbox {...register("permitirSalvarAndamento")}>
+              Permitir que participantes salvem o progresso
+            </Checkbox>
+          </FormControl>
+
+          <FormControl>
+            <FormLabel>Texto de boas-vindas (aceita HTML)</FormLabel>
             <Editor
               editorState={editorState}
               onEditorStateChange={handleEditorChange}
@@ -111,10 +175,10 @@ export const FirstStepForm = ({
                 options: ['inline', 'blockType', 'fontSize', 'list', 'textAlign', 'colorPicker', 'link', 'embedded', 'emoji', 'remove', 'history'],
               }}
             />
-          </Box>
+          </FormControl>
 
-          <Box mb={2}>
-            <label>Template de e-mail de convite (aceita HTML)</label>
+          <FormControl>
+            <FormLabel>Template de e-mail de convite (aceita HTML)</FormLabel>
             <Editor
               editorState={editorConvite}
               onEditorStateChange={handleEditorConviteChange}
@@ -124,10 +188,10 @@ export const FirstStepForm = ({
                 options: ['inline', 'blockType', 'fontSize', 'list', 'textAlign', 'colorPicker', 'link', 'embedded', 'emoji', 'remove', 'history'],
               }}
             />
-          </Box>
+          </FormControl>
 
-          <Box mb={2}>
-            <label>Template de e-mail de lembrete (aceita HTML)</label>
+          <FormControl>
+            <FormLabel>Template de e-mail de lembrete (aceita HTML)</FormLabel>
             <Editor
               editorState={editorLembrete}
               onEditorStateChange={handleEditorLembreteChange}
@@ -137,47 +201,31 @@ export const FirstStepForm = ({
                 options: ['inline', 'blockType', 'fontSize', 'list', 'textAlign', 'colorPicker', 'link', 'embedded', 'emoji', 'remove', 'history'],
               }}
             />
-          </Box>
+          </FormControl>
 
-          <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center' }}>
-            <input
-              id="ordemAleatoria"
-              type="checkbox"
-              {...register("ordemAleatoria")}
-              style={{ marginRight: 8 }}
-            />
-            <label htmlFor="ordemAleatoria">Ordem Aleatória</label>
-          </div>
-
-          <div style={{ marginBottom: 16 }}>
-            <label htmlFor="lembrarACadaXDias">Lembrar a cada X dias</label>
-            <input
+          <FormControl>
+            <FormLabel htmlFor="lembrarACadaXDias">Lembrar a cada X dias</FormLabel>
+            <Input
               id="lembrarACadaXDias"
               type="number"
+              placeholder="Ex: 7"
               {...register("lembrarACadaXDias")}
-              style={{ width: 120, padding: 8, marginLeft: 8 }}
             />
-          </div>
+          </FormControl>
 
-          <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center' }}>
-            <input
-              id="enviarLembreteAutomatico"
-              type="checkbox"
-              {...register("enviarLembreteAutomatico")}
-              style={{ marginRight: 8 }}
-            />
-            <label htmlFor="enviarLembreteAutomatico">Enviar lembrete automático</label>
-          </div>
+          <FormControl>
+            <FormLabel>Enviar lembrete automático</FormLabel>
+            <Checkbox {...register("enviarLembreteAutomatico")}>
+              Ativar lembretes automáticos
+            </Checkbox>
+          </FormControl>
 
-          <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center' }}>
-            <input
-              id="enviarLembreteParaTodos"
-              type="checkbox"
-              {...register("enviarLembreteParaTodos")}
-              style={{ marginRight: 8 }}
-            />
-            <label htmlFor="enviarLembreteParaTodos">Enviar lembrete para todos</label>
-          </div>
+          <FormControl>
+            <FormLabel>Enviar lembrete para todos</FormLabel>
+            <Checkbox {...register("enviarLembreteParaTodos")}>
+              Enviar lembretes para todos os participantes
+            </Checkbox>
+          </FormControl>
 
           <Button
             type="button"

@@ -24,7 +24,7 @@ export default function ResponderFormularioPage() {
           <Heading>Responder Formulário</Heading>
           <Button colorScheme="gray" onClick={() => navigate("/formularios")}>Voltar</Button>
           {id && (
-            <ExecutionForm questionarioId={0} alunoId={0} chave={String(id)} />
+            <ExecutionForm questionarioId={0} participanteId={0} chave={String(id)} />
           )}
         </Stack>
       </Box>

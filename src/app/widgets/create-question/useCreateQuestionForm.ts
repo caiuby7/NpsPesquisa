@@ -13,7 +13,9 @@ export const useCreateQuestionForm = (question?: QuestionResponse) =>
     shouldFocusError: false,
     defaultValues: {
       texto: question?.texto,
-      tipo: question?.tipo
+      tipo: question?.tipo,
+      obrigatorio: question?.obrigatorio || false,
+      isCondicional: question?.isCondicional || false
     },
   });
 
@@ -24,11 +26,19 @@ export const optionSchema = z.object({
   peso: z.number(),
   valor: z.string().optional(),
   ehColuna: z.boolean().default(false),
+  ativaCondicao: z.boolean().optional().default(false),
+  questaoCondicionalId: z.union([z.number(), z.string()]).optional().transform(val => {
+    if (!val || val === '') return undefined;
+    const num = Number(val);
+    return isNaN(num) ? undefined : num;
+  }),
 });
 
 const tipoBase = z.object({
   tipo: z.nativeEnum(QuestionTypeEnum),
   texto: z.string().min(1, "Titulo é obrigatório"),
+  obrigatorio: z.boolean().optional().default(false),
+  isCondicional: z.boolean().optional().default(false),
 });
 
 const matrixSchema = tipoBase.merge(

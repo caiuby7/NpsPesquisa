@@ -18,6 +18,12 @@ const pages = [
     { label: "Questões", path: "/questions" },
     { label: "Participantes", path: "/participantes" },
     { label: "Cursos", path: "/cursos" },
+    { label: "Instituições", path: "/instituicoes" },
+    { label: "Períodos Letivos", path: "/periodos-letivos" },
+    { label: "Disciplinas", path: "/disciplinas" },
+    { label: "Turmas", path: "/turmas" },
+    { label: "Turma-Disciplina", path: "/turma-disciplina" },
+    { label: "Professores", path: "/professores" },
 ];
 
 export function AppHeader() {

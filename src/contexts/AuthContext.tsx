@@ -29,21 +29,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const token = Cookies.get('token');
     const userStr = Cookies.get('user');
     
+    console.log('🔍 AuthContext - Verificando autenticação:', {
+      hasToken: !!token,
+      hasUser: !!userStr,
+      tokenLength: token?.length,
+      userStrLength: userStr?.length
+    });
+    
     if (token && userStr) {
       try {
         const userData = JSON.parse(userStr);
+        console.log('✅ AuthContext - Usuário autenticado:', userData);
         setIsAuthenticated(true);
         setUser(userData);
       } catch (error) {
-        console.error('Error parsing user data:', error);
+        console.error('❌ AuthContext - Erro ao fazer parse do usuário:', error);
         logout();
       }
+    } else {
+      console.log('❌ AuthContext - Token ou usuário não encontrado');
     }
   }, []);
 
   const login = (token: string, userData: User) => {
-    Cookies.set('token', token, { expires: 1, path: '/' });
-    Cookies.set('user', JSON.stringify(userData), { expires: 1, path: '/' });
+    // Salvar token com expiração de 7 dias
+    Cookies.set('token', token, { 
+      expires: 7, 
+      path: '/',
+      secure: false, // Para desenvolvimento local
+      sameSite: 'lax'
+    });
+    Cookies.set('user', JSON.stringify(userData), { 
+      expires: 7, 
+      path: '/',
+      secure: false, // Para desenvolvimento local
+      sameSite: 'lax'
+    });
     setIsAuthenticated(true);
     setUser(userData);
   };

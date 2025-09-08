@@ -22,6 +22,7 @@ interface BaseQuestionProps {
   getValues: UseFormGetValues<FormSchemaType>;
   setValue: UseFormSetValue<FormSchemaType>;
   errors: FieldErrors<FormSchemaType>;
+  isCondicional?: boolean;
 }
 
 interface MultipleChoiceProps extends BaseQuestionProps {
@@ -40,7 +41,7 @@ interface TextBoxProps extends BaseQuestionProps {
   type: QuestionTypeEnum.TEXT_BOX;
 }
 
-export function QuestionTypeForm({ type, register, control, getValues, setValue, errors }: BaseQuestionProps) {
+export function QuestionTypeForm({ type, register, control, getValues, setValue, errors, isCondicional }: BaseQuestionProps) {
   if (type === QuestionTypeEnum.MULTIPLE_CHOICE || type === QuestionTypeEnum.MENU) {
     return (
       <Box>
@@ -51,6 +52,7 @@ export function QuestionTypeForm({ type, register, control, getValues, setValue,
           isMultipleChoice={type === QuestionTypeEnum.MULTIPLE_CHOICE}
           errors={errors as FieldErrors<MultipleChoiceSchemaType>}
           index={0}
+          isCondicional={isCondicional}
         />
       </Box>
     );
@@ -74,11 +76,11 @@ export function QuestionTypeForm({ type, register, control, getValues, setValue,
   if (type === QuestionTypeEnum.MATRIX) {
     return (
       <SortableFieldArray 
-        register={register as UseFormRegister<MatrixSchemaType>}
-        control={control as Control<MatrixSchemaType>}
-        setValue={setValue as UseFormSetValue<MatrixSchemaType>}
-        getValues={getValues as UseFormGetValues<MatrixSchemaType>}
-        errors={errors as FieldErrors<MatrixSchemaType>}
+        register={register as any}
+        control={control as any}
+        setValue={setValue as any}
+        getValues={getValues as any}
+        errors={errors as any}
       />
     );
   }

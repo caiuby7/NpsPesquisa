@@ -71,7 +71,7 @@ export function QuestionTypeExecution({ type, question, onChange, value, require
           {requiredAsterisk && <span style={{ color: 'red', marginLeft: 4 }}>*</span>}
         </Text>
         <Stack gap={2}>
-          {question.opcoes?.map((opcao) => (
+          {question.opcoes?.filter(opcao => opcao && opcao.id).map((opcao) => (
             <Box key={opcao.id} as="label" cursor="pointer">
               <input
                 type="radio"

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Box, SimpleGrid, Heading, Text, Divider, List, ListItem, Badge, Select, Spinner, Alert, AlertIcon, Progress, Button, HStack } from '@chakra-ui/react';
-import { AppHeader } from '../../components/header/header.component';
-import { useGetForms, useGetDashboardData } from '../../services/form/form.service.hooks';
+import { Box, SimpleGrid, Heading, Text, Divider, List, ListItem, Badge, Select, Spinner, Alert, AlertIcon, Progress, Button, HStack, VStack, Grid, GridItem } from '@chakra-ui/react';
+import { MainLayout } from '../../components/layout/main-layout.component';
+import { useGetDashboardData } from '../../services/form/form.service.hooks';
+import { useGetForms } from '../../services/form';
+import { ENV_CONFIG } from '../../config/api.config';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -190,7 +192,7 @@ export default function DashboardPage() {
   const { data: dashboardData, isLoading: dashboardLoading, error: dashboardError } = useGetDashboardData(dashboardFormId);
 
   // Debug: verificar URL da API
-  console.log('API Base URL:', process.env.REACT_APP_API_URL || 'https://apinps.catolicasc.org.br/api');
+  console.log('API Base URL:', ENV_CONFIG.API_URL);
 
   // Dados reais da API ou fallback para mockados
   const data = dashboardData || {
@@ -502,7 +504,7 @@ export default function DashboardPage() {
   const exportDashboardBackendPdf = async () => {
     setIsPdfLoading(true);
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://apinps.catolicasc.org.br/api'}/report/dashboard-pdf`, {
+      const response = await fetch(`${ENV_CONFIG.API_URL}/report/dashboard-pdf`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -532,7 +534,7 @@ export default function DashboardPage() {
   const exportDashboardExcel = async () => {
     setIsExcelLoading(true);
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://apinps.catolicasc.org.br/api'}/report/dashboard-excel`, {
+      const response = await fetch(`${ENV_CONFIG.API_URL}/report/dashboard-excel`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -559,8 +561,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <>
-      <AppHeader />
+    <MainLayout>
       <Box p={3}>
         <Box mb={4} maxW="1200px" w="100%">
           <HStack spacing={4} alignItems="flex-end">
@@ -890,6 +891,6 @@ export default function DashboardPage() {
           </Box>
         )}
       </Box>
-    </>
+    </MainLayout>
   );
 } 

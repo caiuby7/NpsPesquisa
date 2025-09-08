@@ -27,8 +27,10 @@ export default function LoginPage() {
   const handleMutationSuccess = (data: LoginResponse) => {
     // Salvar token e dados do usuário
     Cookies.set("token", data.token, {
-      expires: 1, // 1 dia
+      expires: 7, // 7 dias
       path: "/",
+      secure: false, // Para desenvolvimento local
+      sameSite: 'lax'
     });
     localStorage.setItem("token", data.token);
 

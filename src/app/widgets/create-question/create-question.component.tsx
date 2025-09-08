@@ -67,17 +67,24 @@ const CreateQuestionComponent: React.FC<CreateQuestionComponentProps> = ({ initi
   const navigate = useNavigate();
 
   const [obrigatorio, setObrigatorio] = useState(false);
+  const [isCondicional, setIsCondicional] = useState(false);
 
   useEffect(() => {
     if (question) {
       let formData: any = {
         texto: question.texto,
         tipo: question.tipo,
+        obrigatorio: question.obrigatorio || false,
+        isCondicional: question.isCondicional || false,
       };
+      setIsCondicional(question.isCondicional || false);
+      setObrigatorio(question.obrigatorio || false);
       if (question.tipo === QuestionTypeEnum.MATRIX) {
         formData = {
           texto: question.texto,
           tipo: question.tipo,
+          obrigatorio: question.obrigatorio || false,
+          isCondicional: question.isCondicional || false,
           opcoes: question.opcoes?.filter(opt => !opt.ehColuna).map(convertOptionItem) || [],
           colunas: question.opcoes?.filter(opt => opt.ehColuna).map(convertOptionItem) || [],
         };
@@ -85,6 +92,8 @@ const CreateQuestionComponent: React.FC<CreateQuestionComponentProps> = ({ initi
         formData = {
           texto: question.texto,
           tipo: question.tipo,
+          obrigatorio: question.obrigatorio || false,
+          isCondicional: question.isCondicional || false,
           ratingLabels: {
             min: question.opcoes[0].valor || "",
             max: question.opcoes[1].valor || "",
@@ -96,18 +105,28 @@ const CreateQuestionComponent: React.FC<CreateQuestionComponentProps> = ({ initi
         formData = {
           texto: question.texto,
           tipo: question.tipo,
+          obrigatorio: question.obrigatorio || false,
+          isCondicional: question.isCondicional || false,
           opcoes: question.opcoes?.map(convertOptionItem) || [],
         };
       } else if (question.tipo === QuestionTypeEnum.MENU) {
         formData = {
           texto: question.texto,
           tipo: question.tipo,
+          obrigatorio: question.obrigatorio || false,
+          isCondicional: question.isCondicional || false,
           opcoes: question.opcoes?.map(convertOptionItem) || [],
         };
       }
       reset(formData);
+    } else {
+      // Para novas questões, inicializar com valores padrão
+      setObrigatorio(false);
+      setIsCondicional(false);
+      setValue('obrigatorio', false);
+      setValue('isCondicional', false);
     }
-  }, [question, reset]);
+  }, [question, reset, setValue]);
 
   const handleMutationSuccess = () => {
     toast({
@@ -153,10 +172,15 @@ const CreateQuestionComponent: React.FC<CreateQuestionComponentProps> = ({ initi
       idOpcao: String(opt.id ?? opt.idOpcao),
     });
 
+    const formData = getValues();
+    const obrigatorioValue = formData.obrigatorio || false;
+    const isCondicionalValue = formData.isCondicional || false;
+
     if (data.tipo === QuestionTypeEnum.LINEAR_SCALE) {
       const payloadLinearScale = {
         ...data,
-        obrigatorio,
+        obrigatorio: obrigatorioValue,
+        isCondicional: isCondicionalValue,
         opcoes: [
           {
             texto: data.ratingLabels.minLabel,
@@ -184,7 +208,8 @@ const CreateQuestionComponent: React.FC<CreateQuestionComponentProps> = ({ initi
     if (data.tipo === QuestionTypeEnum.MATRIX) {
       const payloadArray = {
         ...data,
-        obrigatorio,
+        obrigatorio: obrigatorioValue,
+        isCondicional: isCondicionalValue,
         opcoes: data.opcoes.concat(
           data.colunas.map((item) => {
             return { ...item, ehColuna: true };
@@ -202,10 +227,12 @@ const CreateQuestionComponent: React.FC<CreateQuestionComponentProps> = ({ initi
 
     // Para os outros tipos
     const payload: any = { ...data };
-    payload.obrigatorio = obrigatorio;
+    payload.obrigatorio = obrigatorioValue;
+    payload.isCondicional = isCondicionalValue;
     if ('opcoes' in data && Array.isArray(data.opcoes)) {
       payload.opcoes = data.opcoes.map(toApiOption);
     }
+    
     if (data && id) {
       questionPut({ id: id as string, payload });
       return;
@@ -214,8 +241,9 @@ const CreateQuestionComponent: React.FC<CreateQuestionComponentProps> = ({ initi
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit, console.log)}>
-      <Stack maxW="720px" m="auto" display="flex" flexDirection="column" mt={8}>
+    <Box p={6} maxW="1200px" mx="auto">
+      <form onSubmit={handleSubmit(onSubmit, console.log)}>
+        <Stack maxW="720px" m="auto" display="flex" flexDirection="column" mt={8}>
         <Heading>Criar Questão</Heading>
         <Box borderWidth="1px" p={4} borderRadius="md">
           <Stack>
@@ -243,15 +271,31 @@ const CreateQuestionComponent: React.FC<CreateQuestionComponentProps> = ({ initi
                 setValue={setValue as any}
                 getValues={getValues as any}
                 control={control as any}
+                isCondicional={isCondicional}
               />
             )}
-            <FormControl isRequired mb={4}>
+            <FormControl mb={4}>
               <Checkbox
                 isChecked={obrigatorio}
-                onChange={e => setObrigatorio(e.target.checked)}
+                onChange={e => {
+                  setObrigatorio(e.target.checked);
+                  setValue('obrigatorio', e.target.checked);
+                }}
                 colorScheme="blue"
               >
                 Obrigatório?
+              </Checkbox>
+            </FormControl>
+            <FormControl mb={4}>
+              <Checkbox
+                isChecked={isCondicional}
+                onChange={e => {
+                  setIsCondicional(e.target.checked);
+                  setValue('isCondicional', e.target.checked);
+                }}
+                colorScheme="purple"
+              >
+                Questão Condicional?
               </Checkbox>
             </FormControl>
           </Stack>
@@ -262,8 +306,9 @@ const CreateQuestionComponent: React.FC<CreateQuestionComponentProps> = ({ initi
         <Button mt={2} variant="outline" colorScheme="gray" onClick={() => navigate(-1)}>
           Voltar
         </Button>
-      </Stack>
-    </form>
+        </Stack>
+      </form>
+    </Box>
   );
 };
 

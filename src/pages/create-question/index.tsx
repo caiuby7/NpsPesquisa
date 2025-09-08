@@ -1,12 +1,10 @@
-import { AppHeader } from "../../components/header/header.component";
 import CreateQuestion from "../../app/widgets/create-question/create-question.component";
-import { Box } from "@chakra-ui/react";
+import MainLayout from "../../components/layout/main-layout.component";
 
 export default function CreateQuestionPage() {
   return (
-    <Box>
-      <AppHeader />
+    <MainLayout>
       <CreateQuestion />
-    </Box>
+    </MainLayout>
   );
 } 

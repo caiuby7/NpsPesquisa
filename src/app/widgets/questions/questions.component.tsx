@@ -7,9 +7,12 @@ import {
   Stack,
   HStack,
   Button,
+  Badge,
+  Text,
 } from "@chakra-ui/react";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import { MdEdit, MdDelete } from "react-icons/md";
+import { Plus } from "lucide-react";
 import { QuestionTypeExecution } from "../../features/execution/QuestionTypeExecution/question-type-execution.component";
 import { useGetQuestions } from "../../services/question";
 import { useForm } from "react-hook-form";
@@ -55,14 +58,14 @@ export default function QuestionsWidget() {
   };
 
   return (
-    <Box
-      p={8}
-      w="100%"
-      maxW={{ base: "100%", md: "80%" }}
-      mx="auto"
-      display="flex"
-      flexDirection="column"
-    >
+    <Box p={6} maxW="1200px" mx="auto">
+      <Box
+        w="100%"
+        maxW={{ base: "100%", md: "80%" }}
+        mx="auto"
+        display="flex"
+        flexDirection="column"
+      >
       <Stack
         display="flex"
         justifyContent="space-between"
@@ -70,6 +73,13 @@ export default function QuestionsWidget() {
         mb={8}
       >
         <Heading>Questões</Heading>
+        <Button
+          colorScheme="blue"
+          onClick={() => navigate('/create-question')}
+          leftIcon={<Plus />}
+        >
+          Criar Questão
+        </Button>
       </Stack>
 
       <Stack>
@@ -83,6 +93,24 @@ export default function QuestionsWidget() {
             maxW="100%"
           >
             <Stack>
+              <HStack justify="space-between" align="start" mb={2}>
+                <Text fontSize="sm" color="gray.600">
+                  ID: {question.id} | Tipo: {question.tipo}
+                </Text>
+                <HStack>
+                  {question.obrigatorio && (
+                    <Badge colorScheme="red" variant="subtle">
+                      Obrigatório
+                    </Badge>
+                  )}
+                  {question.isCondicional && (
+                    <Badge colorScheme="purple" variant="subtle">
+                      Condicional
+                    </Badge>
+                  )}
+                </HStack>
+              </HStack>
+              
               <QuestionTypeExecution
                 disabled
                 type={question.tipo}
@@ -144,6 +172,7 @@ export default function QuestionsWidget() {
           </HStack>
         )}
       </Stack>
+      </Box>
     </Box>
   );
 }

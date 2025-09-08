@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { Box, Button, Heading, Text } from "@chakra-ui/react";
 import { AppHeader } from "../../components/header/header.component";
-import axios from "axios";
+import { api } from "../../services/api";
 
 export default function ExcluirFormularioPage() {
   const { id } = useParams();
@@ -9,7 +9,7 @@ export default function ExcluirFormularioPage() {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`/api/Questionario/${id}`);
+      await api.delete(`/Questionario/${id}`);
       navigate("/formularios");
     } catch (error) {
       console.error("Erro ao excluir o formulário:", error);

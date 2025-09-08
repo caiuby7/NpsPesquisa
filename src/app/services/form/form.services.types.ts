@@ -8,15 +8,36 @@ export enum QuestionTypeEnum {
 
 export type QuestionType = QuestionTypeEnum;
 
+// Novo enum para TipoQuestionario
+export enum TipoQuestionarioEnum {
+  NPS = "NPS",
+  AVALIACAO_INSTITUCIONAL = "AvaliacaoInstitucional"
+}
+
+// Novo enum para TipoItemAvaliado
+export enum TipoItemAvaliadoEnum {
+  CURSO = "Curso",
+  TURMA = "Turma",
+  DISCIPLINA = "Disciplina",
+  COORDENADOR = "Coordenador",
+  ESTRUTURA = "Estrutura",
+  INFRAESTRUTURA = "Infraestrutura"
+}
+
 export interface FormGetParams {
   id: string;
 }
 
 export interface FormPostParams {
   titulo: string;
-  dataExpiracao: string;
   descricao: string;
-  ordemAleatoria: boolean;
+  dataInicio: string; // Mudou de dataExpiracao para dataInicio
+  dataFim: string;    // Novo campo obrigatório
+  tipo: TipoQuestionarioEnum; // Campo obrigatório novo
+  permitirComentarios?: boolean; // Campo novo
+  permitirSalvarAndamento?: boolean; // Campo novo
+  tipoItemAvaliado?: TipoItemAvaliadoEnum; // Campo novo
+  nomeItemEspecifico?: string; // Campo novo
   questoes: { questaoId: number; ordem: number }[];
   textoBoasVindas?: string;
   templateEmailConvite?: string;
@@ -31,10 +52,13 @@ export interface FormResponse {
   titulo: string;
   descricao: string;
   dataCriacao: string; // ISO Date string
-  dataExpiracao: string; // ISO Date string
-  ordemAleatoria: boolean;
-  dataInicio: string | null;
-  dataFim: string | null;
+  dataInicio: string | null; // Mudou de dataExpiracao
+  dataFim: string | null;    // Novo campo
+  tipo: TipoQuestionarioEnum; // Campo novo
+  permitirComentarios: boolean; // Campo novo
+  permitirSalvarAndamento: boolean; // Campo novo
+  tipoItemAvaliado?: TipoItemAvaliadoEnum; // Campo novo
+  nomeItemEspecifico?: string; // Campo novo
   questoesQuestionarios: QuestoesQuestionario[];
   questoes: any; 
   respostas: any; 
@@ -48,6 +72,7 @@ export interface QuestionResponse {
   colunas?: OptionItem[];
   coluna?: OptionItem[];
   obrigatorio?: boolean;
+  isCondicional?: boolean;
 }
 
 export interface OptionItem {
@@ -56,7 +81,9 @@ export interface OptionItem {
   ordem: number;
   peso: number;
   valor?: string;
-  ehColuna?: boolean
+  ehColuna?: boolean;
+  ativaCondicao?: boolean;
+  questaoCondicionalId?: number;
 }
 
 export const QUESTIONS_TYPES = [
@@ -67,6 +94,20 @@ export const QUESTIONS_TYPES = [
   { value: QuestionTypeEnum.MATRIX, label: "Matriz" },
 ];
 
+// Novos tipos para questionários
+export const QUESTIONARIO_TYPES = [
+  { value: TipoQuestionarioEnum.NPS, label: "NPS" },
+  { value: TipoQuestionarioEnum.AVALIACAO_INSTITUCIONAL, label: "Avaliação Institucional" },
+];
+
+export const ITEM_AVALIADO_TYPES = [
+  { value: TipoItemAvaliadoEnum.CURSO, label: "Curso" },
+  { value: TipoItemAvaliadoEnum.TURMA, label: "Turma" },
+  { value: TipoItemAvaliadoEnum.DISCIPLINA, label: "Disciplina" },
+  { value: TipoItemAvaliadoEnum.COORDENADOR, label: "Coordenador" },
+  { value: TipoItemAvaliadoEnum.ESTRUTURA, label: "Estrutura" },
+  { value: TipoItemAvaliadoEnum.INFRAESTRUTURA, label: "Infraestrutura" },
+];
 
 export interface QuestoesQuestionario {
   id: number;

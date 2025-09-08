@@ -17,7 +17,7 @@ export function ExecutionQuestion({ questionarioId }: ExecutionFormProps) {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const response = await api.get(`/questoes/${questionarioId}`);
+        const response = await api.get(`/questao/${questionarioId}`);
         setQuestions(response.data);
       } catch (error) {
         console.error('Erro ao buscar questões:', error);

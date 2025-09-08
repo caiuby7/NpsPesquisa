@@ -15,7 +15,6 @@ export default function EditarFormularioPage() {
   const [descricao, setDescricao] = useState("");
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
-  const [ordemAleatoria, setOrdemAleatoria] = useState(false);
 
   useEffect(() => {
     if (form) {
@@ -23,7 +22,6 @@ export default function EditarFormularioPage() {
       setDescricao(form.descricao || "");
       setDataInicio(form.dataInicio ? form.dataInicio.slice(0, 10) : "");
       setDataFim(form.dataFim ? form.dataFim.slice(0, 10) : "");
-      setOrdemAleatoria(!!form.ordemAleatoria);
     }
   }, [form]);
 
@@ -36,7 +34,6 @@ export default function EditarFormularioPage() {
       descricao,
       dataInicio,
       dataFim,
-      ordemAleatoria,
     };
 
     updateForm(
@@ -90,18 +87,6 @@ export default function EditarFormularioPage() {
               onChange={e => setDataFim(e.target.value)}
               required
             />
-            <label style={{ display: "flex", alignItems: "center" }}>
-              <input
-                type="checkbox"
-                checked={ordemAleatoria}
-                onChange={e => setOrdemAleatoria(e.target.checked)}
-                style={{ marginRight: 8, width: 18, height: 18 }}
-              />
-              Ordem Aleatória
-              <span style={{ marginLeft: 8, color: ordemAleatoria ? 'green' : 'gray' }}>
-                {ordemAleatoria ? 'Ativado' : 'Desativado'}
-              </span>
-            </label>
             <Button colorScheme="blue" type="submit" isLoading={isPending}>
               Salvar alterações
             </Button>

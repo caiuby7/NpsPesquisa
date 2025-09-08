@@ -1,4 +1,4 @@
-import { Box, Checkbox, FormControl, HStack, Input, VStack, Button } from "@chakra-ui/react";
+import { Box, Checkbox, FormControl, HStack, Input, VStack, Button, Select, Text } from "@chakra-ui/react";
 import {
   Control,
   FieldErrors,
@@ -19,6 +19,7 @@ import {
 } from "../../../widgets/create-question/useCreateQuestionForm";
 import { GripVertical } from "lucide-react";
 import { FiTrash } from "react-icons/fi";
+import { useGetQuestions } from "../../../services/question";
 
 interface SortableItemProps {
   id: string;
@@ -57,6 +58,7 @@ interface Props {
   errors: FieldErrors<MultipleChoiceSchemaType>;
   index: number;
   isMultipleChoice?: boolean;
+  isCondicional?: boolean;
 }
 
 export default function MultipleChoiceQuestion({
@@ -65,11 +67,14 @@ export default function MultipleChoiceQuestion({
   errors,
   index,
   isMultipleChoice = false,
+  isCondicional = false,
 }: Props) {
   const { fields, append, remove, move } = useFieldArray({
     control,
     name: "opcoes",
   });
+
+  const { data: questions } = useGetQuestions();
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -89,26 +94,57 @@ export default function MultipleChoiceQuestion({
         >
           {fields.map((field, optionIndex) => (
             <SortableItem key={field.id} id={field.id}>
-              <FormControl isInvalid={!!errors?.opcoes?.[optionIndex]?.texto}>
-                <HStack>
-                  <Checkbox
-                    isDisabled={isMultipleChoice}
-                    {...register(`opcoes.${optionIndex}.texto`)}
-                  />
-                  <Input
-                    placeholder="Opção"
-                    {...register(`opcoes.${optionIndex}.texto`)}
-                  />
-                  <Button
-                    onClick={() => remove(optionIndex)}
-                    size="sm"
-                    colorScheme="red"
-                    variant="ghost"
-                  >
-                    <FiTrash />
-                  </Button>
-                </HStack>
-              </FormControl>
+              <VStack spacing={2} align="stretch" p={3} borderWidth="1px" borderRadius="md">
+                <FormControl isInvalid={!!errors?.opcoes?.[optionIndex]?.texto}>
+                  <HStack>
+                    <Checkbox
+                      isDisabled={isMultipleChoice}
+                      {...register(`opcoes.${optionIndex}.texto`)}
+                    />
+                    <Input
+                      placeholder="Opção"
+                      {...register(`opcoes.${optionIndex}.texto`)}
+                    />
+                    <Button
+                      onClick={() => remove(optionIndex)}
+                      size="sm"
+                      colorScheme="red"
+                      variant="ghost"
+                    >
+                      <FiTrash />
+                    </Button>
+                  </HStack>
+                </FormControl>
+                
+                {isCondicional && (
+                  <VStack spacing={2} align="stretch" pl={6}>
+                    <FormControl>
+                      <HStack>
+                        <Checkbox
+                          {...register(`opcoes.${optionIndex}.ativaCondicao`)}
+                        />
+                        <Text fontSize="sm" color="gray.600">
+                          Ativa condição
+                        </Text>
+                      </HStack>
+                    </FormControl>
+                    
+                    <FormControl>
+                      <Select
+                        placeholder="Selecione a questão condicional"
+                        {...register(`opcoes.${optionIndex}.questaoCondicionalId`)}
+                        size="sm"
+                      >
+                        {questions?.map((q) => (
+                          <option key={q.id} value={q.id}>
+                            {q.texto}
+                          </option>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </VStack>
+                )}
+              </VStack>
             </SortableItem>
           ))}
         </SortableContext>
@@ -116,7 +152,15 @@ export default function MultipleChoiceQuestion({
       <HStack>
         <Button
           type="button"
-          onClick={() => append({ texto: "", id: Date.now().toString(), ordem: fields.length + 1, peso: 0, ehColuna: false })}
+          onClick={() => append({ 
+            texto: "", 
+            id: Date.now().toString(), 
+            ordem: fields.length + 1, 
+            peso: 0, 
+            ehColuna: false,
+            ativaCondicao: false,
+            questaoCondicionalId: undefined
+          })}
           size="sm"
           colorScheme="teal"
         >

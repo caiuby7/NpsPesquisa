@@ -34,7 +34,9 @@ export interface Form {
   descricao: string;
   dataInicio: string;
   dataFim: string;
-  ordemAleatoria: boolean;
+  tipo: string;
+  permitirComentarios: boolean;
+  permitirSalvarAndamento: boolean;
   textoBoasVindas: string;
   templateEmailConvite: string;
   templateEmailLembrete: string;

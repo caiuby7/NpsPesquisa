@@ -12,7 +12,7 @@ import {
 } from "@chakra-ui/react";
 import { AppHeader } from "../../components/header/header.component";
 import { useEffect, useState } from "react";
-import { api } from "../../app/services/api";
+import { api } from "../../services/api";
 
 interface Participante {
   id: number;

@@ -4,19 +4,31 @@ import { api } from "../../services/api";
 import { QuestionTypeExecution } from "./question-type-execution.component";
 import { QuestionResponse } from "../../services/form";
 import { OptionItem } from "../../services/form/form.services.types";
+import { useConditionalQuestions } from "../../../hooks/useConditionalQuestions";
 
 interface ExecutionFormProps {
   questionarioId: number;
-  alunoId: number;
+  participanteId: number;
   chave: string;
 }
 
-export default function ExecutionForm({ questionarioId, alunoId, chave }: ExecutionFormProps) {
+export default function ExecutionForm({ questionarioId, participanteId, chave }: ExecutionFormProps) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [responses, setResponses] = useState<Record<number, any>>({});
   const [started, setStarted] = useState(false);
   const [invalidRequired, setInvalidRequired] = useState<number[]>([]);
+  
+  const questoes = data?.questionario?.questoes || [];
+  const { shouldShowQuestion, handleAnswer, getVisibleQuestions } = useConditionalQuestions(questoes);
+  
+  // Debug: Log das questões carregadas
+  console.log('🔍 Debug - Questões carregadas:', {
+    dataExists: !!data,
+    questionarioExists: !!data?.questionario,
+    questoesCount: questoes.length,
+    questoes: questoes.map((q: QuestionResponse) => ({ id: q.id, texto: q.texto, tipo: q.tipo, isCondicional: q.isCondicional }))
+  });
 
   useEffect(() => {
     async function loadQuestionario() {
@@ -42,15 +54,57 @@ export default function ExecutionForm({ questionarioId, alunoId, chave }: Execut
       ...prev,
       [questionId]: value
     }));
+    
+    // Notificar o hook de questões condicionais sobre a mudança
+    handleAnswer(questionId, value);
   };
 
   const handleSubmit = async () => {
-    // Validação manual de obrigatórios
-    const obrigatoriasNaoRespondidas = questoes.filter((q: QuestionResponse) =>
+    // Coletar todas as questões (principais + condicionais VISÍVEIS) para validação
+    const todasQuestoes: QuestionResponse[] = [];
+    
+    // Adicionar questões principais
+    questoes.forEach((q: QuestionResponse) => {
+      todasQuestoes.push(q);
+      
+      // Adicionar questões condicionais das opções APENAS se a opção estiver selecionada
+      q.opcoes?.forEach((opcao: any) => {
+        if (opcao.questaoCondicional && opcao.ativaCondicao) {
+          // Verificar se a opção que ativa a condição está selecionada
+          const respostaQuestao = responses[q.id];
+          const isOptionSelected = Array.isArray(respostaQuestao) 
+            ? respostaQuestao.includes(String(opcao.id)) 
+            : String(respostaQuestao) === String(opcao.id);
+            
+          if (isOptionSelected) {
+            todasQuestoes.push(opcao.questaoCondicional);
+          }
+        }
+      });
+      
+      // Adicionar questões condicionais das colunas APENAS se a coluna estiver selecionada
+      q.colunas?.forEach((coluna: any) => {
+        if (coluna.questaoCondicional && coluna.ativaCondicao) {
+          // Verificar se a coluna que ativa a condição está selecionada
+          const respostaQuestao = responses[q.id];
+          const isColumnSelected = Array.isArray(respostaQuestao) 
+            ? respostaQuestao.includes(String(coluna.id)) 
+            : String(respostaQuestao) === String(coluna.id);
+            
+          if (isColumnSelected) {
+            todasQuestoes.push(coluna.questaoCondicional);
+          }
+        }
+      });
+    });
+
+    // Validação manual de obrigatórios (principais + condicionais VISÍVEIS)
+    const obrigatoriasNaoRespondidas = todasQuestoes.filter((q: QuestionResponse) =>
       q.obrigatorio &&
       (responses[q.id] === undefined || responses[q.id] === "" || responses[q.id] === null ||
         (Array.isArray(responses[q.id]) && responses[q.id].length === 0))
     );
+    
     if (obrigatoriasNaoRespondidas.length > 0) {
       setInvalidRequired(obrigatoriasNaoRespondidas.map((q: QuestionResponse) => q.id));
       alert("Por favor, responda todas as questões obrigatórias.");
@@ -58,7 +112,7 @@ export default function ExecutionForm({ questionarioId, alunoId, chave }: Execut
     }
     setInvalidRequired([]);
     try {
-      const respostas = questoes.flatMap((questao: QuestionResponse) => {
+      const respostas = todasQuestoes.flatMap((questao: QuestionResponse): any[] => {
         const resposta = responses[questao.id];
         if (questao.tipo === "MultiplaEscolha" || questao.tipo === "MenuSuspenso") {
           return resposta ? [{ questaoId: questao.id, opcaoId: resposta }] : [];
@@ -97,7 +151,7 @@ export default function ExecutionForm({ questionarioId, alunoId, chave }: Execut
 
       await api.post(`/Questionario/responder/${chave}`, {
         questionarioId,
-        alunoId,
+        participanteId,
         respostas
       });
 
@@ -132,8 +186,6 @@ export default function ExecutionForm({ questionarioId, alunoId, chave }: Execut
     );
   }
 
-  const questoes = data.questionario.questoes || [];
-
   if (!started) {
     return (
       <Box p={8} bg="white" borderRadius="lg" boxShadow="md">
@@ -154,26 +206,45 @@ export default function ExecutionForm({ questionarioId, alunoId, chave }: Execut
     );
   }
 
+  // Debug: Log das questões e visibilidade
+  console.log('🔍 Debug ExecutionForm:', {
+    questoes: questoes.length,
+    questoesData: questoes.map((q: QuestionResponse) => ({ id: q.id, texto: q.texto, isCondicional: q.isCondicional })),
+    responses: Object.keys(responses).length
+  });
+
+  // Obter questões visíveis ordenadas
+  const visibleQuestions = getVisibleQuestions();
+  
+  console.log('🔍 Debug - Questões visíveis para renderização:', {
+    total: visibleQuestions.length,
+    questoes: visibleQuestions.map(q => ({ id: q.id, texto: q.texto, isCondicional: q.isCondicional }))
+  });
+
   return (
     <Box>
       <Stack gap={8}>
-        {questoes.map((questao: QuestionResponse) => (
-          <Box
-            key={questao.id}
-            p={4}
-            borderWidth="1px"
-            borderRadius="lg"
-            borderColor={invalidRequired.includes(questao.id) ? "red.500" : undefined}
-          >
-            <QuestionTypeExecution
-              type={questao.tipo}
-              question={{ ...questao, obrigatorio: questao.obrigatorio }}
-              value={responses[questao.id]}
-              onChange={(value) => handleResponseChange(questao.id, value)}
-              requiredAsterisk={!!questao.obrigatorio}
-            />
-          </Box>
-        ))}
+        {visibleQuestions.map((questao: QuestionResponse) => {
+          console.log(`🔍 Renderizando questão ${questao.id} (${questao.texto})`);
+          
+          return (
+            <Box
+              key={questao.id}
+              p={4}
+              borderWidth="1px"
+              borderRadius="lg"
+              borderColor={invalidRequired.includes(questao.id) ? "red.500" : undefined}
+            >
+              <QuestionTypeExecution
+                type={questao.tipo}
+                question={{ ...questao, obrigatorio: questao.obrigatorio }}
+                value={responses[questao.id]}
+                onChange={(value) => handleResponseChange(questao.id, value)}
+                requiredAsterisk={!!questao.obrigatorio}
+              />
+            </Box>
+          );
+        })}
         <Button
           colorScheme="blue"
           onClick={handleSubmit}
