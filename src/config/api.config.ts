@@ -4,7 +4,7 @@ export const API_CONFIG = {
   BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
   
   // Timeout das requisições (em milissegundos)
-  TIMEOUT: 30000,
+  TIMEOUT: 120000, // 2 minutos para operações do TOTVS
   
   // Configurações de retry
   RETRY_ATTEMPTS: 3,

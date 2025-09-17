@@ -152,8 +152,8 @@ const AdicionarParticipantesAvaliacaoPage: React.FC = () => {
         filtrosVisiveis.push('turma', 'disciplina');
         break;
       case 'Aluno':
-        // Alunos sempre têm turma
-        filtrosVisiveis.push('turma');
+        // Alunos sempre têm turma e podem ter disciplina específica
+        filtrosVisiveis.push('turma', 'disciplina');
         break;
       case 'Coordenador':
         // Coordenadores não precisam de turma ou disciplina
@@ -161,6 +161,139 @@ const AdicionarParticipantesAvaliacaoPage: React.FC = () => {
     }
     
     return filtrosVisiveis;
+  };
+
+  const pesquisarParticipantesTOTVS = async () => {
+    try {
+      setLoadingParticipantes(true);
+      
+      // Validar se o tipo de participante foi selecionado
+      if (!filtrosForm.tipoParticipante) {
+        toast({
+          title: 'Atenção',
+          description: 'Selecione o tipo de participante',
+          status: 'warning',
+          duration: 3000,
+          isClosable: true,
+        });
+        return;
+      }
+
+      // Buscar dados do período letivo selecionado
+      const periodoLetivo = filtros.periodosLetivos.find(p => p.id === Number(filtrosForm.periodoLetivoId));
+      const periodoLetivoNome = periodoLetivo?.nome || '';
+
+      // Buscar dados do curso selecionado
+      const curso = filtros.cursos.find(c => c.id === Number(filtrosForm.cursoId));
+      const cursoId = curso?.id;
+
+      // Buscar dados da turma selecionada
+      const turma = filtros.turmas.find(t => t.id === Number(filtrosForm.turmaId));
+      const turmaId = turma?.id;
+
+      // Buscar dados da disciplina selecionada
+      const disciplina = filtros.disciplinas.find(d => d.id === Number(filtrosForm.disciplinaId));
+      const disciplinaId = disciplina?.id;
+
+      // Mapear tipo de participante para o formato esperado pelo backend
+      let tipoParticipante = '';
+      switch (filtrosForm.tipoParticipante) {
+        case 'Professor':
+          tipoParticipante = 'Professor';
+          break;
+        case 'Aluno':
+          tipoParticipante = 'Aluno';
+          break;
+        case 'Coordenador':
+          tipoParticipante = 'Professor'; // Coordenadores são tratados como professores no TOTVS
+          break;
+        default:
+          toast({
+            title: 'Erro',
+            description: 'Tipo de participante não suportado',
+            status: 'error',
+            duration: 3000,
+            isClosable: true,
+          });
+          return;
+      }
+
+      // Preparar dados para a requisição ao TOTVS
+      const requestData = {
+        questionarioId: Number(id),
+        periodoLetivo: periodoLetivoNome,
+        cursoId: cursoId,
+        turmaId: turmaId,
+        disciplinaId: disciplinaId,
+        tipoParticipante: tipoParticipante,
+        nomeItemEspecifico: disciplina?.nome || turma?.nome || curso?.nome || ''
+      };
+
+      console.log('🔍 Buscando participantes no TOTVS:', requestData);
+
+      // Mostrar mensagem de progresso
+      toast({
+        title: 'Buscando no TOTVS...',
+        description: 'Esta operação pode demorar alguns minutos. Aguarde...',
+        status: 'info',
+        duration: 10000,
+        isClosable: true,
+      });
+
+      // Fazer a requisição para buscar e adicionar participantes do TOTVS
+      const response = await api.post('/ParticipanteQuestionario/buscar-e-adicionar-do-totvs', requestData, {
+        timeout: 120000 // 2 minutos de timeout específico para esta operação
+      });
+      
+      const resultado = response.data;
+      
+      toast({
+        title: 'Busca no TOTVS Concluída',
+        description: `${resultado.totalEncontrados} participantes encontrados, ${resultado.totalAdicionados} adicionados ao questionário`,
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+
+      // Converter participantes do TOTVS para o formato esperado pela interface
+      const participantesTOTVS = resultado.participantes.map((p: any) => ({
+        id: p.id,
+        nome: p.nome,
+        email: p.email,
+        tipo: p.tipo,
+        curso: curso?.nome || '',
+        turma: turma?.nome || '',
+        disciplina: disciplina?.nome || '',
+        instituicao: filtros.instituicoes.find(i => i.id === Number(filtrosForm.instituicaoId))?.nome || '',
+        periodoLetivo: periodoLetivoNome,
+        ra: p.ra,
+        login: p.login,
+        contexto: p.contexto
+      }));
+
+      setParticipantes(participantesTOTVS);
+      setParticipantesSelecionados([]);
+
+    } catch (error: any) {
+      console.error('❌ Erro ao buscar participantes no TOTVS:', error);
+      
+      let errorMessage = 'Erro ao buscar participantes no TOTVS';
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.status === 500) {
+        errorMessage = 'Erro interno do servidor. Verifique a conexão com o TOTVS.';
+      }
+      
+      toast({
+        title: 'Erro na Busca TOTVS',
+        description: errorMessage,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setLoadingParticipantes(false);
+    }
   };
 
   const pesquisarParticipantes = async () => {
@@ -322,8 +455,25 @@ const AdicionarParticipantesAvaliacaoPage: React.FC = () => {
         return;
       }
 
-      // Adicionar participantes à avaliação
-      await api.post(`/Questionario/${id}/participantes`, participantesSelecionados);
+      // Preparar dados completos dos participantes selecionados
+      const participantesParaAdicionar = participantes
+        .filter(p => participantesSelecionados.includes(p.id))
+        .map(participante => ({
+          id: participante.id,
+          nome: participante.nome,
+          email: participante.email,
+          tipo: participante.tipo,
+          curso: participante.curso,
+          turma: participante.turma,
+          disciplina: participante.disciplina,
+          instituicao: participante.instituicao,
+          periodoLetivo: participante.periodoLetivo
+        }));
+
+      console.log('📤 Dados dos participantes para adicionar:', participantesParaAdicionar);
+
+      // Adicionar participantes à avaliação com dados completos
+      await api.post(`/Questionario/${id}/participantes-completos`, participantesParaAdicionar);
 
       toast({
         title: 'Sucesso',
@@ -335,15 +485,21 @@ const AdicionarParticipantesAvaliacaoPage: React.FC = () => {
 
       // Voltar para a lista de participantes da avaliação
       navigate(`/avaliacoes/${id}/participantes`);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('❌ Erro ao adicionar participantes:', error);
+      
+      let errorMessage = 'Erro ao adicionar participantes';
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
       toast({
         title: 'Erro',
-        description: 'Erro ao adicionar participantes',
+        description: errorMessage,
         status: 'error',
-        duration: 3000,
+        duration: 5000,
         isClosable: true,
       });
-      console.error('Erro:', error);
     }
   };
 
@@ -504,7 +660,16 @@ const AdicionarParticipantesAvaliacaoPage: React.FC = () => {
                 onClick={pesquisarParticipantes}
                 isLoading={loadingParticipantes}
               >
-                Pesquisar
+                Pesquisar (Banco Local)
+              </Button>
+              <Button
+                leftIcon={<Search size={16} />}
+                colorScheme="green"
+                onClick={pesquisarParticipantesTOTVS}
+                isLoading={loadingParticipantes}
+                variant="outline"
+              >
+                Buscar no TOTVS
               </Button>
             </HStack>
           </CardBody>

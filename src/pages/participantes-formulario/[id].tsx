@@ -17,11 +17,21 @@ interface Participante {
   respondeu?: boolean;
 }
 
+interface Aluno {
+  id: number;
+  nome: string;
+  emailInstitucional?: string;
+  emailPessoal?: string;
+  ativo: boolean;
+  cursoId: number;
+  matricula: string;
+}
+
 const ParticipantesFormularioPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [alunosDisponiveis, setAlunosDisponiveis] = useState([]);
+  const [alunosDisponiveis, setAlunosDisponiveis] = useState<Aluno[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -182,12 +192,26 @@ const ParticipantesFormularioPage = () => {
         return;
       }
 
-      // Preparar dados para envio
-      const dadosParaEnvio = selecionados.map(id => Number(id));
+      // Preparar dados para envio - enviar objetos completos dos alunos
+      const dadosParaEnvio = selecionados.map(id => {
+        const aluno = alunosDisponiveis.find(a => a.id === id);
+        if (!aluno) {
+          throw new Error(`Aluno com ID ${id} não encontrado`);
+        }
+        return {
+          id: aluno!.id,
+          nome: aluno!.nome,
+          email: aluno!.emailInstitucional || aluno!.emailPessoal,
+          tipo: 'Aluno',
+          ativo: aluno!.ativo,
+          cursoId: aluno!.cursoId,
+          matricula: aluno!.matricula
+        };
+      });
       console.log("📤 Dados preparados para envio:", dadosParaEnvio);
 
       // Fazer a requisição com headers explícitos
-      const response = await api.post(`/Questionario/${id}/participantes`, dadosParaEnvio, {
+      const response = await api.post(`/Questionario/${id}/participantes-teste`, dadosParaEnvio, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`

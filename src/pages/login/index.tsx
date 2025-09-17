@@ -38,11 +38,30 @@ export default function LoginPage() {
     login(data.token, {
       id: data.email, // Usando email como ID temporário
       name: data.nome,
-      email: data.email
+      email: data.email,
+      perfil: data.perfil
     });
 
-    // Redirecionar para home
-    navigate("/home");
+    // Redirecionar baseado no perfil
+    switch (data.perfil.toLowerCase()) {
+      case 'aluno':
+        navigate("/aluno/dashboard");
+        break;
+      case 'professor':
+        navigate("/professor/dashboard");
+        break;
+      case 'cpa':
+        navigate("/cpa/dashboard");
+        break;
+      case 'administrador':
+        navigate("/home");
+        break;
+      case 'coordenador':
+        navigate("/coordenador/dashboard");
+        break;
+      default:
+        navigate("/home");
+    }
   };
 
   const { mutate: loginMutate, isPending } = useLoginMutate(handleMutationSuccess);
@@ -97,7 +116,7 @@ export default function LoginPage() {
         backdropFilter="blur(8px)"
         shadow="lg"
       >
-        <Heading mb={8} color="#9d2235" fontSize="2xl">Pesquisa NPS</Heading>
+        <Heading mb={8} color="#9d2235" fontSize="2xl">Avaliação Institucional</Heading>
         <form onSubmit={handleSubmit(onSubmit)}>
           <Stack mb={6}>
             <Flex align="center" bg="white" borderRadius="md">

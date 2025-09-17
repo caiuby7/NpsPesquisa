@@ -28,12 +28,12 @@ import {
   Flex,
   Icon
 } from '@chakra-ui/react';
-import { FiBook, FiDatabase, FiGlobe, FiSmartphone, FiShield, FiCpu, FiBarChart3 } from 'react-icons/fi';
+import { FiBook, FiDatabase, FiGlobe, FiSmartphone, FiShield, FiCpu, FiBarChart2 } from 'react-icons/fi';
 
 interface Discipline {
   id: string;
   name: string;
-  icon: React.ElementType;
+  icon: string;
   aspects: string[];
 }
 
@@ -104,7 +104,7 @@ const InstitutionalEvaluationLayout: React.FC<InstitutionalEvaluationLayoutProps
       'smartphone': FiSmartphone,
       'shield': FiShield,
       'cpu': FiCpu,
-      'bar-chart': FiBarChart3
+      'bar-chart': FiBarChart2
     };
     return icons[iconName] || FiBook;
   };

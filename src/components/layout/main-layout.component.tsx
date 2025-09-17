@@ -6,6 +6,7 @@ import {
   HStack, 
   Text, 
   Icon, 
+  Image,
   useColorModeValue,
   Collapse,
   IconButton,
@@ -134,7 +135,7 @@ interface MainLayoutProps {
 export const MainLayout = ({ children }: MainLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const { isOpen, onToggle } = useDisclosure();
   
   const sidebarBg = useColorModeValue('white', 'gray.800');
@@ -150,56 +151,142 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
-  return (
-    <Flex h="100vh" bg={mainBg}>
-      {/* Sidebar */}
-      <Box
-        w={{ base: isOpen ? '280px' : '80px', md: '280px' }}
-        bg={sidebarBg}
-        borderRight="1px"
-        borderColor={borderColor}
-        transition="width 0.3s"
-        overflow="hidden"
-        position="relative"
-      >
-        {/* Logo e Header da Sidebar */}
-        <Box p={4} borderBottom="1px" borderColor={borderColor}>
-          <HStack spacing={3} justify="space-between">
-            <HStack spacing={3}>
-              <Box 
-                w="8" 
-                h="8" 
-                bg="blue.500" 
-                borderRadius="md" 
-                display="flex" 
-                alignItems="center" 
-                justifyContent="center"
-              >
-                <Icon as={FiTarget} color="white" boxSize={5} />
-              </Box>
-              <Text 
-                fontSize="lg" 
-                fontWeight="bold" 
-                color="blue.600"
-                display={{ base: isOpen ? 'block' : 'none', md: 'block' }}
-              >
-                Sistema Unificado
-              </Text>
-            </HStack>
-            <IconButton
-              aria-label="Toggle sidebar"
-              icon={isOpen ? <FiX /> : <FiMenu />}
-              size="sm"
-              variant="ghost"
-              onClick={onToggle}
-              display={{ base: 'flex', md: 'none' }}
-            />
-          </HStack>
-        </Box>
-
-        {/* Navegação */}
-        <Box p={4} overflowY="auto" h="calc(100vh - 80px)">
+  const renderMenuByProfile = () => {
+    const perfil = user?.perfil?.toLowerCase();
+    
+    switch (perfil) {
+      case 'aluno':
+        return (
           <VStack spacing={6} align="stretch">
+            {/* Dashboard */}
+            <NavSection title="Dashboard" isExpanded={true}>
+              <NavItem 
+                icon={FiHome} 
+                href="/aluno/dashboard"
+                isActive={isActiveRoute('/aluno/dashboard')}
+                onClick={() => navigate('/aluno/dashboard')}
+                badge="Aluno"
+                badgeColor="blue"
+              >
+                Meu Dashboard
+              </NavItem>
+            </NavSection>
+
+            {/* Questionários */}
+            <NavSection title="Questionários" isExpanded={true}>
+              <NavItem 
+                icon={FiFileText} 
+                href="/aluno/questionarios"
+                isActive={isActiveRoute('/aluno/questionarios')}
+                onClick={() => navigate('/aluno/questionarios')}
+                badge="QR"
+                badgeColor="green"
+              >
+                Questionários Disponíveis
+              </NavItem>
+              <NavItem 
+                icon={FiBarChart2} 
+                href="/aluno/historico"
+                isActive={isActiveRoute('/aluno/historico')}
+                onClick={() => navigate('/aluno/historico')}
+                badge="H"
+                badgeColor="purple"
+              >
+                Meu Histórico
+              </NavItem>
+            </NavSection>
+
+            {/* Sistema */}
+            <NavSection title="Sistema" isExpanded={false}>
+              <NavItem 
+                icon={FiBookOpen} 
+                href="/faq-aluno"
+                isActive={isActiveRoute('/faq-aluno')}
+                onClick={() => navigate('/faq-aluno')}
+                badge="Manual"
+                badgeColor="blue"
+              >
+                Manual/FAQ
+              </NavItem>
+            </NavSection>
+          </VStack>
+        );
+
+      case 'professor':
+        return (
+          <VStack spacing={6} align="stretch">
+            {/* Dashboard */}
+            <NavSection title="Dashboard" isExpanded={true}>
+              <NavItem 
+                icon={FiHome} 
+                href="/professor/dashboard"
+                isActive={isActiveRoute('/professor/dashboard')}
+                onClick={() => navigate('/professor/dashboard')}
+                badge="Professor"
+                badgeColor="green"
+              >
+                Meu Dashboard
+              </NavItem>
+            </NavSection>
+
+            {/* Questionários */}
+            <NavSection title="Questionários" isExpanded={true}>
+              <NavItem 
+                icon={FiFileText} 
+                href="/professor/questionarios"
+                isActive={isActiveRoute('/professor/questionarios')}
+                onClick={() => navigate('/professor/questionarios')}
+                badge="QR"
+                badgeColor="green"
+              >
+                Questionários para Responder
+              </NavItem>
+              <NavItem 
+                icon={FiBarChart2} 
+                href="/professor/historico"
+                isActive={isActiveRoute('/professor/historico')}
+                onClick={() => navigate('/professor/historico')}
+                badge="H"
+                badgeColor="purple"
+              >
+                Meu Histórico
+              </NavItem>
+            </NavSection>
+
+            {/* Sistema */}
+            <NavSection title="Sistema" isExpanded={false}>
+              <NavItem 
+                icon={FiBookOpen} 
+                href="/faq-professor"
+                isActive={isActiveRoute('/faq-professor')}
+                onClick={() => navigate('/faq-professor')}
+                badge="Manual"
+                badgeColor="blue"
+              >
+                Manual/FAQ
+              </NavItem>
+            </NavSection>
+          </VStack>
+        );
+
+      case 'cpa':
+      case 'administrador':
+        return (
+          <VStack spacing={6} align="stretch">
+            {/* Dashboard */}
+            <NavSection title="Dashboard" isExpanded={true}>
+              <NavItem 
+                icon={FiHome} 
+                href="/cpa/dashboard"
+                isActive={isActiveRoute('/cpa/dashboard')}
+                onClick={() => navigate('/cpa/dashboard')}
+                badge={perfil === 'cpa' ? "CPA" : "ADM"}
+                badgeColor="red"
+              >
+                Dashboard {perfil === 'cpa' ? 'CPA' : 'Administrador'}
+              </NavItem>
+            </NavSection>
+
             {/* Relatórios */}
             <NavSection title="Relatórios" isExpanded={true}>
               <NavItem 
@@ -210,7 +297,17 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                 badge="RPT"
                 badgeColor="orange"
               >
-                Dashboard
+                Dashboard Geral
+              </NavItem>
+              <NavItem 
+                icon={FiFileText} 
+                href="/institutional-evaluation-example"
+                isActive={isActiveRoute('/institutional-evaluation-example')}
+                onClick={() => navigate('/institutional-evaluation-example')}
+                badge="EX"
+                badgeColor="green"
+              >
+                Exemplo Avaliação
               </NavItem>
             </NavSection>
 
@@ -350,8 +447,18 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
               </NavItem>
             </NavSection>
 
-            {/* Configurações */}
+            {/* Sistema */}
             <NavSection title="Sistema" isExpanded={false}>
+              <NavItem 
+                icon={FiBookOpen} 
+                href="/faq"
+                isActive={isActiveRoute('/faq')}
+                onClick={() => navigate('/faq')}
+                badge="Manual"
+                badgeColor="blue"
+              >
+                Manual/FAQ
+              </NavItem>
               <NavItem 
                 icon={FiSettings} 
                 href="/configuracoes"
@@ -362,6 +469,102 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
               </NavItem>
             </NavSection>
           </VStack>
+        );
+
+      default:
+        // Menu padrão para usuários sem perfil definido
+        return (
+          <VStack spacing={6} align="stretch">
+            {/* Relatórios */}
+            <NavSection title="Relatórios" isExpanded={true}>
+              <NavItem 
+                icon={FiBarChart2} 
+                href="/dashboard"
+                isActive={isActiveRoute('/dashboard')}
+                onClick={() => navigate('/dashboard')}
+                badge="RPT"
+                badgeColor="orange"
+              >
+                Dashboard
+              </NavItem>
+            </NavSection>
+
+            {/* Sistema */}
+            <NavSection title="Sistema" isExpanded={false}>
+              <NavItem 
+                icon={FiBookOpen} 
+                href="/faq"
+                isActive={isActiveRoute('/faq')}
+                onClick={() => navigate('/faq')}
+                badge="Manual"
+                badgeColor="blue"
+              >
+                Manual/FAQ
+              </NavItem>
+            </NavSection>
+          </VStack>
+        );
+    }
+  };
+
+  return (
+    <Flex h="100vh" bg={mainBg}>
+      {/* Sidebar */}
+      <Box
+        w={{ base: isOpen ? '280px' : '80px', md: '280px' }}
+        bg={sidebarBg}
+        borderRight="1px"
+        borderColor={borderColor}
+        transition="width 0.3s"
+        overflow="hidden"
+        position="relative"
+      >
+        {/* Logo e Header da Sidebar */}
+        <Box p={4} borderBottom="1px" borderColor={borderColor}>
+          <HStack justify="space-between" position="relative">
+            <HStack spacing={3} flex="1" justify="center">
+              <Image 
+                src="/logo.png" 
+                alt="Logo PUC Católica" 
+                w="12" 
+                h="12" 
+                objectFit="contain"
+                flexShrink={0}
+              />
+              <VStack spacing={0} align="start" display={{ base: isOpen ? 'flex' : 'none', md: 'flex' }}>
+                <Text 
+                  fontSize="sm" 
+                  fontWeight="bold" 
+                  color="red.600"
+                  lineHeight="tight"
+                >
+                  Católica de Santa Catarina
+                </Text>
+                <Text 
+                  fontSize="xs" 
+                  color="red.600"
+                  lineHeight="tight"
+                >
+                  Centro Universitário
+                </Text>
+              </VStack>
+            </HStack>
+            <IconButton
+              aria-label="Toggle sidebar"
+              icon={isOpen ? <FiX /> : <FiMenu />}
+              size="sm"
+              variant="ghost"
+              onClick={onToggle}
+              display={{ base: 'flex', md: 'none' }}
+              position="absolute"
+              right={0}
+            />
+          </HStack>
+        </Box>
+
+        {/* Navegação */}
+        <Box p={4} overflowY="auto" h="calc(100vh - 80px)">
+          {renderMenuByProfile()}
         </Box>
 
         {/* Footer da Sidebar */}
