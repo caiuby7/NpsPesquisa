@@ -10,6 +10,8 @@ namespace NpsPesquisa.Api.Models
         Disciplina,      // Aluno avalia disciplina específica
         TurmaDisciplina, // Aluno avalia professor+disciplina+turma (contexto completo)
         Curso,           // Aluno avalia curso (coordenador)
+        Estagio,         // Aluno avalia estágio curricular
+        ProjetoExtensionista, // Aluno avalia projeto extensionista
         Estrutura,       // Aluno avalia infraestrutura da instituição
         
         // Avaliações de Professores  
@@ -18,6 +20,7 @@ namespace NpsPesquisa.Api.Models
         Turma,           // Professor avalia turma como um todo
         
         // Avaliações Gerais
-        Infraestrutura   // Avaliação geral de infraestrutura
+        Infraestrutura,  // Avaliação geral de infraestrutura
+        TCC              // Aluno avalia Trabalho de Conclusão de Curso
     }
 }

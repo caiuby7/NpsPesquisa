@@ -118,11 +118,6 @@ namespace NpsPesquisa.Api.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
-                    b.Property<string>("Matricula")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
-
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -134,6 +129,11 @@ namespace NpsPesquisa.Api.Migrations
                     b.Property<string>("PeriodoLetivoIntegracaoId")
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
+
+                    b.Property<string>("RA")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<int?>("Sexo")
                         .HasColumnType("int");
@@ -404,6 +404,9 @@ namespace NpsPesquisa.Api.Migrations
                     b.Property<bool>("Ativo")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<string>("Codigo")
+                        .HasColumnType("longtext");
+
                     b.Property<DateTime?>("DataAtualizacao")
                         .HasColumnType("datetime(6)");
 
@@ -637,13 +640,35 @@ namespace NpsPesquisa.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    b.Property<int?>("CursoId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("DataConvite")
                         .HasColumnType("datetime(6)");
 
                     b.Property<DateTime?>("DataResposta")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<int?>("DisciplinaId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("InstituicaoId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ItemAvaliadoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NomeItemEspecifico")
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
                     b.Property<int>("ParticipanteId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("PeriodoLetivoId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ProfessorId")
                         .HasColumnType("int");
 
                     b.Property<int>("QuestionarioId")
@@ -653,11 +678,29 @@ namespace NpsPesquisa.Api.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<int?>("TipoItemAvaliado")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TurmaId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("CursoId");
+
+                    b.HasIndex("DisciplinaId");
+
+                    b.HasIndex("InstituicaoId");
 
                     b.HasIndex("ParticipanteId");
 
+                    b.HasIndex("PeriodoLetivoId");
+
+                    b.HasIndex("ProfessorId");
+
                     b.HasIndex("QuestionarioId");
+
+                    b.HasIndex("TurmaId");
 
                     b.ToTable("participantesquestionarios", (string)null);
                 });
@@ -971,7 +1014,22 @@ namespace NpsPesquisa.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    b.Property<int?>("CursoId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("DisciplinaId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("InstituicaoId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ItemAvaliadoId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("OpcaoId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ProfessorId")
                         .HasColumnType("int");
 
                     b.Property<int>("QuestaoId")
@@ -983,16 +1041,32 @@ namespace NpsPesquisa.Api.Migrations
                     b.Property<string>("Texto")
                         .HasColumnType("longtext");
 
+                    b.Property<int?>("TurmaId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Valor")
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CursoId");
+
+                    b.HasIndex("DisciplinaId");
+
+                    b.HasIndex("InstituicaoId");
+
+                    b.HasIndex("ItemAvaliadoId");
+
                     b.HasIndex("OpcaoId");
+
+                    b.HasIndex("ProfessorId");
 
                     b.HasIndex("QuestaoId");
 
-                    b.HasIndex("RespostaId");
+                    b.HasIndex("TurmaId");
+
+                    b.HasIndex("RespostaId", "QuestaoId", "ItemAvaliadoId")
+                        .IsUnique();
 
                     b.ToTable("respostasquestoes", (string)null);
                 });
@@ -1005,6 +1079,9 @@ namespace NpsPesquisa.Api.Migrations
 
                     b.Property<bool>("Ativo")
                         .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Codigo")
+                        .HasColumnType("longtext");
 
                     b.Property<int>("CursoId")
                         .HasColumnType("int");
@@ -1345,11 +1422,36 @@ namespace NpsPesquisa.Api.Migrations
 
             modelBuilder.Entity("NpsPesquisa.Api.Models.ParticipanteQuestionario", b =>
                 {
+                    b.HasOne("NpsPesquisa.Api.Models.Curso", "Curso")
+                        .WithMany()
+                        .HasForeignKey("CursoId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("NpsPesquisa.Api.Models.Disciplina", "Disciplina")
+                        .WithMany()
+                        .HasForeignKey("DisciplinaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("NpsPesquisa.Api.Models.Instituicao", "Instituicao")
+                        .WithMany()
+                        .HasForeignKey("InstituicaoId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("NpsPesquisa.Api.Models.Participante", "Participante")
                         .WithMany("Participacoes")
                         .HasForeignKey("ParticipanteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("NpsPesquisa.Api.Models.PeriodoLetivo", "PeriodoLetivo")
+                        .WithMany()
+                        .HasForeignKey("PeriodoLetivoId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("NpsPesquisa.Api.Models.Professor", "Professor")
+                        .WithMany()
+                        .HasForeignKey("ProfessorId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("NpsPesquisa.Api.Models.Questionario", "Questionario")
                         .WithMany("Participantes")
@@ -1357,9 +1459,26 @@ namespace NpsPesquisa.Api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("NpsPesquisa.Api.Models.Turma", "Turma")
+                        .WithMany()
+                        .HasForeignKey("TurmaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Curso");
+
+                    b.Navigation("Disciplina");
+
+                    b.Navigation("Instituicao");
+
                     b.Navigation("Participante");
 
+                    b.Navigation("PeriodoLetivo");
+
+                    b.Navigation("Professor");
+
                     b.Navigation("Questionario");
+
+                    b.Navigation("Turma");
                 });
 
             modelBuilder.Entity("NpsPesquisa.Api.Models.Professor", b =>
@@ -1415,9 +1534,29 @@ namespace NpsPesquisa.Api.Migrations
 
             modelBuilder.Entity("NpsPesquisa.Api.Models.RespostaQuestao", b =>
                 {
+                    b.HasOne("NpsPesquisa.Api.Models.Curso", "Curso")
+                        .WithMany()
+                        .HasForeignKey("CursoId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("NpsPesquisa.Api.Models.Disciplina", "Disciplina")
+                        .WithMany()
+                        .HasForeignKey("DisciplinaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("NpsPesquisa.Api.Models.Instituicao", "Instituicao")
+                        .WithMany()
+                        .HasForeignKey("InstituicaoId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("NpsPesquisa.Api.Models.OpcaoQuestao", "Opcao")
                         .WithMany()
                         .HasForeignKey("OpcaoId");
+
+                    b.HasOne("NpsPesquisa.Api.Models.Professor", "Professor")
+                        .WithMany()
+                        .HasForeignKey("ProfessorId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("NpsPesquisa.Api.Models.Questao", "Questao")
                         .WithMany()
@@ -1431,11 +1570,26 @@ namespace NpsPesquisa.Api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("NpsPesquisa.Api.Models.Turma", "Turma")
+                        .WithMany()
+                        .HasForeignKey("TurmaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Curso");
+
+                    b.Navigation("Disciplina");
+
+                    b.Navigation("Instituicao");
+
                     b.Navigation("Opcao");
+
+                    b.Navigation("Professor");
 
                     b.Navigation("Questao");
 
                     b.Navigation("Resposta");
+
+                    b.Navigation("Turma");
                 });
 
             modelBuilder.Entity("NpsPesquisa.Api.Models.Turma", b =>

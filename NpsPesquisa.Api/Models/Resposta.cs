@@ -23,6 +23,7 @@ namespace NpsPesquisa.Api.Models
         
         public int? ItemAvaliadoId { get; set; }
 
+
         // Propriedade Aluno para compatibilidade (através do Participante)
         [NotMapped]
         public Aluno? Aluno => Participante?.Aluno;

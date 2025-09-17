@@ -71,12 +71,19 @@ namespace NpsPesquisa.Api.Models
         // Filtros para busca de participantes
         public int? InstituicaoId { get; set; }
         public int? PeriodoLetivoId { get; set; }
+        
+        // Filtros single select (mantidos para compatibilidade)
         public int? CursoId { get; set; }
         public int? TurmaId { get; set; }
         public int? DisciplinaId { get; set; }
         public int? ProfessorId { get; set; }
         public int? TurmaDisciplinaId { get; set; }
         public int? CoordenadorId { get; set; }
+
+        // Filtros multiselect (novos)
+        public List<int>? CursoIds { get; set; }
+        public List<int>? DisciplinaIds { get; set; }
+        public List<int>? TurmaIds { get; set; }
 
         // Para avaliações de Estrutura
         public TipoParticipante? TipoParticipante { get; set; }

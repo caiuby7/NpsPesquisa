@@ -92,6 +92,39 @@ namespace NpsPesquisa.Api.Controllers
             if (convite == null)
                 return NotFound("Chave inválida.");
 
+            // Buscar todas as disciplinas/contextos que o participante deve avaliar
+            var contextosAvaliacao = await _context.ParticipantesQuestionarios
+                .Where(pq => pq.QuestionarioId == convite.QuestionarioId && pq.ParticipanteId == convite.ParticipanteId)
+                .Include(pq => pq.Curso)
+                .Include(pq => pq.Turma)
+                .Include(pq => pq.Disciplina)
+                .Include(pq => pq.Professor)
+                .Include(pq => pq.Instituicao)
+                .Include(pq => pq.PeriodoLetivo)
+                .Select(pq => new
+                {
+                    pq.Id,
+                    pq.TipoItemAvaliado,
+                    pq.NomeItemEspecifico,
+                    pq.ItemAvaliadoId,
+                    pq.CursoId,
+                    CursoNome = pq.Curso != null ? pq.Curso.Nome : null,
+                    pq.TurmaId,
+                    TurmaNome = pq.Turma != null ? pq.Turma.Nome : null,
+                    pq.DisciplinaId,
+                    DisciplinaNome = pq.Disciplina != null ? pq.Disciplina.Nome : null,
+                    pq.ProfessorId,
+                    ProfessorNome = pq.Professor != null ? pq.Professor.Nome : null,
+                    pq.InstituicaoId,
+                    InstituicaoNome = pq.Instituicao != null ? pq.Instituicao.Nome : null,
+                    pq.PeriodoLetivoId,
+                    PeriodoLetivoNome = pq.PeriodoLetivo != null ? pq.PeriodoLetivo.Nome : null,
+                    pq.Status,
+                    pq.DataResposta,
+                    ContextoDescricao = pq.ContextoDescricao
+                })
+                .ToListAsync();
+
             return Ok(new
             {
                 convite.Id,
@@ -100,7 +133,11 @@ namespace NpsPesquisa.Api.Controllers
                 TipoParticipante = convite.Participante.TipoDescricao,
                 convite.QuestionarioId,
                 Questionario = convite.Questionario.Titulo,
-                convite.Respondido
+                convite.Respondido,
+                ContextosAvaliacao = contextosAvaliacao,
+                TotalItensAvaliar = contextosAvaliacao.Count,
+                ItensRespondidos = contextosAvaliacao.Count(c => c.DataResposta.HasValue),
+                ItensPendentes = contextosAvaliacao.Count(c => !c.DataResposta.HasValue)
             });
         }
 

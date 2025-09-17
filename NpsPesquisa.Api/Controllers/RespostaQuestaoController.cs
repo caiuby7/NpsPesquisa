@@ -53,7 +53,7 @@ namespace NpsPesquisa.Api.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Administrador")]
+        
         public async Task<IActionResult> Delete(int id)
         {
             var respostaQuestao = await _context.RespostasQuestoes.FindAsync(id);

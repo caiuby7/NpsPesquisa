@@ -61,7 +61,7 @@ namespace NpsPesquisa.Api.Controllers
         }
 
         [HttpPost]
-       // [Authorize(Roles = "Administrador")]
+       // 
         public async Task<ActionResult<Aluno>> Create(AlunoViewModel alunoViewModel)
         {
             // Verifica se o curso existe
@@ -142,7 +142,7 @@ namespace NpsPesquisa.Api.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Administrador")]
+        
         public async Task<IActionResult> Update(int id, AlunoViewModel alunoViewModel)
         {
             var aluno = await _context.Alunos.FindAsync(id);
@@ -201,28 +201,9 @@ namespace NpsPesquisa.Api.Controllers
             aluno.InstituicaoIntegracaoId = alunoViewModel.InstituicaoIntegracaoId;
             aluno.DataAtualizacao = DateTime.Now;
 
-            // Atualiza as turmas-disciplinas se fornecidas
-            if (alunoViewModel.TurmaDisciplinaIds != null)
-            {
-                // Limpa as turmas-disciplinas atuais
-                aluno.TurmasDisciplinas.Clear();
-
-                // Adiciona as novas turmas-disciplinas
-                if (alunoViewModel.TurmaDisciplinaIds.Any())
-                {
-                    var turmasDisciplinas = await _context.TurmaDisciplinas
-                        .Where(td => alunoViewModel.TurmaDisciplinaIds.Contains(td.Id))
-                        .ToListAsync();
-
-                    foreach (var turmaDisciplina in turmasDisciplinas)
-                    {
-                        aluno.TurmasDisciplinas.Add(turmaDisciplina);
-                    }
-                }
-            }
-
             try
             {
+                // Salva as alterações do aluno primeiro (sem as turmas-disciplinas)
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
@@ -232,11 +213,37 @@ namespace NpsPesquisa.Api.Controllers
                 throw;
             }
 
+            // Atualiza as turmas-disciplinas se fornecidas (após salvar o aluno)
+            if (alunoViewModel.TurmaDisciplinaIds != null)
+            {
+                try
+                {
+                    // Remove todas as associações atuais da tabela de junção
+                    await _context.Database.ExecuteSqlRawAsync(
+                        "DELETE FROM AlunoTurmaDisciplina WHERE AlunosAlunoId = {0}", id);
+
+                    // Adiciona as novas associações
+                    if (alunoViewModel.TurmaDisciplinaIds.Any())
+                    {
+                        foreach (var turmaDisciplinaId in alunoViewModel.TurmaDisciplinaIds)
+                        {
+                            await _context.Database.ExecuteSqlRawAsync(
+                                "INSERT INTO AlunoTurmaDisciplina (AlunosAlunoId, TurmasDisciplinasId) VALUES ({0}, {1})",
+                                id, turmaDisciplinaId);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest($"Erro ao atualizar turmas-disciplinas: {ex.Message}");
+                }
+            }
+
             return NoContent();
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Administrador")]
+        
         public async Task<IActionResult> Delete(int id)
         {
             var aluno = await _context.Alunos.FindAsync(id);
@@ -339,13 +346,16 @@ namespace NpsPesquisa.Api.Controllers
             if (turmasDisciplinas.Count != turmaDisciplinaIds.Count)
                 return BadRequest("Uma ou mais turmas-disciplinas não foram encontradas");
 
-            // Limpa as turmas-disciplinas atuais
-            aluno.TurmasDisciplinas.Clear();
+            // Remove todas as associações atuais da tabela de junção
+            await _context.Database.ExecuteSqlRawAsync(
+                "DELETE FROM AlunoTurmaDisciplina WHERE AlunosAlunoId = {0}", id);
 
-            // Adiciona as novas turmas-disciplinas
+            // Adiciona as novas associações
             foreach (var turmaDisciplina in turmasDisciplinas)
             {
-                aluno.TurmasDisciplinas.Add(turmaDisciplina);
+                await _context.Database.ExecuteSqlRawAsync(
+                    "INSERT INTO AlunoTurmaDisciplina (AlunosAlunoId, TurmasDisciplinasId) VALUES ({0}, {1})",
+                    id, turmaDisciplina.Id);
             }
 
             await _context.SaveChangesAsync();

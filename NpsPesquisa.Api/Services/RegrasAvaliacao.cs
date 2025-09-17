@@ -13,13 +13,20 @@ namespace NpsPesquisa.Api.Services
                 TipoItemAvaliado.Curso,           // Aluno avalia seu curso
                 TipoItemAvaliado.Turma,           // Aluno avalia sua turma
                 TipoItemAvaliado.Disciplina,      // Aluno avalia disciplinas que cursa
-                TipoItemAvaliado.Coordenador      // Aluno avalia coordenador do curso
+                TipoItemAvaliado.Coordenador,     // Aluno avalia coordenador do curso
+                TipoItemAvaliado.Estagio,         // Aluno avalia estágio curricular
+                TipoItemAvaliado.ProjetoExtensionista, // Aluno avalia projeto extensionista
+                TipoItemAvaliado.Estrutura,       // Aluno avalia estrutura física
+                TipoItemAvaliado.Infraestrutura   // Aluno avalia infraestrutura
             }},
             
             { TipoParticipante.Professor, new[] { 
+                TipoItemAvaliado.Professor,       // Professor se autoavalia
                 TipoItemAvaliado.Turma,           // Professor avalia turmas que leciona
                 TipoItemAvaliado.Disciplina,      // Professor avalia disciplinas que ministra
                 TipoItemAvaliado.Coordenador,     // Professor avalia coordenador
+                TipoItemAvaliado.Estagio,         // Professor avalia estágio curricular
+                TipoItemAvaliado.ProjetoExtensionista, // Professor avalia projeto extensionista
                 TipoItemAvaliado.Estrutura,       // Professor avalia estrutura da sala
                 TipoItemAvaliado.Infraestrutura   // Professor avalia infraestrutura
             }},
@@ -31,6 +38,7 @@ namespace NpsPesquisa.Api.Services
             }},
             
             { TipoParticipante.Coordenador, new[] { 
+                TipoItemAvaliado.Coordenador,     // Coordenador se autoavalia
                 TipoItemAvaliado.Estrutura,       // Coordenador avalia estrutura física
                 TipoItemAvaliado.Infraestrutura   // Coordenador avalia infraestrutura
             }}
@@ -90,10 +98,17 @@ namespace NpsPesquisa.Api.Services
                 (TipoParticipante.Aluno, TipoItemAvaliado.Turma) => "Alunos avaliam suas turmas",
                 (TipoParticipante.Aluno, TipoItemAvaliado.Disciplina) => "Alunos avaliam disciplinas que cursam",
                 (TipoParticipante.Aluno, TipoItemAvaliado.Coordenador) => "Alunos avaliam coordenadores",
+                (TipoParticipante.Aluno, TipoItemAvaliado.Estagio) => "Alunos avaliam estágio curricular",
+                (TipoParticipante.Aluno, TipoItemAvaliado.ProjetoExtensionista) => "Alunos avaliam projeto extensionista",
+                (TipoParticipante.Aluno, TipoItemAvaliado.Estrutura) => "Alunos avaliam estrutura física",
+                (TipoParticipante.Aluno, TipoItemAvaliado.Infraestrutura) => "Alunos avaliam infraestrutura",
                 
+                (TipoParticipante.Professor, TipoItemAvaliado.Professor) => "Professores se autoavaliam",
                 (TipoParticipante.Professor, TipoItemAvaliado.Turma) => "Professores avaliam turmas que lecionam",
                 (TipoParticipante.Professor, TipoItemAvaliado.Disciplina) => "Professores avaliam disciplinas que ministram",
                 (TipoParticipante.Professor, TipoItemAvaliado.Coordenador) => "Professores avaliam coordenadores",
+                (TipoParticipante.Professor, TipoItemAvaliado.Estagio) => "Professores avaliam estágio curricular",
+                (TipoParticipante.Professor, TipoItemAvaliado.ProjetoExtensionista) => "Professores avaliam projeto extensionista",
                 (TipoParticipante.Professor, TipoItemAvaliado.Estrutura) => "Professores avaliam estrutura das salas",
                 (TipoParticipante.Professor, TipoItemAvaliado.Infraestrutura) => "Professores avaliam infraestrutura",
                 
@@ -101,6 +116,7 @@ namespace NpsPesquisa.Api.Services
                 (TipoParticipante.Funcionario, TipoItemAvaliado.Infraestrutura) => "Funcionários avaliam infraestrutura",
                 (TipoParticipante.Funcionario, TipoItemAvaliado.Coordenador) => "Funcionários avaliam coordenadores",
                 
+                (TipoParticipante.Coordenador, TipoItemAvaliado.Coordenador) => "Coordenadores se autoavaliam",
                 (TipoParticipante.Coordenador, TipoItemAvaliado.Estrutura) => "Coordenadores avaliam estrutura física",
                 (TipoParticipante.Coordenador, TipoItemAvaliado.Infraestrutura) => "Coordenadores avaliam infraestrutura",
                 

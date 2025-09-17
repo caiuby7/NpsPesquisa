@@ -21,7 +21,26 @@ namespace NpsPesquisa.Api.Data
         public static async Task Initialize(NpsDbContext context, IAuthService authService)
         {
             // Garante que o banco de dados está criado
-            await context.Database.MigrateAsync();
+            // Migrações automáticas desabilitadas para evitar conflitos
+            try
+            {
+                // Tenta usar EnsureCreated primeiro (mais seguro)
+                await context.Database.EnsureCreatedAsync();
+            }
+            catch (Exception ex)
+            {
+                // Se EnsureCreated falhar, tenta Migrate como fallback
+                Console.WriteLine($"EnsureCreated falhou, tentando Migrate: {ex.Message}");
+                try
+                {
+                    await context.Database.MigrateAsync();
+                }
+                catch (Exception migrateEx)
+                {
+                    Console.WriteLine($"Migrate também falhou: {migrateEx.Message}");
+                    throw new InvalidOperationException("Não foi possível inicializar o banco de dados. Verifique as configurações de conexão.", migrateEx);
+                }
+            }
 
             // Adiciona perfis padrão se não existirem
             if (!context.Perfis.Any())

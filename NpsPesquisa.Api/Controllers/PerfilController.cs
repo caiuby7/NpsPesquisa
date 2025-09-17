@@ -8,7 +8,7 @@ namespace NpsPesquisa.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Administrador")]
+    
     public class PerfilController : ControllerBase
     {
         private readonly NpsDbContext _context;

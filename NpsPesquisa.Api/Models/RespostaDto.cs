@@ -26,5 +26,7 @@ namespace NpsPesquisa.Api.Models
     {
         public int QuestaoId { get; set; }
         public int? OpcaoId { get; set; }  // ID da opção selecionada para questões de múltipla escolha e matriz
+        public int? ItemAvaliadoId { get; set; }  // ID do item específico sendo avaliado (disciplina, turma, etc.)
+        public string? Valor { get; set; }  // Valor para questões de texto livre ou escala linear
     }
 } 

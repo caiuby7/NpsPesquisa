@@ -11,7 +11,7 @@ namespace NpsPesquisa.Api.Models
     {
         public static DirectoryEntry AcessoAd()
         {
-            DirectoryEntry de = new DirectoryEntry("LDAP://DC=catolicasc,DC=org,DC=br", "ldapportal", "ldapportal*");
+            DirectoryEntry de = new DirectoryEntry("LDAP://10.197.40.6", "ldapportal", "ldapportal*");
             return de;
         }
 
@@ -46,7 +46,9 @@ namespace NpsPesquisa.Api.Models
                     //TESTE
                     //DirectoryEntry directoryEntry = new DirectoryEntry("LDAP://177.52.222.16", username, pwd);
                     //PRODUÇÃO
-                    DirectoryEntry directoryEntry = new DirectoryEntry("LDAP://192.168.40.10", username, pwd);
+                    //DirectoryEntry directoryEntry = new DirectoryEntry("LDAP://192.168.40.10", username, pwd);
+
+                    DirectoryEntry directoryEntry = new DirectoryEntry("LDAP://10.197.40.6", username, pwd);
                     DirectorySearcher directorySearcher = new DirectorySearcher(directoryEntry);
                     directorySearcher.Filter = "(sAMAccountName=" + username + ")";
                     SearchResult searchResult = directorySearcher.FindOne();
@@ -62,9 +64,21 @@ namespace NpsPesquisa.Api.Models
                         return false;
                     }
                 }
+                catch (System.DirectoryServices.DirectoryServicesCOMException dsEx)
+                {
+                    // Erro específico do Active Directory
+                    System.Diagnostics.Debug.WriteLine($"Erro DirectoryServices: {dsEx.Message}");
+                    return false;
+                }
+                catch (System.Net.Sockets.SocketException socketEx)
+                {
+                    // Erro de conectividade LDAP
+                    System.Diagnostics.Debug.WriteLine($"Erro de conectividade LDAP: {socketEx.Message} - SocketError: {socketEx.SocketErrorCode}");
+                    return false;
+                }
                 catch (Exception ex)
                 {
-                    var msdg = ex;
+                    System.Diagnostics.Debug.WriteLine($"Erro inesperado na autenticação LDAP: {ex.Message}");
                     return false;
                 }
             }
@@ -83,8 +97,8 @@ namespace NpsPesquisa.Api.Models
                 {
                     //TESTE
                     //DirectoryEntry directoryEntry = new DirectoryEntry("LDAP://177.52.222.16", username, pwd);
-                    //PRODUÇÃO
-                    DirectoryEntry directoryEntry = new DirectoryEntry("LDAP://DC=catolicasc,DC=org,DC=br", username, pwd);
+                    //PRODUÇÃO - Usando IP interno da mesma faixa de rede
+                    DirectoryEntry directoryEntry = new DirectoryEntry("LDAP://10.197.40.6", username, pwd);
                     DirectorySearcher directorySearcher = new DirectorySearcher(directoryEntry);
                     directorySearcher.Filter = "(sAMAccountName=" + username + ")";
                     SearchResult searchResult = directorySearcher.FindOne();
@@ -124,6 +138,89 @@ namespace NpsPesquisa.Api.Models
                 }
             }
             return info;
+        }
+
+        public static InfoPerfil ConsultaPerfilSemSenha(string username)
+        {
+            InfoPerfil info = new InfoPerfil();
+            info.perfil = "";
+            
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                return info;
+            }
+
+            try
+            {
+                // Usa credenciais do ldapportal para consulta
+                DirectoryEntry directoryEntry = new DirectoryEntry("LDAP://10.197.40.6", "ldapportal", "ldapportal*");
+                DirectorySearcher directorySearcher = new DirectorySearcher(directoryEntry);
+                directorySearcher.Filter = "(sAMAccountName=" + username + ")";
+                SearchResult searchResult = directorySearcher.FindOne();
+
+                if (searchResult != null)
+                {
+                    // Obtém o nome do usuário
+                    if (searchResult.Properties["displayName"].Count > 0)
+                    {
+                        info.nome = (string)searchResult.Properties["displayName"][0];
+                    }
+                    else if (searchResult.Properties["cn"].Count > 0)
+                    {
+                        info.nome = (string)searchResult.Properties["cn"][0];
+                    }
+                    else
+                    {
+                        info.nome = username; // Fallback para o username
+                    }
+
+                    // Determina o perfil baseado no caminho (OU)
+                    string path = searchResult.Path ?? "";
+                    info.perfil = DeterminePerfilFromPath(path);
+                    
+                    return info;
+                }
+                else
+                {
+                    info.perfil = "Usuário não encontrado no AD";
+                    return info;
+                }
+            }
+            catch (Exception ex)
+            {
+                info.perfil = $"Erro ao consultar AD: {ex.Message}";
+                return info;
+            }
+        }
+
+        private static string DeterminePerfilFromPath(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return "Funcionário"; // Perfil padrão
+            }
+
+            // Converte para minúsculo para comparação
+            string pathLower = path.ToLower();
+
+            if (pathLower.Contains("ou=prof"))
+            {
+                return "Prof";
+            }
+            if (pathLower.Contains("ou=aluno"))
+            {
+                return "Aluno";
+            }
+            if (pathLower.Contains("ou=ead"))
+            {
+                return "Aluno";
+            }
+            if (pathLower.Contains("ou=funcionarios"))
+            {
+                return "Funcionário";
+            }
+
+            return "Funcionário"; // Perfil padrão
         }
 
         public static string Coordenadores(string username, string pwd)
@@ -295,8 +392,8 @@ namespace NpsPesquisa.Api.Models
         {
             string domain = "catolicasc";
             string domainAndUsername = domain + @"\" + username;
-            DirectoryEntry entry = new DirectoryEntry("LDAP://177.52.222.16", username, pwd);
-            DirectoryEntry directoryEntry = new DirectoryEntry("LDAP://177.52.222.16", username, pwd);
+            DirectoryEntry entry = new DirectoryEntry("LDAP://10.197.40.6", username, pwd);
+            DirectoryEntry directoryEntry = new DirectoryEntry("LDAP://10.197.40.6", username, pwd);
 
 
             try

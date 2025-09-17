@@ -4,6 +4,19 @@ using NpsPesquisa.Api.Data;
 using NpsPesquisa.Api.Models;
 using NpsPesquisa.Api.Services;
 
+public class VincularParticipanteRequest
+{
+    public string Email { get; set; } = string.Empty;
+    public string Nome { get; set; } = string.Empty;
+    public TipoParticipante Tipo { get; set; }
+    public int? AlunoId { get; set; }
+    public int? ProfessorId { get; set; }
+    public int? CoordenadorId { get; set; }
+    public string? Telefone { get; set; }
+    public string? Cpf { get; set; }
+    public DateTime? DataNascimento { get; set; }
+}
+
 namespace NpsPesquisa.Api.Controllers
 {
     [ApiController]
@@ -102,7 +115,10 @@ namespace NpsPesquisa.Api.Controllers
             [FromQuery] TipoItemAvaliado? tipoItemAvaliado = null,
             [FromQuery] int? cursoId = null,
             [FromQuery] int? turmaId = null,
-            [FromQuery] int? disciplinaId = null)
+            [FromQuery] int? disciplinaId = null,
+            [FromQuery] string? cursoIds = null,
+            [FromQuery] string? turmaIds = null,
+            [FromQuery] string? disciplinaIds = null)
         {
             try
             {
@@ -142,30 +158,84 @@ namespace NpsPesquisa.Api.Controllers
                 var query = _context.Participantes
                     .Include(p => p.Curso)
                     .Include(p => p.Aluno)
+                        .ThenInclude(a => a.TurmasDisciplinas)
+                            .ThenInclude(td => td.Disciplina)
                     .Include(p => p.Professor)
+                        .ThenInclude(prof => prof.TurmasDisciplinas)
+                            .ThenInclude(td => td.Disciplina)
                     .Include(p => p.Coordenador)
                     .Where(p => p.Ativo && tiposParticipantesValidos.Contains(p.Tipo));
 
-                // Filtrar por curso se especificado
+                // Filtrar por curso se especificado (single select - compatibilidade)
                 if (cursoId.HasValue)
                 {
                     query = query.Where(p => p.CursoId == cursoId.Value);
                 }
 
-                // Filtrar por turma se especificado (para alunos)
+                // Filtrar por turma se especificado (para alunos e professores) (single select - compatibilidade)
                 if (turmaId.HasValue)
                 {
-                    query = query.Where(p => p.Tipo == TipoParticipante.Aluno && p.Aluno != null && p.Aluno.TurmaId == turmaId.Value);
+                    query = query.Where(p => 
+                        (p.Tipo == TipoParticipante.Aluno && p.Aluno != null && 
+                         p.Aluno.TurmasDisciplinas.Any(td => td.TurmaId == turmaId.Value && td.Ativo)) ||
+                        (p.Tipo == TipoParticipante.Professor && p.Professor != null && 
+                         p.Professor.TurmasDisciplinas.Any(td => td.TurmaId == turmaId.Value && td.Ativo))
+                    );
                 }
 
-                // Filtrar por disciplina se especificado
+                // Filtrar por disciplina se especificado (single select - compatibilidade)
                 if (disciplinaId.HasValue)
                 {
-                    // Para alunos: disciplinas que cursam
-                    // Para professores: disciplinas que ministram
+                    // Para alunos: disciplinas que cursam via TurmaDisciplina
+                    // Para professores: disciplinas que ministram via TurmaDisciplina
                     query = query.Where(p => 
-                        (p.Tipo == TipoParticipante.Aluno && p.Aluno != null) ||
-                        (p.Tipo == TipoParticipante.Professor && p.Professor != null)
+                        (p.Tipo == TipoParticipante.Aluno && p.Aluno != null && 
+                         p.Aluno.TurmasDisciplinas.Any(td => td.DisciplinaId == disciplinaId.Value && td.Ativo)) ||
+                        (p.Tipo == TipoParticipante.Professor && p.Professor != null && 
+                         p.Professor.TurmasDisciplinas.Any(td => td.DisciplinaId == disciplinaId.Value && td.Ativo))
+                    );
+                }
+
+                // Processar filtros multiselect
+                var cursoIdsList = !string.IsNullOrEmpty(cursoIds) 
+                    ? cursoIds.Split(',').Select(int.Parse).ToList() 
+                    : new List<int>();
+                
+                var turmaIdsList = !string.IsNullOrEmpty(turmaIds) 
+                    ? turmaIds.Split(',').Select(int.Parse).ToList() 
+                    : new List<int>();
+                
+                var disciplinaIdsList = !string.IsNullOrEmpty(disciplinaIds) 
+                    ? disciplinaIds.Split(',').Select(int.Parse).ToList() 
+                    : new List<int>();
+
+                // Filtrar por múltiplos cursos se especificado
+                if (cursoIdsList.Any())
+                {
+                    query = query.Where(p => cursoIdsList.Contains(p.CursoId ?? 0));
+                }
+
+                // Filtrar por múltiplas turmas se especificado (para alunos e professores)
+                if (turmaIdsList.Any())
+                {
+                    query = query.Where(p => 
+                        (p.Tipo == TipoParticipante.Aluno && p.Aluno != null && 
+                         p.Aluno.TurmasDisciplinas.Any(td => turmaIdsList.Contains(td.TurmaId) && td.Ativo)) ||
+                        (p.Tipo == TipoParticipante.Professor && p.Professor != null && 
+                         p.Professor.TurmasDisciplinas.Any(td => turmaIdsList.Contains(td.TurmaId) && td.Ativo))
+                    );
+                }
+
+                // Filtrar por múltiplas disciplinas se especificado
+                if (disciplinaIdsList.Any())
+                {
+                    // Para alunos: disciplinas que cursam via TurmaDisciplina
+                    // Para professores: disciplinas que ministram via TurmaDisciplina
+                    query = query.Where(p => 
+                        (p.Tipo == TipoParticipante.Aluno && p.Aluno != null && 
+                         p.Aluno.TurmasDisciplinas.Any(td => disciplinaIdsList.Contains(td.DisciplinaId) && td.Ativo)) ||
+                        (p.Tipo == TipoParticipante.Professor && p.Professor != null && 
+                         p.Professor.TurmasDisciplinas.Any(td => disciplinaIdsList.Contains(td.DisciplinaId) && td.Ativo))
                     );
                 }
 
@@ -311,6 +381,59 @@ namespace NpsPesquisa.Api.Controllers
                     message = "Erro ao gerar sugestões", 
                     error = ex.Message 
                 });
+            }
+        }
+
+        // POST: api/Participante/vincular
+        [HttpPost("vincular")]
+        public async Task<ActionResult<Participante>> VincularParticipanteExistente([FromBody] VincularParticipanteRequest request)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(request.Email))
+                {
+                    return BadRequest("O email é obrigatório");
+                }
+
+                // Verificar se já existe um participante com o mesmo email
+                var participanteExistente = await _context.Participantes
+                    .FirstOrDefaultAsync(p => p.Email.ToLower() == request.Email.ToLower());
+
+                if (participanteExistente != null)
+                {
+                    return BadRequest("Já existe um participante com este email");
+                }
+
+                Participante participante = null;
+
+                switch (request.Tipo)
+                {
+                    case TipoParticipante.Aluno:
+                        participante = await VincularComAluno(request);
+                        break;
+                    case TipoParticipante.Professor:
+                        participante = await VincularComProfessor(request);
+                        break;
+                    case TipoParticipante.Coordenador:
+                        participante = await VincularComCoordenador(request);
+                        break;
+                    default:
+                        return BadRequest("Tipo de participante inválido");
+                }
+
+                if (participante == null)
+                {
+                    return BadRequest("Não foi possível vincular o participante");
+                }
+
+                _context.Participantes.Add(participante);
+                await _context.SaveChangesAsync();
+
+                return CreatedAtAction(nameof(GetParticipante), new { id = participante.Id }, participante);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Erro ao vincular participante: {ex.Message}");
             }
         }
 
@@ -688,6 +811,76 @@ namespace NpsPesquisa.Api.Controllers
             return NoContent();
         }
 
+        // GET: api/Participante/alunos-disponiveis
+        [HttpGet("alunos-disponiveis")]
+        public async Task<ActionResult<IEnumerable<object>>> GetAlunosDisponiveis()
+        {
+            var alunos = await _context.Alunos
+                .Include(a => a.Curso)
+                .Where(a => a.Ativo)
+                .Select(a => new
+                {
+                    id = a.Id,
+                    nome = a.Nome,
+                    email = a.Email,
+                    matricula = a.Matricula,
+                    curso = a.Curso.Nome,
+                    cursoId = a.CursoId,
+                    telefone = a.Telefone,
+                    cpf = a.Cpf,
+                    dataNascimento = a.DataNascimento
+                })
+                .ToListAsync();
+
+            return Ok(alunos);
+        }
+
+        // GET: api/Participante/professores-disponiveis
+        [HttpGet("professores-disponiveis")]
+        public async Task<ActionResult<IEnumerable<object>>> GetProfessoresDisponiveis()
+        {
+            var professores = await _context.Professores
+                .Include(p => p.Instituicao)
+                .Where(p => p.Ativo)
+                .Select(p => new
+                {
+                    id = p.Id,
+                    nome = p.Nome,
+                    email = p.Email,
+                    departamento = p.Departamento,
+                    titulacao = p.Titulacao,
+                    telefone = p.Telefone,
+                    cpf = p.Cpf,
+                    dataNascimento = p.DataNascimento,
+                    instituicao = p.Instituicao.Nome
+                })
+                .ToListAsync();
+
+            return Ok(professores);
+        }
+
+        // GET: api/Participante/coordenadores-disponiveis
+        [HttpGet("coordenadores-disponiveis")]
+        public async Task<ActionResult<IEnumerable<object>>> GetCoordenadoresDisponiveis()
+        {
+            var coordenadores = await _context.Coordenadores
+                .Where(c => c.Ativo)
+                .Select(c => new
+                {
+                    id = c.Id,
+                    nome = c.Nome,
+                    email = c.Email,
+                    departamento = c.Departamento,
+                    titulacao = c.Titulacao,
+                    telefone = c.Telefone,
+                    cpf = c.Cpf,
+                    dataNascimento = c.DataNascimento
+                })
+                .ToListAsync();
+
+            return Ok(coordenadores);
+        }
+
         // PATCH: api/Participante/5/desativar
         [HttpPatch("{id}/desativar")]
         public async Task<IActionResult> DesativarParticipante(int id)
@@ -765,6 +958,101 @@ namespace NpsPesquisa.Api.Controllers
             }
 
             return (true, string.Empty);
+        }
+
+        private async Task<Participante?> VincularComAluno(VincularParticipanteRequest request)
+        {
+            if (!request.AlunoId.HasValue)
+            {
+                return null;
+            }
+
+            var aluno = await _context.Alunos
+                .Include(a => a.Curso)
+                .FirstOrDefaultAsync(a => a.Id == request.AlunoId.Value);
+
+            if (aluno == null)
+            {
+                return null;
+            }
+
+            return new Participante
+            {
+                Nome = !string.IsNullOrEmpty(request.Nome) ? request.Nome : aluno.Nome,
+                Email = request.Email,
+                Tipo = TipoParticipante.Aluno,
+                Ativo = true,
+                CursoId = aluno.CursoId,
+                Matricula = aluno.Matricula,
+                Telefone = request.Telefone ?? aluno.Telefone,
+                Cpf = request.Cpf,
+                DataNascimento = request.DataNascimento,
+                AlunoId = aluno.Id,
+                DataCadastro = DateTime.Now
+            };
+        }
+
+        private async Task<Participante?> VincularComProfessor(VincularParticipanteRequest request)
+        {
+            if (!request.ProfessorId.HasValue)
+            {
+                return null;
+            }
+
+            var professor = await _context.Professores
+                .Include(p => p.Instituicao)
+                .FirstOrDefaultAsync(p => p.Id == request.ProfessorId.Value);
+
+            if (professor == null)
+            {
+                return null;
+            }
+
+            return new Participante
+            {
+                Nome = !string.IsNullOrEmpty(request.Nome) ? request.Nome : professor.Nome,
+                Email = request.Email,
+                Tipo = TipoParticipante.Professor,
+                Ativo = true,
+                Departamento = professor.Departamento,
+                Titulacao = professor.Titulacao,
+                Telefone = request.Telefone ?? professor.Telefone,
+                Cpf = request.Cpf ?? professor.Cpf,
+                DataNascimento = request.DataNascimento ?? professor.DataNascimento,
+                ProfessorId = professor.Id,
+                DataCadastro = DateTime.Now
+            };
+        }
+
+        private async Task<Participante?> VincularComCoordenador(VincularParticipanteRequest request)
+        {
+            if (!request.CoordenadorId.HasValue)
+            {
+                return null;
+            }
+
+            var coordenador = await _context.Coordenadores
+                .FirstOrDefaultAsync(c => c.Id == request.CoordenadorId.Value);
+
+            if (coordenador == null)
+            {
+                return null;
+            }
+
+            return new Participante
+            {
+                Nome = !string.IsNullOrEmpty(request.Nome) ? request.Nome : coordenador.Nome,
+                Email = request.Email,
+                Tipo = TipoParticipante.Coordenador,
+                Ativo = true,
+                Departamento = coordenador.Departamento,
+                Titulacao = coordenador.Titulacao,
+                Telefone = request.Telefone ?? coordenador.Telefone,
+                Cpf = request.Cpf ?? coordenador.Cpf,
+                DataNascimento = request.DataNascimento ?? coordenador.DataNascimento,
+                CoordenadorId = coordenador.Id,
+                DataCadastro = DateTime.Now
+            };
         }
     }
 }

@@ -1,14 +1,15 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NpsPesquisa.Api.Data;
-using Microsoft.EntityFrameworkCore;
+using NpsPesquisa.Api.Models;
+using NpsPesquisa.Api.Services;
 using System;
 using System.Linq;
+using System.Runtime.Intrinsics.Arm;
 using System.Threading;
 using System.Threading.Tasks;
-using NpsPesquisa.Api.Services;
-using System.Runtime.Intrinsics.Arm;
 
 namespace NpsPesquisa.Api.Services
 {
@@ -26,7 +27,7 @@ namespace NpsPesquisa.Api.Services
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            while (!stoppingToken.IsCancellationRequested)
+           /* while (!stoppingToken.IsCancellationRequested)
             {
                 using (var scope = _serviceProvider.CreateScope())
                 {
@@ -112,8 +113,9 @@ namespace NpsPesquisa.Api.Services
                     }
                 }
                 // Aguarda 1 hora antes de rodar novamente (ajuste conforme necessário)
-                await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
-            }
+                await Task.Delay(TimeSpan.FromHours(questionario.), stoppingToken);
+            }*/
+        
         }
     }
 } 

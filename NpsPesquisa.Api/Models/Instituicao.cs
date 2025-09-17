@@ -13,6 +13,7 @@ namespace NpsPesquisa.Api.Models
 
         [StringLength(1000, ErrorMessage = "A descrição deve ter no máximo 1000 caracteres")]
         public string? Descricao { get; set; }
+        public string? Codigo { get; set; }
 
         [Required(ErrorMessage = "O ID de integração é obrigatório")]
         public int IntegracaoId { get; set; }

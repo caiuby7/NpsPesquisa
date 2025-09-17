@@ -13,8 +13,14 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using QuestPDF.Infrastructure;
+using NpsPesquisa.Api.IntegracaoExterna.Services;
+using NpsPesquisa.Api.Middleware;
+using NpsPesquisa.Api.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configurar configurações de rede
+NetworkConfiguration.ConfigureNetworkSettings();
 
 // Configura licença Community do QuestPDF
 QuestPDF.Settings.License = LicenseType.Community;
@@ -118,6 +124,11 @@ builder.Services.AddDbContext<NpsDbContext>(options =>
 // Add Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ReportService>();
+builder.Services.AddScoped<ITotvsService, TotvsService>();
+
+// Add Background Services
+builder.Services.AddHostedService<LembreteBackgroundService>();
+builder.Services.AddHostedService<TotvsBackgroundService>();
 
 // Registrar o EmailService
 var smtpServer = builder.Configuration["Email:SmtpServer"] ?? throw new InvalidOperationException("Email:SmtpServer não configurado");
@@ -138,6 +149,9 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
+// Add error handling middleware
+app.UseMiddleware<ErrorHandlingMiddleware>();
+
 // Use CORS
 app.UseCors("AllowAll");
 
@@ -149,7 +163,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Initialize Database
+// Initialize Database (sem migrações automáticas)
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -157,6 +171,11 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<NpsDbContext>();
         var authService = services.GetRequiredService<IAuthService>();
+        
+        // Usar EnsureCreated em vez de Migrate para evitar conflitos de migração
+        await context.Database.EnsureCreatedAsync();
+        
+        // Inicializar dados básicos sem migrações
         await DbInitializer.Initialize(context, authService);
     }
     catch (Exception ex)

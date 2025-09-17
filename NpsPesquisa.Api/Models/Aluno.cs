@@ -21,6 +21,10 @@ namespace NpsPesquisa.Api.Models
         [StringLength(50)]
         public string Matricula { get; set; } = string.Empty;
 
+        // Propriedade RA para compatibilidade (aponta para Matricula)
+        [NotMapped]
+        public string RA => Matricula;
+
         [StringLength(14)]
         public string? Cpf { get; set; }
 

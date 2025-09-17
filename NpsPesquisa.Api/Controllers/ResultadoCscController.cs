@@ -115,7 +115,7 @@ namespace NpsPesquisa.Api.Controllers
         }
 
         [HttpPost("historico")]
-        [Authorize(Roles = "Administrador")]
+        
         public async Task<ActionResult<ResultadoHistoricoCsc>> AdicionarHistorico(ResultadoHistoricoCsc resultado)
         {
             var curso = await _context.Cursos.FindAsync(resultado.CursoId);
@@ -133,7 +133,7 @@ namespace NpsPesquisa.Api.Controllers
         }
 
         [HttpPut("historico/{id}")]
-        [Authorize(Roles = "Administrador")]
+        
         public async Task<IActionResult> AtualizarHistorico(int id, ResultadoHistoricoCsc resultado)
         {
             if (id != resultado.Id)
@@ -168,7 +168,7 @@ namespace NpsPesquisa.Api.Controllers
         }
 
         [HttpDelete("historico/{id}")]
-        [Authorize(Roles = "Administrador")]
+        
         public async Task<IActionResult> DeletarHistorico(int id)
         {
             var resultado = await _context.ResultadosHistoricosCsc.FindAsync(id);

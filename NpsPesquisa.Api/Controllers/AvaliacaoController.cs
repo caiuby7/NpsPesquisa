@@ -75,6 +75,16 @@ namespace NpsPesquisa.Api.Controllers
                     case TipoItemAvaliado.Coordenador:
                         itemAvaliado.CoordenadorId = request.CoordenadorId;
                         break;
+                    case TipoItemAvaliado.Infraestrutura:
+                        // Para Infraestrutura, buscar o nome da instituição do participante
+                        // O NomeItemEspecifico e DescricaoItem serão definidos dinamicamente
+                        break;
+                    case TipoItemAvaliado.TCC:
+                    case TipoItemAvaliado.Estagio:
+                    case TipoItemAvaliado.ProjetoExtensionista:
+                        // Para TCC, Estágio e Projeto Extensionista, não precisa de ID específico
+                        // O nome e descrição já foram definidos acima
+                        break;
                 }
 
                 _context.ItensAvaliadosQuestionarios.Add(itemAvaliado);
@@ -186,6 +196,55 @@ namespace NpsPesquisa.Api.Controllers
                 switch (request.TipoItemAvaliado)
                 {
                     case TipoItemAvaliado.Professor:
+                        // Buscar professores baseado nos filtros
+                        var queryProfessores = _context.Professores.AsQueryable();
+
+                        if (request.InstituicaoId.HasValue)
+                            queryProfessores = queryProfessores.Where(p => p.InstituicaoId == request.InstituicaoId);
+
+                        // Filtrar por curso através de TurmaDisciplina
+                        if (request.CursoId.HasValue)
+                        {
+                            queryProfessores = queryProfessores.Where(p => p.TurmasDisciplinas.Any(td => td.Turma.CursoId == request.CursoId.Value && td.Ativo));
+                        }
+
+                        // Filtrar por disciplina através de TurmaDisciplina
+                        if (request.DisciplinaId.HasValue)
+                        {
+                            queryProfessores = queryProfessores.Where(p => p.TurmasDisciplinas.Any(td => td.DisciplinaId == request.DisciplinaId.Value && td.Ativo));
+                        }
+
+                        // Filtrar por turma através de TurmaDisciplina
+                        if (request.TurmaId.HasValue)
+                        {
+                            queryProfessores = queryProfessores.Where(p => p.TurmasDisciplinas.Any(td => td.TurmaId == request.TurmaId.Value && td.Ativo));
+                        }
+
+                        var professores = await queryProfessores
+                            .Include(p => p.Instituicao)
+                            .Include(p => p.TurmasDisciplinas)
+                                .ThenInclude(td => td.Disciplina)
+                            .Where(p => p.Ativo)
+                            .ToListAsync();
+
+                        // Converter professores para participantes
+                        foreach (var professor in professores)
+                        {
+                            var participante = new Participante
+                            {
+                                Nome = professor.Nome,
+                                Email = professor.Email,
+                                Tipo = TipoParticipante.Professor,
+                                ProfessorId = professor.Id,
+                                Departamento = professor.Departamento,
+                                Titulacao = professor.Titulacao,
+                                Ativo = true,
+                                DataCadastro = DateTime.Now
+                            };
+                            participantes.Add(participante);
+                        }
+                        break;
+
                     case TipoItemAvaliado.Disciplina:
                     case TipoItemAvaliado.TurmaDisciplina:
                         // Buscar alunos baseado nos filtros
@@ -203,9 +262,17 @@ namespace NpsPesquisa.Api.Controllers
                         if (request.TurmaId.HasValue)
                             query = query.Where(a => a.TurmaId == request.TurmaId);
 
+                        // Filtrar por disciplina através de TurmaDisciplina
+                        if (request.DisciplinaId.HasValue)
+                        {
+                            query = query.Where(a => a.TurmasDisciplinas.Any(td => td.DisciplinaId == request.DisciplinaId.Value && td.Ativo));
+                        }
+
                         var alunos = await query
                             .Include(a => a.Curso)
                             .Include(a => a.Instituicao)
+                            .Include(a => a.TurmasDisciplinas)
+                                .ThenInclude(td => td.Disciplina)
                             .Where(a => a.Ativo)
                             .ToListAsync();
 
@@ -256,12 +323,12 @@ namespace NpsPesquisa.Api.Controllers
                         else if (request.TipoParticipante == TipoParticipante.Professor)
                         {
                             // Buscar professores
-                            var professores = await _context.Professores
+                            var professoresFiltrados = await _context.Professores
                                 .Where(p => p.Ativo)
                                 .Include(p => p.Departamento)
                                 .ToListAsync();
 
-                            foreach (var professor in professores)
+                            foreach (var professor in professoresFiltrados)
                             {
                                 var participante = new Participante
                                 {

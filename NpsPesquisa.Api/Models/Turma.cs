@@ -13,6 +13,7 @@ namespace NpsPesquisa.Api.Models
 
         [StringLength(500)]
         public string? Descricao { get; set; }
+        public string? Codigo { get; set; }
 
         [Required]
         public int CursoId { get; set; }

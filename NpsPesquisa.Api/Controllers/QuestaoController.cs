@@ -240,7 +240,7 @@ namespace NpsPesquisa.Api.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Administrador")]
+        
         public async Task<IActionResult> DeleteQuestao(int id)
         {
             var questao = await _context.Questoes

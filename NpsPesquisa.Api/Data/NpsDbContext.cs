@@ -204,6 +204,12 @@ namespace NpsPesquisa.Api.Data
                 .HasForeignKey(rq => rq.QuestaoId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Configuração de índice único para permitir múltiplas respostas para a mesma questão
+            // com diferentes itens avaliados (ItemAvaliadoId)
+            modelBuilder.Entity<RespostaQuestao>()
+                .HasIndex(rq => new { rq.RespostaId, rq.QuestaoId, rq.ItemAvaliadoId })
+                .IsUnique();
+
             // Configuração do ConviteQuestionario
             modelBuilder.Entity<ConviteQuestionario>()
                 .HasOne(cq => cq.Questionario)
@@ -220,6 +226,44 @@ namespace NpsPesquisa.Api.Data
             modelBuilder.Entity<ConviteQuestionario>()
                 .HasIndex(cq => cq.Chave)
                 .IsUnique();
+
+            // Configurações para RespostaQuestao com campos desnormalizados
+            modelBuilder.Entity<RespostaQuestao>(entity =>
+            {
+                // Índices para performance
+                entity.HasIndex(e => e.CursoId);
+                entity.HasIndex(e => e.TurmaId);
+                entity.HasIndex(e => e.DisciplinaId);
+                entity.HasIndex(e => e.ProfessorId);
+                entity.HasIndex(e => e.InstituicaoId);
+                entity.HasIndex(e => e.ItemAvaliadoId);
+                
+                // Relacionamentos opcionais para os campos desnormalizados
+                entity.HasOne(e => e.Curso)
+                    .WithMany()
+                    .HasForeignKey(e => e.CursoId)
+                    .OnDelete(DeleteBehavior.SetNull);
+                    
+                entity.HasOne(e => e.Turma)
+                    .WithMany()
+                    .HasForeignKey(e => e.TurmaId)
+                    .OnDelete(DeleteBehavior.SetNull);
+                    
+                entity.HasOne(e => e.Disciplina)
+                    .WithMany()
+                    .HasForeignKey(e => e.DisciplinaId)
+                    .OnDelete(DeleteBehavior.SetNull);
+                    
+                entity.HasOne(e => e.Professor)
+                    .WithMany()
+                    .HasForeignKey(e => e.ProfessorId)
+                    .OnDelete(DeleteBehavior.SetNull);
+                    
+                entity.HasOne(e => e.Instituicao)
+                    .WithMany()
+                    .HasForeignKey(e => e.InstituicaoId)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
 
             // Configuração do ItemAvaliadoQuestionario
             modelBuilder.Entity<ItemAvaliadoQuestionario>()
@@ -240,6 +284,43 @@ namespace NpsPesquisa.Api.Data
                 .WithMany(p => p.Participacoes)
                 .HasForeignKey(pq => pq.ParticipanteId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Configuração dos relacionamentos de contexto
+            modelBuilder.Entity<ParticipanteQuestionario>()
+                .HasOne(pq => pq.Curso)
+                .WithMany()
+                .HasForeignKey(pq => pq.CursoId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<ParticipanteQuestionario>()
+                .HasOne(pq => pq.Turma)
+                .WithMany()
+                .HasForeignKey(pq => pq.TurmaId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<ParticipanteQuestionario>()
+                .HasOne(pq => pq.Disciplina)
+                .WithMany()
+                .HasForeignKey(pq => pq.DisciplinaId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<ParticipanteQuestionario>()
+                .HasOne(pq => pq.Professor)
+                .WithMany()
+                .HasForeignKey(pq => pq.ProfessorId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<ParticipanteQuestionario>()
+                .HasOne(pq => pq.Instituicao)
+                .WithMany()
+                .HasForeignKey(pq => pq.InstituicaoId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<ParticipanteQuestionario>()
+                .HasOne(pq => pq.PeriodoLetivo)
+                .WithMany()
+                .HasForeignKey(pq => pq.PeriodoLetivoId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             // Configuração do relacionamento do Participante com Coordenador
             modelBuilder.Entity<Participante>()

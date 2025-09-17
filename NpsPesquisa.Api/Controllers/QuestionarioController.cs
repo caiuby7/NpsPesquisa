@@ -160,6 +160,70 @@ namespace NpsPesquisa.Api.Controllers
             };
         }
 
+        [HttpGet("debug-itens-avaliados/{id}")]
+        [AllowAnonymous]
+        public async Task<ActionResult<object>> DebugItensAvaliados(int id)
+        {
+            var questionario = await _context.Questionarios
+                .Include(q => q.ItensAvaliados)
+                .FirstOrDefaultAsync(q => q.Id == id);
+
+            if (questionario == null)
+                return NotFound(new { message = "Questionário não encontrado" });
+
+            return Ok(new
+            {
+                questionarioId = questionario.Id,
+                titulo = questionario.Titulo,
+                tipoItemAvaliado = questionario.TipoItemAvaliado,
+                itensAvaliadosCount = questionario.ItensAvaliados?.Count ?? 0,
+                itensAvaliados = questionario.ItensAvaliados?.Select(ia => new
+                {
+                    id = ia.Id,
+                    tipoItemAvaliado = ia.TipoItemAvaliado,
+                    nomeItemEspecifico = ia.NomeItemEspecifico,
+                    ativo = ia.Ativo,
+                    ordemApresentacao = ia.OrdemApresentacao
+                }).ToList()
+            });
+        }
+
+        [HttpGet("debug-disciplinas-aluno/{alunoId}")]
+        [AllowAnonymous]
+        public async Task<ActionResult<object>> DebugDisciplinasAluno(int alunoId)
+        {
+            var aluno = await _context.Alunos
+                .Include(a => a.TurmasDisciplinas)
+                    .ThenInclude(td => td.Disciplina)
+                .Include(a => a.TurmasDisciplinas)
+                    .ThenInclude(td => td.Professor)
+                .FirstOrDefaultAsync(a => a.AlunoId == alunoId);
+
+            if (aluno == null)
+                return NotFound(new { message = "Aluno não encontrado" });
+
+            var disciplinas = aluno.TurmasDisciplinas
+                .Where(td => td.Ativo)
+                .Select(td => new
+                {
+                    id = td.DisciplinaId,
+                    nome = td.Disciplina.Nome,
+                    professor = td.Professor.Nome,
+                    turmaId = td.TurmaId,
+                    ativo = td.Ativo
+                })
+                .Distinct()
+                .ToList();
+
+            return Ok(new
+            {
+                alunoId = aluno.AlunoId,
+                alunoNome = aluno.Nome,
+                disciplinasCount = disciplinas.Count,
+                disciplinas = disciplinas
+            });
+        }
+
         [HttpGet("{id}/estatisticas")]
         [Authorize(Roles = "Administrador,Coordenacao")]
         public async Task<ActionResult<object>> GetEstatisticas(int id)
@@ -296,7 +360,7 @@ namespace NpsPesquisa.Api.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Administrador")]
+        
         public async Task<IActionResult> Delete(int id)
         {
             var questionario = await _context.Questionarios
@@ -550,6 +614,320 @@ namespace NpsPesquisa.Api.Controllers
             return NoContent();
         }
 
+        [HttpPost("{id}/participantes-completos")]
+        [Authorize(Roles = "Administrador,Coordenacao")]
+        public async Task<IActionResult> AdicionarParticipantesCompletos(int id, [FromBody] List<ParticipanteAvaliacaoDto> participantesData)
+        {
+            try
+            {
+                var questionario = await _context.Questionarios
+                    .Include(q => q.Respostas)
+                    .FirstOrDefaultAsync(q => q.Id == id);
+
+                if (questionario == null)
+                    return NotFound(new { message = "Questionário não encontrado" });
+
+                var participantesAdicionados = new List<object>();
+                var participantesCriados = new List<object>();
+
+                foreach (var participanteData in participantesData)
+                {
+                    if (participanteData == null)
+                    {
+                        return BadRequest(new { message = "Dados do participante não podem ser nulos" });
+                    }
+
+                    if (participanteData.Id <= 0 || string.IsNullOrEmpty(participanteData.Nome))
+                    {
+                        return BadRequest(new { message = "ID e nome do participante são obrigatórios" });
+                    }
+
+                    // Verifica se já existe um participante com esse ID original baseado no tipo
+                    Participante? participanteExistente = null;
+                    var tipoParticipanteString = participanteData.Tipo?.ToLower();
+                    
+                    if (tipoParticipanteString == "professor")
+                    {
+                        participanteExistente = await _context.Participantes
+                            .FirstOrDefaultAsync(p => p.ProfessorId == participanteData.Id);
+                    }
+                    else if (tipoParticipanteString == "aluno")
+                    {
+                        participanteExistente = await _context.Participantes
+                            .FirstOrDefaultAsync(p => p.AlunoId == participanteData.Id);
+                    }
+                    else if (tipoParticipanteString == "coordenador")
+                    {
+                        participanteExistente = await _context.Participantes
+                            .FirstOrDefaultAsync(p => p.CoordenadorId == participanteData.Id);
+                    }
+
+                    int participanteIdFinal;
+
+                    // Se não existe, cria um novo participante
+                    if (participanteExistente == null)
+                    {
+                        // Determina o tipo de participante
+                        TipoParticipante tipoParticipante;
+                        switch (tipoParticipanteString)
+                        {
+                            case "professor":
+                                tipoParticipante = TipoParticipante.Professor;
+                                break;
+                            case "aluno":
+                                tipoParticipante = TipoParticipante.Aluno;
+                                break;
+                            case "coordenador":
+                                tipoParticipante = TipoParticipante.Coordenador;
+                                break;
+                            default:
+                                return BadRequest(new { message = $"Tipo de participante inválido: {participanteData.Tipo}" });
+                        }
+
+                        // Cria o novo participante com referência ao ID original
+                        var novoParticipante = new Participante
+                        {
+                            Nome = participanteData.Nome,
+                            Email = participanteData.Email ?? "",
+                            Tipo = tipoParticipante,
+                            Ativo = true,
+                            DataCadastro = DateTime.UtcNow,
+                            // Armazena o ID original baseado no tipo
+                            ProfessorId = participanteData.Tipo?.ToLower() == "professor" ? participanteData.Id : null,
+                            AlunoId = participanteData.Tipo?.ToLower() == "aluno" ? participanteData.Id : null,
+                            CoordenadorId = participanteData.Tipo?.ToLower() == "coordenador" ? participanteData.Id : null
+                        };
+
+                        _context.Participantes.Add(novoParticipante);
+                        await _context.SaveChangesAsync();
+                        
+                        participanteIdFinal = novoParticipante.Id;
+                        participantesCriados.Add(new { 
+                            id = novoParticipante.Id,
+                            idOriginal = participanteData.Id, // ID original para referência
+                            nome = novoParticipante.Nome,
+                            email = novoParticipante.Email,
+                            tipo = participanteData.Tipo
+                        });
+                    }
+                    else
+                    {
+                        // Usar o participante existente
+                        participanteIdFinal = participanteExistente.Id;
+                    }
+
+                    // Verifica se já existe associação com o questionário
+                    var associacaoExistente = await _context.ParticipantesQuestionarios
+                        .FirstOrDefaultAsync(pq => pq.QuestionarioId == id && pq.ParticipanteId == participanteIdFinal);
+
+                    if (associacaoExistente != null)
+                    {
+                        return BadRequest(new { message = $"O participante {participanteData.Nome} já está associado ao questionário" });
+                    }
+
+                    // Cria a associação
+                    var participanteQuestionario = new ParticipanteQuestionario
+                    {
+                        QuestionarioId = id,
+                        ParticipanteId = participanteIdFinal,
+                        Status = "Pendente"
+                    };
+                    _context.ParticipantesQuestionarios.Add(participanteQuestionario);
+                    
+                    participantesAdicionados.Add(new { 
+                        questionarioId = id, 
+                        participanteId = participanteIdFinal,
+                        nome = participanteData.Nome,
+                        status = "Pendente"
+                    });
+                }
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new { 
+                    message = "Participantes adicionados com sucesso",
+                    participantesAdicionados = participantesAdicionados,
+                    participantesCriados = participantesCriados
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erro interno do servidor", error = ex.Message });
+            }
+        }
+
+        [HttpGet("participante-por-id-original/{tipo}/{idOriginal}")]
+        [Authorize(Roles = "Administrador,Coordenacao")]
+        public async Task<IActionResult> BuscarParticipantePorIdOriginal(string tipo, int idOriginal)
+        {
+            try
+            {
+                Participante? participante = null;
+
+                switch (tipo.ToLower())
+                {
+                    case "professor":
+                        participante = await _context.Participantes
+                            .FirstOrDefaultAsync(p => p.ProfessorId == idOriginal);
+                        break;
+                    case "aluno":
+                        participante = await _context.Participantes
+                            .FirstOrDefaultAsync(p => p.AlunoId == idOriginal);
+                        break;
+                    case "coordenador":
+                        participante = await _context.Participantes
+                            .FirstOrDefaultAsync(p => p.CoordenadorId == idOriginal);
+                        break;
+                    default:
+                        return BadRequest(new { message = "Tipo de participante inválido" });
+                }
+
+                if (participante == null)
+                {
+                    return NotFound(new { message = "Participante não encontrado" });
+                }
+
+                return Ok(new
+                {
+                    id = participante.Id,
+                    idOriginal = idOriginal,
+                    nome = participante.Nome,
+                    email = participante.Email,
+                    tipo = participante.Tipo,
+                    ativo = participante.Ativo,
+                    dataCadastro = participante.DataCadastro
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erro interno do servidor", error = ex.Message });
+            }
+        }
+
+        // Endpoint temporário para teste sem autenticação
+        [HttpPost("{id}/participantes-teste")]
+        [AllowAnonymous]
+        public async Task<IActionResult> AdicionarParticipantesTeste(int id, [FromBody] List<object> participantesData)
+        {
+            try
+            {
+                var questionario = await _context.Questionarios
+                    .Include(q => q.Respostas)
+                    .FirstOrDefaultAsync(q => q.Id == id);
+
+                if (questionario == null)
+                    return NotFound(new { message = "Questionário não encontrado" });
+
+                var participantesAdicionados = new List<object>();
+                var participantesCriados = new List<object>();
+
+                foreach (var participanteData in participantesData)
+                {
+                    // Converte o objeto dinâmico para um dicionário para facilitar o acesso
+                    var dataDict = participanteData as Newtonsoft.Json.Linq.JObject;
+                    if (dataDict == null)
+                    {
+                        return BadRequest(new { message = "Formato de dados inválido" });
+                    }
+
+                    var participanteId = dataDict["id"]?.ToObject<int>();
+                    var nome = dataDict["nome"]?.ToObject<string>();
+                    var email = dataDict["email"]?.ToObject<string>();
+                    var tipo = dataDict["tipo"]?.ToObject<string>();
+                    var ativo = dataDict["ativo"]?.ToObject<bool>() ?? true;
+                    var cursoId = dataDict["cursoId"]?.ToObject<int?>();
+                    var matricula = dataDict["matricula"]?.ToObject<string>();
+
+                    if (!participanteId.HasValue)
+                    {
+                        return BadRequest(new { message = "ID do participante é obrigatório" });
+                    }
+
+                    // Verifica se já existe um participante com esse ID
+                    var participanteExistente = await _context.Participantes
+                        .FirstOrDefaultAsync(p => p.Id == participanteId.Value);
+
+                    int participanteIdFinal = participanteId.Value;
+
+                    // Se não existe, tenta criar baseado no tipo (Aluno, Professor, etc.)
+                    if (participanteExistente == null)
+                    {
+                        // Tenta encontrar um aluno com esse ID
+                        var aluno = await _context.Alunos
+                            .Include(a => a.Curso)
+                            .FirstOrDefaultAsync(a => a.Id == participanteId.Value);
+
+                        if (aluno != null)
+                        {
+                            // Cria o participante baseado no aluno
+                            var novoParticipante = new Participante
+                            {
+                                Nome = nome ?? aluno.Nome,
+                                Email = email ?? aluno.Email,
+                                Tipo = TipoParticipante.Aluno,
+                                Ativo = ativo,
+                                CursoId = cursoId ?? aluno.CursoId,
+                                AlunoId = aluno.Id,
+                                DataCadastro = DateTime.UtcNow
+                            };
+
+                            _context.Participantes.Add(novoParticipante);
+                            await _context.SaveChangesAsync();
+                            
+                            participanteIdFinal = novoParticipante.Id;
+                            participantesCriados.Add(new { 
+                                id = novoParticipante.Id,
+                                nome = novoParticipante.Nome,
+                                email = novoParticipante.Email,
+                                tipo = "Aluno",
+                                alunoId = aluno.Id
+                            });
+                        }
+                        else
+                        {
+                            return BadRequest(new { message = $"Não foi possível encontrar aluno com ID {participanteId.Value}" });
+                        }
+                    }
+
+                    // Verifica se já existe associação com o questionário
+                    var associacaoExistente = await _context.ParticipantesQuestionarios
+                        .FirstOrDefaultAsync(pq => pq.QuestionarioId == id && pq.ParticipanteId == participanteIdFinal);
+
+                    if (associacaoExistente != null)
+                    {
+                        return BadRequest(new { message = $"O participante {participanteIdFinal} já está associado ao questionário" });
+                    }
+
+                    // Cria a associação
+                    var participanteQuestionario = new ParticipanteQuestionario
+                    {
+                        QuestionarioId = id,
+                        ParticipanteId = participanteIdFinal,
+                        Status = "Pendente"
+                    };
+                    _context.ParticipantesQuestionarios.Add(participanteQuestionario);
+                    
+                    participantesAdicionados.Add(new { 
+                        questionarioId = id, 
+                        participanteId = participanteIdFinal,
+                        status = "Pendente"
+                    });
+                }
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new { 
+                    message = "Participantes adicionados com sucesso",
+                    participantesAdicionados = participantesAdicionados,
+                    participantesCriados = participantesCriados
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erro interno do servidor", error = ex.Message });
+            }
+        }
+
         [HttpPost("{id}/gerar-convites")]
         [Authorize(Roles = "Administrador,Coordenacao")]
         public async Task<IActionResult> GerarConvites(int id)
@@ -660,6 +1038,8 @@ namespace NpsPesquisa.Api.Controllers
                     .ThenInclude(q => q.QuestoesQuestionarios)
                         .ThenInclude(qq => qq.Questao)
                             .ThenInclude(q => q.Opcoes)
+                .Include(c => c.Questionario)
+                    .ThenInclude(q => q.ItensAvaliados)
                 .Include(c => c.Participante)
                     .ThenInclude(p => p.Aluno)
                         .ThenInclude(a => a.Curso)
@@ -700,12 +1080,570 @@ namespace NpsPesquisa.Api.Controllers
 
             // Buscar as questões condicionais
             var questoesCondicionais = await _context.Questoes
-                .Include(x=>x.Opcoes)
+                .Include(x => x.Opcoes)
                 .Where(q => questoesCondicionaisIds.Contains(q.Id))
                 .ToListAsync();
 
             // Criar dicionário para acesso rápido às questões condicionais
             var questoesCondicionaisDict = questoesCondicionais.ToDictionary(q => q.Id);
+
+            // NOVA LÓGICA: Buscar contextos específicos salvos na tabela ParticipanteQuestionario
+            var contextosAvaliacao = await _context.ParticipantesQuestionarios
+                .Where(pq => pq.QuestionarioId == questionario.Id && pq.ParticipanteId == convite.ParticipanteId)
+                .Include(pq => pq.Curso)
+                .Include(pq => pq.Turma)
+                .Include(pq => pq.Disciplina)
+                .Include(pq => pq.Professor)
+                .Include(pq => pq.Instituicao)
+                .Include(pq => pq.PeriodoLetivo)
+                .ToListAsync();
+
+            // Se não há contextos específicos, usar lógica de fallback para compatibilidade
+            var itensAvaliados = new List<object>();
+
+            if (contextosAvaliacao.Any())
+            {
+                // Usar contextos específicos salvos
+                itensAvaliados = contextosAvaliacao
+                    .Where(pq => pq.TipoItemAvaliado == questionario.TipoItemAvaliado)
+                    .Select(pq => new
+                    {
+                        id = pq.ItemAvaliadoId ?? pq.Id,
+                        tipoItemAvaliado = pq.TipoItemAvaliado?.ToString(),
+                        nomeItemEspecifico = pq.NomeItemEspecifico ??
+                            (pq.Disciplina?.Nome ?? pq.Turma?.Nome ?? pq.Curso?.Nome ?? "Item"),
+                        descricaoItem = pq.ContextoDescricao,
+                        itemAvaliadoId = pq.ItemAvaliadoId,
+                        ativo = true,
+                        ordemApresentacao = 0,
+                        // IDs específicos baseados no contexto
+                        professorId = pq.ProfessorId,
+                        disciplinaId = pq.DisciplinaId,
+                        turmaDisciplinaId = pq.TurmaId,
+                        cursoId = pq.CursoId,
+                        turmaId = pq.TurmaId,
+                        coordenadorId = (int?)null,
+                        instituicaoId = pq.InstituicaoId,
+                        periodoLetivoId = pq.PeriodoLetivoId
+                    })
+                    .Cast<object>()
+                    .ToList();
+            }
+
+            // FALLBACK: Usar lógica antiga para compatibilidade com questionários antigos
+            if (!contextosAvaliacao.Any())
+            {
+                switch (questionario.TipoItemAvaliado)
+                {
+                    case TipoItemAvaliado.Disciplina:
+                        if (convite.Participante.Tipo == TipoParticipante.Aluno)
+                        {
+                            // Carregar o Aluno se ainda não foi carregado
+                            if (convite.Participante.Aluno == null)
+                            {
+                                await _context.Entry(convite.Participante)
+                                    .Reference(p => p.Aluno)
+                                    .LoadAsync();
+                            }
+
+                            // Para disciplinas do aluno, buscar as disciplinas do aluno
+                            if (convite.Participante.Aluno != null)
+                            {
+                                await _context.Entry(convite.Participante.Aluno)
+                                    .Collection(a => a.TurmasDisciplinas)
+                                    .LoadAsync();
+
+                                await _context.Entry(convite.Participante.Aluno)
+                                    .Collection(a => a.TurmasDisciplinas)
+                                    .Query()
+                                    .Include(td => td.Disciplina)
+                                    .Include(td => td.Professor)
+                                    .LoadAsync();
+                            }
+
+                            if (convite.Participante.Aluno != null)
+                            {
+                                itensAvaliados = convite.Participante.Aluno.TurmasDisciplinas
+                                    .Where(td => td.Ativo)
+                                    .Select(td => new
+                                    {
+                                        id = td.Id,
+                                        tipoItemAvaliado = "Disciplina",
+                                        nomeItemEspecifico = td.Disciplina.Nome,
+                                        descricaoItem = $"Disciplina: {td.Disciplina.Nome} - Professor: {td.Professor.Nome}",
+                                        itemAvaliadoId = td.Id,
+                                        ativo = td.Ativo,
+                                        ordemApresentacao = 0,
+                                        // IDs específicos baseados no tipo
+                                        professorId = td.ProfessorId,
+                                        disciplinaId = td.DisciplinaId,
+                                        turmaDisciplinaId = td.Id,
+                                        cursoId = (int?)null,
+                                        turmaId = td.TurmaId,
+                                        coordenadorId = (int?)null
+                                    })
+                                    .Distinct()
+                                    .OrderBy(ia => ia.nomeItemEspecifico)
+                                    .Cast<object>()
+                                    .ToList();
+                            }
+                        }
+                        else if (convite.Participante.Tipo == TipoParticipante.Professor)
+                        {
+                            // Carregar o Professor se ainda não foi carregado
+                            if (convite.Participante.Professor == null)
+                            {
+                                await _context.Entry(convite.Participante)
+                                    .Reference(p => p.Professor)
+                                    .LoadAsync();
+                            }
+
+                            // Para disciplinas do professor, buscar as disciplinas do professor
+                            if (convite.Participante.Professor != null)
+                            {
+                                await _context.Entry(convite.Participante.Professor)
+                                    .Collection(p => p.TurmasDisciplinas)
+                                    .LoadAsync();
+
+                                await _context.Entry(convite.Participante.Professor)
+                                    .Collection(p => p.TurmasDisciplinas)
+                                    .Query()
+                                    .Include(td => td.Disciplina)
+                                    .Include(td => td.Turma)
+                                    .LoadAsync();
+                            }
+
+                            if (convite.Participante.Professor != null)
+                            {
+                                itensAvaliados = convite.Participante.Professor.TurmasDisciplinas
+                                    .Where(td => td.Ativo)
+                                    .Select(td => new
+                                    {
+                                        id = td.Id,
+                                        tipoItemAvaliado = "Disciplina",
+                                        nomeItemEspecifico = td.Disciplina.Nome,
+                                        descricaoItem = $"Disciplina: {td.Disciplina.Nome} - Turma: {td.Turma.Nome}",
+                                        itemAvaliadoId = td.Id,
+                                        ativo = td.Ativo,
+                                        ordemApresentacao = 0,
+                                        // IDs específicos baseados no tipo
+                                        professorId = td.ProfessorId,
+                                        disciplinaId = td.DisciplinaId,
+                                        turmaDisciplinaId = td.Id,
+                                        cursoId = (int?)null,
+                                        turmaId = td.TurmaId,
+                                        coordenadorId = (int?)null
+                                    })
+                                    .Distinct()
+                                    .OrderBy(ia => ia.nomeItemEspecifico)
+                                    .Cast<object>()
+                                    .ToList();
+                            }
+                        }
+                        break;
+
+                    case TipoItemAvaliado.Curso:
+                        // Para cursos, buscar informações do curso do participante
+                        if (convite.Participante.Tipo == TipoParticipante.Aluno && convite.Participante.Aluno != null)
+                        {
+                            await _context.Entry(convite.Participante.Aluno)
+                                .Reference(a => a.Curso)
+                                .LoadAsync();
+
+                            if (convite.Participante.Aluno.Curso != null)
+                            {
+                                itensAvaliados = new List<object>
+                            {
+                                new
+                                {
+                                    id = convite.Participante.Aluno.Curso.Id,
+                                    tipoItemAvaliado = "Curso",
+                                    nomeItemEspecifico = convite.Participante.Aluno.Curso.Nome,
+                                    descricaoItem = $"Curso: {convite.Participante.Aluno.Curso.Nome}",
+                                    itemAvaliadoId = convite.Participante.Aluno.Curso.Id,
+                                    ativo = true,
+                                    ordemApresentacao = 0,
+                                    professorId = (int?)null,
+                                    disciplinaId = (int?)null,
+                                    turmaDisciplinaId = (int?)null,
+                                    cursoId = convite.Participante.Aluno.Curso.Id,
+                                    turmaId = (int?)null,
+                                    coordenadorId = (int?)null
+                                }
+                            };
+                            }
+                        }
+                        break;
+
+                    case TipoItemAvaliado.Infraestrutura:
+                        // Para Infraestrutura, buscar o nome da instituição do participante
+                        string nomeInstituicao = "Instituição";
+                        int? instituicaoId = null;
+
+                        if (convite.Participante.Tipo == TipoParticipante.Aluno && convite.Participante.Aluno != null)
+                        {
+                            await _context.Entry(convite.Participante.Aluno)
+                                .Reference(a => a.Instituicao)
+                                .LoadAsync();
+
+                            if (convite.Participante.Aluno.Instituicao != null)
+                            {
+                                nomeInstituicao = convite.Participante.Aluno.Instituicao.Nome;
+                                instituicaoId = convite.Participante.Aluno.Instituicao.Id;
+                            }
+                        }
+                        else if (convite.Participante.Tipo == TipoParticipante.Professor && convite.Participante.Professor != null)
+                        {
+                            await _context.Entry(convite.Participante.Professor)
+                                .Reference(p => p.Instituicao)
+                                .LoadAsync();
+
+                            if (convite.Participante.Professor.Instituicao != null)
+                            {
+                                nomeInstituicao = convite.Participante.Professor.Instituicao.Nome;
+                                instituicaoId = convite.Participante.Professor.Instituicao.Id;
+                            }
+                        }
+                        else if (convite.Participante.Tipo == TipoParticipante.Coordenador && convite.Participante.Coordenador != null)
+                        {
+                            await _context.Entry(convite.Participante.Coordenador)
+                                .Collection(c => c.Coordenacoes)
+                                .LoadAsync();
+
+                            // Buscar a primeira coordenação ativa
+                            var coordenacaoAtiva = convite.Participante.Coordenador.Coordenacoes
+                                .FirstOrDefault(cc => cc.Ativo);
+
+                            if (coordenacaoAtiva != null)
+                            {
+                                await _context.Entry(coordenacaoAtiva)
+                                    .Reference(cc => cc.Curso)
+                                    .LoadAsync();
+
+                                if (coordenacaoAtiva.Curso != null)
+                                {
+                                    await _context.Entry(coordenacaoAtiva.Curso)
+                                        .Reference(c => c.Instituicao)
+                                        .LoadAsync();
+
+                                    if (coordenacaoAtiva.Curso.Instituicao != null)
+                                    {
+                                        nomeInstituicao = coordenacaoAtiva.Curso.Instituicao.Nome;
+                                        instituicaoId = coordenacaoAtiva.Curso.Instituicao.Id;
+                                    }
+                                }
+                            }
+                        }
+
+                        itensAvaliados = new List<object>
+                    {
+                        new
+                        {
+                            id = 1, // ID fictício para Infraestrutura
+                            tipoItemAvaliado = "Infraestrutura",
+                            nomeItemEspecifico = nomeInstituicao,
+                            descricaoItem = $"Infraestrutura: {nomeInstituicao}",
+                            itemAvaliadoId = 1, // ID fictício
+                            ativo = true,
+                            ordemApresentacao = 0,
+                            professorId = (int?)null,
+                            disciplinaId = (int?)null,
+                            turmaDisciplinaId = (int?)null,
+                            cursoId = (int?)null,
+                            turmaId = (int?)null,
+                            coordenadorId = (int?)null,
+                            instituicaoId = instituicaoId
+                        }
+                    };
+                        break;
+
+                    case TipoItemAvaliado.Professor:
+                    case TipoItemAvaliado.Turma:
+                        // Para Turma, buscar as turmas do participante (similar a Disciplina)
+                        if (convite.Participante.Tipo == TipoParticipante.Aluno && convite.Participante.Aluno != null)
+                        {
+                            await _context.Entry(convite.Participante.Aluno)
+                                .Collection(a => a.TurmasDisciplinas)
+                                .Query()
+                                .Include(td => td.Turma)
+                                .Include(td => td.Disciplina)
+                                .LoadAsync();
+
+                            itensAvaliados = convite.Participante.Aluno.TurmasDisciplinas
+                                .Where(td => td.Ativo)
+                                .Select(td => new
+                                {
+                                    id = td.TurmaId,
+                                    tipoItemAvaliado = "Turma",
+                                    nomeItemEspecifico = td.Turma.Nome,
+                                    descricaoItem = $"Turma: {td.Turma.Nome}",
+                                    itemAvaliadoId = td.TurmaId,
+                                    ativo = td.Ativo,
+                                    ordemApresentacao = 0,
+                                    professorId = (int?)null,
+                                    disciplinaId = (int?)null,
+                                    turmaDisciplinaId = (int?)null,
+                                    cursoId = td.Turma.CursoId,
+                                    turmaId = td.TurmaId,
+                                    coordenadorId = (int?)null
+                                })
+                                .Cast<object>()
+                                .ToList();
+                        }
+                        else if (convite.Participante.Tipo == TipoParticipante.Professor && convite.Participante.Professor != null)
+                        {
+                            await _context.Entry(convite.Participante.Professor)
+                                .Collection(p => p.TurmasDisciplinas)
+                                .Query()
+                                .Include(td => td.Turma)
+                                .Include(td => td.Disciplina)
+                                .LoadAsync();
+
+                            itensAvaliados = convite.Participante.Professor.TurmasDisciplinas
+                                .Where(td => td.Ativo)
+                                .Select(td => new
+                                {
+                                    id = td.TurmaId,
+                                    tipoItemAvaliado = "Turma",
+                                    nomeItemEspecifico = td.Turma.Nome,
+                                    descricaoItem = $"Turma: {td.Turma.Nome}",
+                                    itemAvaliadoId = td.TurmaId,
+                                    ativo = td.Ativo,
+                                    ordemApresentacao = 0,
+                                    professorId = td.ProfessorId,
+                                    disciplinaId = (int?)null,
+                                    turmaDisciplinaId = (int?)null,
+                                    cursoId = td.Turma.CursoId,
+                                    turmaId = td.TurmaId,
+                                    coordenadorId = (int?)null
+                                })
+                                .Cast<object>()
+                                .ToList();
+                        }
+                        break;
+
+                    case TipoItemAvaliado.TCC:
+                        // Para TCC, usar a mesma lógica da Disciplina
+                        if (convite.Participante.Tipo == TipoParticipante.Aluno && convite.Participante.Aluno != null)
+                        {
+                            await _context.Entry(convite.Participante.Aluno)
+                                .Collection(a => a.TurmasDisciplinas)
+                                .Query()
+                                .Include(td => td.Turma)
+                                .Include(td => td.Disciplina)
+                                .LoadAsync();
+
+                            itensAvaliados = convite.Participante.Aluno.TurmasDisciplinas
+                                .Where(td => td.Ativo)
+                                .Select(td => new
+                                {
+                                    id = td.Id,
+                                    tipoItemAvaliado = "TCC",
+                                    nomeItemEspecifico = td.Disciplina.Nome,
+                                    descricaoItem = $"TCC: {td.Disciplina.Nome}",
+                                    itemAvaliadoId = td.Id,
+                                    ativo = td.Ativo,
+                                    ordemApresentacao = 0,
+                                    professorId = td.ProfessorId,
+                                    disciplinaId = td.DisciplinaId,
+                                    turmaDisciplinaId = td.Id,
+                                    cursoId = td.Turma.CursoId,
+                                    turmaId = td.TurmaId,
+                                    coordenadorId = (int?)null
+                                })
+                                .Cast<object>()
+                                .ToList();
+                        }
+                        else if (convite.Participante.Tipo == TipoParticipante.Professor && convite.Participante.Professor != null)
+                        {
+                            await _context.Entry(convite.Participante.Professor)
+                                .Collection(p => p.TurmasDisciplinas)
+                                .Query()
+                                .Include(td => td.Turma)
+                                .Include(td => td.Disciplina)
+                                .LoadAsync();
+
+                            itensAvaliados = convite.Participante.Professor.TurmasDisciplinas
+                                .Where(td => td.Ativo)
+                                .Select(td => new
+                                {
+                                    id = td.Id,
+                                    tipoItemAvaliado = "TCC",
+                                    nomeItemEspecifico = td.Disciplina.Nome,
+                                    descricaoItem = $"TCC: {td.Disciplina.Nome}",
+                                    itemAvaliadoId = td.Id,
+                                    ativo = td.Ativo,
+                                    ordemApresentacao = 0,
+                                    professorId = td.ProfessorId,
+                                    disciplinaId = td.DisciplinaId,
+                                    turmaDisciplinaId = td.Id,
+                                    cursoId = td.Turma.CursoId,
+                                    turmaId = td.TurmaId,
+                                    coordenadorId = (int?)null
+                                })
+                                .Cast<object>()
+                                .ToList();
+                        }
+                        break;
+
+                    case TipoItemAvaliado.Estagio:
+                        // Para Estágio, usar a mesma lógica da Disciplina
+                        if (convite.Participante.Tipo == TipoParticipante.Aluno && convite.Participante.Aluno != null)
+                        {
+                            await _context.Entry(convite.Participante.Aluno)
+                                .Collection(a => a.TurmasDisciplinas)
+                                .Query()
+                                .Include(td => td.Turma)
+                                .Include(td => td.Disciplina)
+                                .LoadAsync();
+
+                            itensAvaliados = convite.Participante.Aluno.TurmasDisciplinas
+                                .Where(td => td.Ativo)
+                                .Select(td => new
+                                {
+                                    id = td.Id,
+                                    tipoItemAvaliado = "Estagio",
+                                    nomeItemEspecifico = td.Disciplina.Nome,
+                                    descricaoItem = $"Estágio: {td.Disciplina.Nome}",
+                                    itemAvaliadoId = td.Id,
+                                    ativo = td.Ativo,
+                                    ordemApresentacao = 0,
+                                    professorId = td.ProfessorId,
+                                    disciplinaId = td.DisciplinaId,
+                                    turmaDisciplinaId = td.Id,
+                                    cursoId = td.Turma.CursoId,
+                                    turmaId = td.TurmaId,
+                                    coordenadorId = (int?)null
+                                })
+                                .Cast<object>()
+                                .ToList();
+                        }
+                        else if (convite.Participante.Tipo == TipoParticipante.Professor && convite.Participante.Professor != null)
+                        {
+                            await _context.Entry(convite.Participante.Professor)
+                                .Collection(p => p.TurmasDisciplinas)
+                                .Query()
+                                .Include(td => td.Turma)
+                                .Include(td => td.Disciplina)
+                                .LoadAsync();
+
+                            itensAvaliados = convite.Participante.Professor.TurmasDisciplinas
+                                .Where(td => td.Ativo)
+                                .Select(td => new
+                                {
+                                    id = td.Id,
+                                    tipoItemAvaliado = "Estagio",
+                                    nomeItemEspecifico = td.Disciplina.Nome,
+                                    descricaoItem = $"Estágio: {td.Disciplina.Nome}",
+                                    itemAvaliadoId = td.Id,
+                                    ativo = td.Ativo,
+                                    ordemApresentacao = 0,
+                                    professorId = td.ProfessorId,
+                                    disciplinaId = td.DisciplinaId,
+                                    turmaDisciplinaId = td.Id,
+                                    cursoId = td.Turma.CursoId,
+                                    turmaId = td.TurmaId,
+                                    coordenadorId = (int?)null
+                                })
+                                .Cast<object>()
+                                .ToList();
+                        }
+                        break;
+
+                    case TipoItemAvaliado.ProjetoExtensionista:
+                        // Para Projeto Extensionista, usar a mesma lógica da Disciplina
+                        if (convite.Participante.Tipo == TipoParticipante.Aluno && convite.Participante.Aluno != null)
+                        {
+                            await _context.Entry(convite.Participante.Aluno)
+                                .Collection(a => a.TurmasDisciplinas)
+                                .Query()
+                                .Include(td => td.Turma)
+                                .Include(td => td.Disciplina)
+                                .LoadAsync();
+
+                            itensAvaliados = convite.Participante.Aluno.TurmasDisciplinas
+                                .Where(td => td.Ativo)
+                                .Select(td => new
+                                {
+                                    id = td.Id,
+                                    tipoItemAvaliado = "ProjetoExtensionista",
+                                    nomeItemEspecifico = td.Disciplina.Nome,
+                                    descricaoItem = $"Projeto Extensionista: {td.Disciplina.Nome}",
+                                    itemAvaliadoId = td.Id,
+                                    ativo = td.Ativo,
+                                    ordemApresentacao = 0,
+                                    professorId = td.ProfessorId,
+                                    disciplinaId = td.DisciplinaId,
+                                    turmaDisciplinaId = td.Id,
+                                    cursoId = td.Turma.CursoId,
+                                    turmaId = td.TurmaId,
+                                    coordenadorId = (int?)null
+                                })
+                                .Cast<object>()
+                                .ToList();
+                        }
+                        else if (convite.Participante.Tipo == TipoParticipante.Professor && convite.Participante.Professor != null)
+                        {
+                            await _context.Entry(convite.Participante.Professor)
+                                .Collection(p => p.TurmasDisciplinas)
+                                .Query()
+                                .Include(td => td.Turma)
+                                .Include(td => td.Disciplina)
+                                .LoadAsync();
+
+                            itensAvaliados = convite.Participante.Professor.TurmasDisciplinas
+                                .Where(td => td.Ativo)
+                                .Select(td => new
+                                {
+                                    id = td.Id,
+                                    tipoItemAvaliado = "ProjetoExtensionista",
+                                    nomeItemEspecifico = td.Disciplina.Nome,
+                                    descricaoItem = $"Projeto Extensionista: {td.Disciplina.Nome}",
+                                    itemAvaliadoId = td.Id,
+                                    ativo = td.Ativo,
+                                    ordemApresentacao = 0,
+                                    professorId = td.ProfessorId,
+                                    disciplinaId = td.DisciplinaId,
+                                    turmaDisciplinaId = td.Id,
+                                    cursoId = td.Turma.CursoId,
+                                    turmaId = td.TurmaId,
+                                    coordenadorId = (int?)null
+                                })
+                                .Cast<object>()
+                                .ToList();
+                        }
+                        break;
+
+                    case TipoItemAvaliado.TurmaDisciplina:
+                    case TipoItemAvaliado.Coordenador:
+                    case TipoItemAvaliado.Estrutura:
+                    case TipoItemAvaliado.Alunos:
+                    default:
+                        // Para outros tipos, usar os itens avaliados do questionário
+                        itensAvaliados = questionario.ItensAvaliados?
+                            .Where(ia => ia.Ativo)
+                            .OrderBy(ia => ia.OrdemApresentacao)
+                            .ThenBy(ia => ia.NomeItemEspecifico)
+                            .Select(ia => new
+                            {
+                                id = ia.Id,
+                                tipoItemAvaliado = ia.TipoItemAvaliado,
+                                nomeItemEspecifico = ia.NomeItemEspecifico,
+                                descricaoItem = ia.DescricaoItem,
+                                itemAvaliadoId = ia.ItemAvaliadoId,
+                                // IDs específicos baseados no tipo
+                                professorId = ia.ProfessorId,
+                                disciplinaId = ia.DisciplinaId,
+                                turmaDisciplinaId = ia.TurmaDisciplinaId,
+                                cursoId = ia.CursoId,
+                                turmaId = ia.TurmaId,
+                                coordenadorId = ia.CoordenadorId
+                            })
+                            .Cast<object>()
+                            .ToList() ?? new List<object>();
+                        break;
+                }
+            }
 
             var questoes = questoesPrincipais
                 .Select(q => new QuestaoResponseDto
@@ -715,7 +1653,7 @@ namespace NpsPesquisa.Api.Controllers
                     Tipo = q.Tipo,
                     Obrigatorio = q.Obrigatorio,
                     IsCondicional = q.IsCondicional,
-                    Opcoes = (q.Opcoes ?? new List<OpcaoQuestao>()).Where(o => o.EhColuna == false).Select(o => 
+                    Opcoes = (q.Opcoes ?? new List<OpcaoQuestao>()).Where(o => o.EhColuna == false).Select(o =>
                     {
                         var opcaoDto = new OpcaoQuestaoResponseDto
                         {
@@ -730,7 +1668,7 @@ namespace NpsPesquisa.Api.Controllers
                         };
 
                         // Se a opção ativa condição, buscar e incluir a questão condicional
-                        if (o.AtivaCondicao && o.QuestaoCondicionalId.HasValue && 
+                        if (o.AtivaCondicao && o.QuestaoCondicionalId.HasValue &&
                             questoesCondicionaisDict.TryGetValue(o.QuestaoCondicionalId.Value, out var questaoCondicional))
                         {
                             opcaoDto.QuestaoCondicional = new QuestaoResponseDto
@@ -791,39 +1729,41 @@ namespace NpsPesquisa.Api.Controllers
                     dataFim = questionario.DataFim,
                     questoes = questoes
                 },
-        participante = new
-        {
-            id = convite.Participante.Id,
-            nome = convite.Participante.Nome,
-            email = convite.Participante.Email,
-            tipo = convite.Participante.TipoDescricao,
-            // Dados específicos baseados no tipo
-            aluno = convite.Participante.Tipo == TipoParticipante.Aluno && convite.Participante.Aluno != null ? new
-            {
-                id = convite.Participante.Aluno.Id,
-                nome = convite.Participante.Aluno.Nome,
-                email = convite.Participante.Aluno.Email,
-                matricula = convite.Participante.Aluno.Matricula,
-                curso = convite.Participante.Aluno.Curso?.Nome
-            } : null,
-            professor = convite.Participante.Tipo == TipoParticipante.Professor && convite.Participante.Professor != null ? new
-            {
-                id = convite.Participante.Professor.Id,
-                nome = convite.Participante.Professor.Nome,
-                email = convite.Participante.Professor.Email,
-                departamento = convite.Participante.Professor.Departamento,
-                titulacao = convite.Participante.Professor.Titulacao,
-                instituicao = convite.Participante.Professor.Instituicao?.Nome
-            } : null,
-            coordenador = convite.Participante.Tipo == TipoParticipante.Coordenador && convite.Participante.Coordenador != null ? new
-            {
-                id = convite.Participante.Coordenador.Id,
-                nome = convite.Participante.Coordenador.Nome,
-                email = convite.Participante.Coordenador.Email,
-                departamento = convite.Participante.Coordenador.Departamento,
-                titulacao = convite.Participante.Coordenador.Titulacao
-            } : null
-        }
+                tipoItemAvaliado = questionario.TipoItemAvaliado,
+                itensAvaliados = itensAvaliados,
+                participante = new
+                {
+                    id = convite.Participante.Id,
+                    nome = convite.Participante.Nome,
+                    email = convite.Participante.Email,
+                    tipo = convite.Participante.TipoDescricao,
+                    // Dados específicos baseados no tipo
+                    aluno = convite.Participante.Tipo == TipoParticipante.Aluno && convite.Participante.Aluno != null ? new
+                    {
+                        id = convite.Participante.Aluno.Id,
+                        nome = convite.Participante.Aluno.Nome,
+                        email = convite.Participante.Aluno.Email,
+                        matricula = convite.Participante.Aluno.Matricula,
+                        curso = convite.Participante.Aluno.Curso?.Nome
+                    } : null,
+                    professor = convite.Participante.Tipo == TipoParticipante.Professor && convite.Participante.Professor != null ? new
+                    {
+                        id = convite.Participante.Professor.Id,
+                        nome = convite.Participante.Professor.Nome,
+                        email = convite.Participante.Professor.Email,
+                        departamento = convite.Participante.Professor.Departamento,
+                        titulacao = convite.Participante.Professor.Titulacao,
+                        instituicao = convite.Participante.Professor.Instituicao?.Nome
+                    } : null,
+                    coordenador = convite.Participante.Tipo == TipoParticipante.Coordenador && convite.Participante.Coordenador != null ? new
+                    {
+                        id = convite.Participante.Coordenador.Id,
+                        nome = convite.Participante.Coordenador.Nome,
+                        email = convite.Participante.Coordenador.Email,
+                        departamento = convite.Participante.Coordenador.Departamento,
+                        titulacao = convite.Participante.Coordenador.Titulacao
+                    } : null
+                }
             });
         }
 
@@ -841,6 +1781,7 @@ namespace NpsPesquisa.Api.Controllers
             public string? Texto { get; set; }
             public int? OpcaoId { get; set; }
             public int? ColunaId { get; set; }
+            public int? ItemAvaliadoId { get; set; }  // ID do item específico sendo avaliado
         }
 
         [HttpPost("responder/{chave}")]
@@ -853,6 +1794,74 @@ namespace NpsPesquisa.Api.Controllers
 
             if (convite == null)
                 return NotFound(new { message = "Convite não encontrado" });
+
+            // Carregar dados específicos baseado no tipo do participante
+            if (convite.Participante.Tipo == TipoParticipante.Aluno)
+            {
+                await _context.Entry(convite.Participante)
+                    .Reference(p => p.Aluno)
+                    .LoadAsync();
+                
+                if (convite.Participante.Aluno != null)
+                {
+                    await _context.Entry(convite.Participante.Aluno)
+                        .Reference(a => a.Curso)
+                        .LoadAsync();
+                }
+            }
+            
+            if (convite.Participante.Tipo == TipoParticipante.Professor)
+            {
+                await _context.Entry(convite.Participante)
+                    .Reference(p => p.Professor)
+                    .LoadAsync();
+                
+                if (convite.Participante.Professor != null)
+                {
+                    await _context.Entry(convite.Participante.Professor)
+                        .Reference(prof => prof.Instituicao)
+                        .LoadAsync();
+                }
+            }
+            
+            if (convite.Participante.Tipo == TipoParticipante.Coordenador)
+            {
+                await _context.Entry(convite.Participante)
+                    .Reference(p => p.Coordenador)
+                    .LoadAsync();
+            }
+
+            // Carregar informações de disciplinas e turmas se necessário
+            // (Estas informações podem ser úteis para contexto da avaliação)
+            // As disciplinas e turmas são carregadas através dos relacionamentos específicos
+
+            // Carregar TurmaDisciplinas do participante (se for professor)
+            var turmaDisciplinas = new List<object>();
+            if (convite.Participante.Tipo == TipoParticipante.Professor)
+            {
+                var turmaDisciplinasData = await _context.TurmaDisciplinas
+                    .Include(td => td.Turma)
+                    .Include(td => td.Disciplina)
+                    .Include(td => td.Professor)
+                    .Where(td => td.ProfessorId == convite.Participante.Professor.Id && td.Ativo)
+                    .Select(td => new
+                    {
+                        id = td.Id,
+                        turmaId = td.TurmaId,
+                        turmaNome = td.Turma.Nome,
+                        turmaCodigo = td.Turma.IntegracaoId,
+                        disciplinaId = td.DisciplinaId,
+                        disciplinaNome = td.Disciplina.Nome,
+                        disciplinaCodigo = td.Disciplina.Codigo,
+                        professorId = td.ProfessorId,
+                        professorNome = td.Professor.Nome,
+                        periodoLetivoId = td.PeriodoLetivoId,
+                        gerenciada = td.Gerenciada
+                    })
+                    .ToListAsync();
+                
+                turmaDisciplinas = turmaDisciplinasData.Cast<object>().ToList();
+            }
 
             if (convite.DataResposta.HasValue)
                 return BadRequest(new { message = "Este questionário já foi respondido" });
@@ -887,7 +1896,14 @@ namespace NpsPesquisa.Api.Controllers
             {
                 QuestionarioId = convite.QuestionarioId,
                 ParticipanteId = convite.ParticipanteId,
-                DataResposta = DateTime.UtcNow
+                DataResposta = DateTime.UtcNow,
+                // Preencher campos de item avaliado se existirem nas respostas
+                TipoItemAvaliado = dto.Respostas.FirstOrDefault()?.ItemAvaliadoId.HasValue == true ? 
+                    await GetTipoItemAvaliadoFromRespostas(dto.Respostas) : null,
+                NomeItemEspecifico = dto.Respostas.FirstOrDefault()?.ItemAvaliadoId.HasValue == true ? 
+                    await GetNomeItemEspecificoFromRespostas(dto.Respostas) : null,
+                ItemAvaliadoId = dto.Respostas.FirstOrDefault()?.ItemAvaliadoId,
+                
             };
             _context.Respostas.Add(resposta);
             await _context.SaveChangesAsync(); // Salva para obter o ID da resposta
@@ -902,13 +1918,49 @@ namespace NpsPesquisa.Api.Controllers
                 if (!questoesValidas.Contains(respostaDto.QuestaoId))
                     return BadRequest(new { message = $"Questão {respostaDto.QuestaoId} não pertence ao questionário ou não é uma questão condicional válida" });
 
+                // Preencher campos desnormalizados baseado no item avaliado E no participante
+                var cursoId = await GetCursoIdFromItemAvaliado(respostaDto.ItemAvaliadoId, convite.Questionario.TipoItemAvaliado) ?? 
+                              await GetCursoIdFromParticipante(convite.Participante);
+                
+                var turmaId = await GetTurmaIdFromItemAvaliado(respostaDto.ItemAvaliadoId, convite.Questionario.TipoItemAvaliado) ?? 
+                              await GetTurmaIdFromParticipante(convite.Participante);
+                
+                var disciplinaId = await GetDisciplinaIdFromItemAvaliado(respostaDto.ItemAvaliadoId, convite.Questionario.TipoItemAvaliado) ?? 
+                                   await GetDisciplinaIdFromParticipante(convite.Participante);
+                
+                var professorId = await GetProfessorIdFromItemAvaliado(respostaDto.ItemAvaliadoId, convite.Questionario.TipoItemAvaliado) ?? 
+                                  await GetProfessorIdFromParticipante(convite.Participante);
+                
+                // InstituicaoId pode ser calculado baseado no CursoId já obtido
+                var instituicaoId = await GetInstituicaoIdFromItemAvaliado(respostaDto.ItemAvaliadoId, convite.Questionario.TipoItemAvaliado) ?? 
+                                    await GetInstituicaoIdFromParticipante(convite.Participante) ??
+                                    await GetInstituicaoIdFromCursoId(cursoId);
+
+                // Debug: Log dos valores obtidos
+                Console.WriteLine($"DEBUG - RespostaQuestao {respostaDto.QuestaoId}:");
+                Console.WriteLine($"  CursoId: {cursoId}");
+                Console.WriteLine($"  TurmaId: {turmaId}");
+                Console.WriteLine($"  DisciplinaId: {disciplinaId}");
+                Console.WriteLine($"  ProfessorId: {professorId}");
+                Console.WriteLine($"  InstituicaoId: {instituicaoId}");
+                Console.WriteLine($"  Participante Tipo: {convite.Participante.Tipo}");
+                Console.WriteLine($"  Participante CursoId: {convite.Participante.CursoId}");
+
                 var novaRespostaQuestao = new RespostaQuestao
                 {
                     RespostaId = resposta.Id,
                     QuestaoId = respostaDto.QuestaoId,
                     Valor = respostaDto.ColunaId.HasValue ? await _context.OpcoesQuestao.Where(o => o.Id == respostaDto.ColunaId && o.QuestaoId == respostaDto.QuestaoId).Select(o => o.Texto).FirstOrDefaultAsync() ?? respostaDto.Valor : respostaDto.Valor,
                     Texto = respostaDto.Texto,
-                    OpcaoId = respostaDto.OpcaoId
+                    OpcaoId = respostaDto.OpcaoId,
+                    ItemAvaliadoId = respostaDto.ItemAvaliadoId,
+                    
+                    // Campos desnormalizados
+                    CursoId = cursoId,
+                    TurmaId = turmaId,
+                    DisciplinaId = disciplinaId,
+                    ProfessorId = professorId,
+                    InstituicaoId = instituicaoId
                 };
 
                 _context.RespostasQuestoes.Add(novaRespostaQuestao);
@@ -918,7 +1970,47 @@ namespace NpsPesquisa.Api.Controllers
             convite.Respondido = true;
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(new
+            {
+                message = "Respostas enviadas com sucesso",
+                participante = new
+                {
+                    id = convite.Participante.Id,
+                    nome = convite.Participante.Nome,
+                    email = convite.Participante.Email,
+                    tipo = convite.Participante.TipoDescricao,
+                    // Dados específicos baseados no tipo
+                    aluno = convite.Participante.Tipo == TipoParticipante.Aluno && convite.Participante.Aluno != null ? new
+                    {
+                        id = convite.Participante.Aluno.Id,
+                        nome = convite.Participante.Aluno.Nome,
+                        email = convite.Participante.Aluno.Email,
+                        matricula = convite.Participante.Aluno.Matricula,
+                        curso = convite.Participante.Aluno.Curso?.Nome
+                    } : null,
+                    professor = convite.Participante.Tipo == TipoParticipante.Professor && convite.Participante.Professor != null ? new
+                    {
+                        id = convite.Participante.Professor.Id,
+                        nome = convite.Participante.Professor.Nome,
+                        email = convite.Participante.Professor.Email,
+                        departamento = convite.Participante.Professor.Departamento,
+                        titulacao = convite.Participante.Professor.Titulacao,
+                        instituicao = convite.Participante.Professor.Instituicao?.Nome
+                    } : null,
+                    coordenador = convite.Participante.Tipo == TipoParticipante.Coordenador && convite.Participante.Coordenador != null ? new
+                    {
+                        id = convite.Participante.Coordenador.Id,
+                        nome = convite.Participante.Coordenador.Nome,
+                        email = convite.Participante.Coordenador.Email,
+                        departamento = convite.Participante.Coordenador.Departamento,
+                        titulacao = convite.Participante.Coordenador.Titulacao
+                    } : null,
+                    // Informações de disciplinas e turmas
+                    disciplinas = new List<object>(), // Carregadas através dos relacionamentos específicos
+                    turmas = new List<object>(), // Carregadas através dos relacionamentos específicos
+                    turmaDisciplinas = turmaDisciplinas
+                }
+            });
         }
 
         [HttpGet("{id}/participantes")]
@@ -2116,5 +3208,399 @@ namespace NpsPesquisa.Api.Controllers
                 _ => null
             };
         }
+
+        // Métodos auxiliares para buscar informações de itens avaliados
+        private async Task<TipoItemAvaliado?> GetTipoItemAvaliadoFromRespostas(List<RespostaParaQuestionarioDto> respostas)
+        {
+            var itemAvaliadoId = respostas.FirstOrDefault(r => r.ItemAvaliadoId.HasValue)?.ItemAvaliadoId;
+            if (!itemAvaliadoId.HasValue) return null;
+
+            var item = await _context.ItensAvaliadosQuestionarios
+                .FirstOrDefaultAsync(ia => ia.Id == itemAvaliadoId.Value);
+            
+            return item?.TipoItemAvaliado;
+        }
+
+        private async Task<string?> GetNomeItemEspecificoFromRespostas(List<RespostaParaQuestionarioDto> respostas)
+        {
+            var itemAvaliadoId = respostas.FirstOrDefault(r => r.ItemAvaliadoId.HasValue)?.ItemAvaliadoId;
+            if (!itemAvaliadoId.HasValue) return null;
+
+            var item = await _context.ItensAvaliadosQuestionarios
+                .FirstOrDefaultAsync(ia => ia.Id == itemAvaliadoId.Value);
+            
+            return item?.NomeItemEspecifico;
+        }
+
+        // Métodos auxiliares para buscar IDs baseado no ItemAvaliadoId individual
+        private async Task<int?> GetCursoIdFromItemAvaliado(int? itemAvaliadoId, TipoItemAvaliado? tipoItemAvaliado)
+        {
+            if (!itemAvaliadoId.HasValue) return null;
+            
+            switch (tipoItemAvaliado)
+            {
+                case TipoItemAvaliado.Curso:
+                    return itemAvaliadoId.Value;
+                    
+                case TipoItemAvaliado.Turma:
+                    // Buscar curso da turma
+                    var turma = await _context.Turmas
+                        .FirstOrDefaultAsync(t => t.Id == itemAvaliadoId.Value);
+                    return turma?.CursoId;
+                    
+                case TipoItemAvaliado.TurmaDisciplina:
+                    // Buscar curso através da turma
+                    var turmaDisciplina = await _context.TurmasDisciplinas
+                        .Include(td => td.Turma)
+                        .FirstOrDefaultAsync(td => td.Id == itemAvaliadoId.Value);
+                    return turmaDisciplina?.Turma?.CursoId;
+                    
+                default:
+                    return null;
+            }
+        }
+
+        private async Task<int?> GetTurmaIdFromItemAvaliado(int? itemAvaliadoId, TipoItemAvaliado? tipoItemAvaliado)
+        {
+            if (!itemAvaliadoId.HasValue) return null;
+            
+            switch (tipoItemAvaliado)
+            {
+                case TipoItemAvaliado.Turma:
+                case TipoItemAvaliado.Alunos:
+                    return itemAvaliadoId.Value;
+                    
+                case TipoItemAvaliado.TurmaDisciplina:
+                    var turmaDisciplina = await _context.TurmasDisciplinas
+                        .FirstOrDefaultAsync(td => td.Id == itemAvaliadoId.Value);
+                    return turmaDisciplina?.TurmaId;
+
+                case TipoItemAvaliado.Disciplina:
+                    // Para Disciplina, o itemAvaliadoId agora é o ID da TurmaDisciplina
+                    var turmaDisciplinaDisciplina = await _context.TurmasDisciplinas
+                        .FirstOrDefaultAsync(td => td.Id == itemAvaliadoId.Value);
+                    return turmaDisciplinaDisciplina?.TurmaId;
+                default:
+                    return null;
+            }
+        }
+
+        private async Task<int?> GetDisciplinaIdFromItemAvaliado(int? itemAvaliadoId, TipoItemAvaliado? tipoItemAvaliado)
+        {
+            if (!itemAvaliadoId.HasValue) return null;
+            
+            switch (tipoItemAvaliado)
+            {
+                case TipoItemAvaliado.Disciplina:
+                    // Para Disciplina, o itemAvaliadoId agora é o ID da TurmaDisciplina
+                    var turmaDisciplinaDisciplina = await _context.TurmasDisciplinas
+                        .FirstOrDefaultAsync(td => td.Id == itemAvaliadoId.Value);
+                    return turmaDisciplinaDisciplina?.DisciplinaId;
+                    
+                case TipoItemAvaliado.Estagio:
+                case TipoItemAvaliado.ProjetoExtensionista:
+                    return itemAvaliadoId.Value;
+                    
+                case TipoItemAvaliado.TurmaDisciplina:
+                    var turmaDisciplina = await _context.TurmasDisciplinas
+                        .FirstOrDefaultAsync(td => td.Id == itemAvaliadoId.Value);
+                    return turmaDisciplina?.DisciplinaId;
+                    
+                default:
+                    return null;
+            }
+        }
+
+        private async Task<int?> GetProfessorIdFromItemAvaliado(int? itemAvaliadoId, TipoItemAvaliado? tipoItemAvaliado)
+        {
+            Console.WriteLine($"DEBUG GetProfessorIdFromItemAvaliado - ItemAvaliadoId: {itemAvaliadoId}, Tipo: {tipoItemAvaliado}");
+            
+            if (!itemAvaliadoId.HasValue) return null;
+            
+            switch (tipoItemAvaliado)
+            {
+                case TipoItemAvaliado.Professor:
+                case TipoItemAvaliado.Coordenador:
+                    Console.WriteLine($"DEBUG Professor - ItemAvaliadoId direto: {itemAvaliadoId.Value}");
+                    return itemAvaliadoId.Value;
+                    
+                case TipoItemAvaliado.TurmaDisciplina:
+                    var turmaDisciplina = await _context.TurmasDisciplinas
+                        .FirstOrDefaultAsync(td => td.Id == itemAvaliadoId.Value);
+                    Console.WriteLine($"DEBUG TurmaDisciplina - ProfessorId: {turmaDisciplina?.ProfessorId}");
+                    return turmaDisciplina?.ProfessorId;
+                    
+                case TipoItemAvaliado.Disciplina:
+                    // Para Disciplina, o itemAvaliadoId agora é o ID da TurmaDisciplina
+                    var turmaDisciplinaDisciplina = await _context.TurmasDisciplinas
+                        .FirstOrDefaultAsync(td => td.Id == itemAvaliadoId.Value);
+                    Console.WriteLine($"DEBUG Disciplina - ProfessorId: {turmaDisciplinaDisciplina?.ProfessorId}");
+                    return turmaDisciplinaDisciplina?.ProfessorId;
+                    
+                default:
+                    Console.WriteLine($"DEBUG Professor - Tipo não suportado: {tipoItemAvaliado}");
+                    return null;
+            }
+        }
+
+        private async Task<int?> GetInstituicaoIdFromItemAvaliado(int? itemAvaliadoId, TipoItemAvaliado? tipoItemAvaliado)
+        {
+            if (!itemAvaliadoId.HasValue) return null;
+            
+            switch (tipoItemAvaliado)
+            {
+                case TipoItemAvaliado.Estrutura:
+                case TipoItemAvaliado.Infraestrutura:
+                    return itemAvaliadoId.Value;
+                    
+                case TipoItemAvaliado.Curso:
+                    // Buscar instituição do curso
+                    var curso = await _context.Cursos
+                        .FirstOrDefaultAsync(c => c.Id == itemAvaliadoId.Value);
+                    return curso?.InstituicaoId;
+                    
+                case TipoItemAvaliado.Turma:
+                    // Buscar instituição através da turma -> curso
+                    var turma = await _context.Turmas
+                        .Include(t => t.Curso)
+                        .FirstOrDefaultAsync(t => t.Id == itemAvaliadoId.Value);
+                    return turma?.Curso?.InstituicaoId;
+                    
+                case TipoItemAvaliado.TurmaDisciplina:
+                    // Buscar instituição através da turma -> curso
+                    var turmaDisciplina = await _context.TurmasDisciplinas
+                        .Include(td => td.Turma)
+                        .ThenInclude(t => t.Curso)
+                        .FirstOrDefaultAsync(td => td.Id == itemAvaliadoId.Value);
+                    return turmaDisciplina?.Turma?.Curso?.InstituicaoId;
+                    
+                case TipoItemAvaliado.Disciplina:
+                    // Para Disciplina, o itemAvaliadoId agora é o ID da TurmaDisciplina
+                    var turmaDisciplinaDisciplina = await _context.TurmasDisciplinas
+                        .Include(td => td.Turma)
+                        .ThenInclude(t => t.Curso)
+                        .FirstOrDefaultAsync(td => td.Id == itemAvaliadoId.Value);
+                    return turmaDisciplinaDisciplina?.Turma?.Curso?.InstituicaoId;
+                    
+                default:
+                    return null;
+            }
+        }
+
+        // Métodos para buscar informações baseadas no PARTICIPANTE
+        private async Task<int?> GetCursoIdFromParticipante(Participante participante)
+        {
+            Console.WriteLine($"DEBUG GetCursoIdFromParticipante - Tipo: {participante.Tipo}, AlunoId: {participante.AlunoId}");
+            
+            switch (participante.Tipo)
+            {
+                case TipoParticipante.Aluno:
+                    // Buscar CursoId diretamente da tabela alunos
+                    if (participante.AlunoId.HasValue)
+                    {
+                        var aluno = await _context.Alunos
+                            .FirstOrDefaultAsync(a => a.AlunoId == participante.AlunoId.Value);
+                        Console.WriteLine($"DEBUG Aluno - CursoId da tabela alunos: {aluno?.CursoId}");
+                        return aluno?.CursoId;
+                    }
+                    Console.WriteLine("DEBUG Aluno - Sem AlunoId");
+                    return null;
+                    
+                case TipoParticipante.Professor:
+                    // Professor pode ter turmas/disciplinas com cursos
+                    if (participante.ProfessorId.HasValue)
+                    {
+                        var turmaDisciplina = await _context.TurmasDisciplinas
+                            .Include(td => td.Turma)
+                            .FirstOrDefaultAsync(td => td.ProfessorId == participante.ProfessorId.Value);
+                        return turmaDisciplina?.Turma?.CursoId;
+                    }
+                    return null;
+                    
+                case TipoParticipante.Coordenador:
+                    // Coordenador pode ter curso específico
+                    if (participante.CoordenadorId.HasValue)
+                    {
+                        var coordenadorCurso = await _context.CoordenadoresCursos
+                            .FirstOrDefaultAsync(cc => cc.CoordenadorId == participante.CoordenadorId.Value);
+                        return coordenadorCurso?.CursoId;
+                    }
+                    return null;
+                    
+                default:
+                    return null;
+            }
+        }
+
+        private async Task<int?> GetTurmaIdFromParticipante(Participante participante)
+        {
+            Console.WriteLine($"DEBUG GetTurmaIdFromParticipante - Tipo: {participante.Tipo}, AlunoId: {participante.AlunoId}");
+            
+            switch (participante.Tipo)
+            {
+                case TipoParticipante.Aluno:
+                    // Aluno pode ter turma específica OU múltiplas turmas através de TurmaDisciplina
+                    if (participante.AlunoId.HasValue)
+                    {
+                        // Primeiro tenta buscar via TurmaDisciplina
+                        var turmaDisciplina = await _context.TurmasDisciplinas
+                            .Include(td => td.Alunos)
+                            .FirstOrDefaultAsync(td => td.Alunos.Any(a => a.AlunoId == participante.AlunoId.Value));
+                        if (turmaDisciplina?.TurmaId > 0)
+                        {
+                            Console.WriteLine($"DEBUG Aluno - TurmaId via TurmaDisciplina: {turmaDisciplina.TurmaId}");
+                            return turmaDisciplina.TurmaId;
+                        }
+                            
+                        // Se não encontrou via TurmaDisciplina, busca a turma direta do aluno
+                        var aluno = await _context.Alunos
+                            .FirstOrDefaultAsync(a => a.AlunoId == participante.AlunoId.Value);
+                        if (aluno?.TurmaId.HasValue == true)
+                        {
+                            Console.WriteLine($"DEBUG Aluno - TurmaId direto: {aluno.TurmaId}");
+                            return aluno.TurmaId;
+                        }
+                        
+                        Console.WriteLine("DEBUG Aluno - Nenhuma turma encontrada");
+                    }
+                    Console.WriteLine("DEBUG Aluno - Sem AlunoId");
+                    return null;
+                    
+                case TipoParticipante.Professor:
+                    // Professor pode ter turmas através de TurmaDisciplina
+                    if (participante.ProfessorId.HasValue)
+                    {
+                        var turmaDisciplina = await _context.TurmasDisciplinas
+                            .FirstOrDefaultAsync(td => td.ProfessorId == participante.ProfessorId.Value);
+                        return turmaDisciplina?.TurmaId;
+                    }
+                    return null;
+                    
+                default:
+                    return null;
+            }
+        }
+
+        private async Task<int?> GetDisciplinaIdFromParticipante(Participante participante)
+        {
+            Console.WriteLine($"DEBUG GetDisciplinaIdFromParticipante - Tipo: {participante.Tipo}, AlunoId: {participante.AlunoId}");
+            
+            switch (participante.Tipo)
+            {
+                case TipoParticipante.Aluno:
+                    // Aluno pode ter disciplinas através de TurmaDisciplina
+                    if (participante.AlunoId.HasValue)
+                    {
+                        var turmaDisciplina = await _context.TurmasDisciplinas
+                            .Include(td => td.Alunos)
+                            .FirstOrDefaultAsync(td => td.Alunos.Any(a => a.AlunoId == participante.AlunoId.Value));
+                        Console.WriteLine($"DEBUG Aluno - DisciplinaId via TurmaDisciplina: {turmaDisciplina?.DisciplinaId}");
+                        return turmaDisciplina?.DisciplinaId;
+                    }
+                    Console.WriteLine("DEBUG Aluno - Sem AlunoId");
+                    return null;
+                    
+                case TipoParticipante.Professor:
+                    // Professor pode ter disciplinas através de TurmaDisciplina
+                    if (participante.ProfessorId.HasValue)
+                    {
+                        var turmaDisciplina = await _context.TurmasDisciplinas
+                            .FirstOrDefaultAsync(td => td.ProfessorId == participante.ProfessorId.Value);
+                        return turmaDisciplina?.DisciplinaId;
+                    }
+                    return null;
+                    
+                default:
+                    return null;
+            }
+        }
+
+        private async Task<int?> GetProfessorIdFromParticipante(Participante participante)
+        {
+            switch (participante.Tipo)
+            {
+                case TipoParticipante.Professor:
+                    // Professor tem ProfessorId direto
+                    return participante.ProfessorId;
+                    
+                case TipoParticipante.Coordenador:
+                    // Coordenador pode ser professor também
+                    return participante.ProfessorId;
+                    
+                default:
+                    return null;
+            }
+        }
+
+        private async Task<int?> GetInstituicaoIdFromParticipante(Participante participante)
+        {
+            Console.WriteLine($"DEBUG GetInstituicaoIdFromParticipante - Tipo: {participante.Tipo}, AlunoId: {participante.AlunoId}");
+            
+            switch (participante.Tipo)
+            {
+                case TipoParticipante.Aluno:
+                    // Buscar InstituicaoId diretamente da tabela alunos
+                    if (participante.AlunoId.HasValue)
+                    {
+                        var aluno = await _context.Alunos
+                            .Include(a => a.Curso)
+                            .FirstOrDefaultAsync(a => a.AlunoId == participante.AlunoId.Value);
+                        Console.WriteLine($"DEBUG Aluno - InstituicaoId da tabela alunos: {aluno?.InstituicaoId}");
+                        return aluno?.InstituicaoId;
+                    }
+                    Console.WriteLine("DEBUG Aluno - Sem AlunoId");
+                    return null;
+                    
+                case TipoParticipante.Professor:
+                    // Professor pode ter instituição através de turmas/disciplinas
+                    if (participante.ProfessorId.HasValue)
+                    {
+                        var turmaDisciplina = await _context.TurmasDisciplinas
+                            .Include(td => td.Turma)
+                            .ThenInclude(t => t.Curso)
+                            .FirstOrDefaultAsync(td => td.ProfessorId == participante.ProfessorId.Value);
+                        return turmaDisciplina?.Turma?.Curso?.InstituicaoId;
+                    }
+                    return null;
+                    
+                case TipoParticipante.Coordenador:
+                    // Coordenador pode ter instituição através do curso
+                    if (participante.CoordenadorId.HasValue)
+                    {
+                        var coordenadorCurso = await _context.CoordenadoresCursos
+                            .Include(cc => cc.Curso)
+                            .FirstOrDefaultAsync(cc => cc.CoordenadorId == participante.CoordenadorId.Value);
+                        return coordenadorCurso?.Curso?.InstituicaoId;
+                    }
+                    return null;
+                    
+                default:
+                    return null;
+            }
+        }
+
+        // Método auxiliar para buscar InstituicaoId baseado no CursoId
+        private async Task<int?> GetInstituicaoIdFromCursoId(int? cursoId)
+        {
+            if (!cursoId.HasValue) return null;
+            
+            var curso = await _context.Cursos
+                .FirstOrDefaultAsync(c => c.Id == cursoId.Value);
+            return curso?.InstituicaoId;
+        }
+    }
+
+    // DTO para receber dados de participantes da avaliação
+    public class ParticipanteAvaliacaoDto
+    {
+        public int Id { get; set; }
+        public string Nome { get; set; } = string.Empty;
+        public string? Email { get; set; }
+        public string? Tipo { get; set; }
+        public string? Curso { get; set; }
+        public string? Turma { get; set; }
+        public string? Disciplina { get; set; }
+        public string? Instituicao { get; set; }
+        public string? PeriodoLetivo { get; set; }
     }
 }
