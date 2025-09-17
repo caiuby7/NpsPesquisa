@@ -7,9 +7,10 @@ interface QuestionTypeExecutionProps {
   onChange: (value: any) => void;
   value?: any;
   requiredAsterisk?: boolean;
+  itemAvaliadoId?: number;
 }
 
-export function QuestionTypeExecution({ type, question, onChange, value, requiredAsterisk }: QuestionTypeExecutionProps) {
+export function QuestionTypeExecution({ type, question, onChange, value, requiredAsterisk, itemAvaliadoId }: QuestionTypeExecutionProps) {
   // Escala Linear (0 a 10, com textos nas extremidades)
   if (type === "EscalaLinear") {
     const minOption = question.opcoes?.find(o => o.valor === "0");
@@ -66,22 +67,56 @@ export function QuestionTypeExecution({ type, question, onChange, value, require
   if (type === "MultiplaEscolha") {
     return (
       <Box>
-        <Text mb={2}>
+        <Text 
+          mb={5} 
+          fontSize="lg" 
+          fontWeight="medium" 
+          color="gray.700"
+          lineHeight="1.5"
+        >
           {question.texto}
-          {requiredAsterisk && <span style={{ color: 'red', marginLeft: 4 }}>*</span>}
+          {requiredAsterisk && <Text as="span" color="red.500" ml={1}>*</Text>}
         </Text>
         <Stack gap={2}>
           {question.opcoes?.filter(opcao => opcao && opcao.id).map((opcao) => (
-            <Box key={opcao.id} as="label" cursor="pointer">
-              <input
-                type="radio"
-                name={`question-${question.id}`}
-                value={opcao.id.toString()}
-                checked={value == opcao.id}
-                onChange={() => onChange(opcao.id)}
-                required={!!question.obrigatorio}
-              />
-              <Text as="span" ml={2}>{opcao.texto}</Text>
+            <Box 
+              key={opcao.id} 
+              as="label" 
+              cursor="pointer"
+              p={3}
+              borderRadius="md"
+              border="1px solid"
+              borderColor={value == opcao.id ? "blue.300" : "gray.200"}
+              bg={value == opcao.id ? "blue.50" : "white"}
+              _hover={{
+                borderColor: value == opcao.id ? "blue.400" : "blue.200",
+                bg: value == opcao.id ? "blue.100" : "gray.50"
+              }}
+              transition="all 0.2s"
+            >
+              <HStack spacing={3}>
+                <input
+                  type="radio"
+                  name={`question-${question.id}`}
+                  value={opcao.id.toString()}
+                  checked={value == opcao.id}
+                  onChange={() => onChange(opcao.id)}
+                  required={!!question.obrigatorio}
+                  style={{ 
+                    width: "18px", 
+                    height: "18px",
+                    accentColor: "#3182ce"
+                  }}
+                />
+                <Text 
+                  as="span" 
+                  fontSize="md" 
+                  color={value == opcao.id ? "blue.700" : "gray.700"}
+                  fontWeight={value == opcao.id ? "medium" : "normal"}
+                >
+                  {opcao.texto}
+                </Text>
+              </HStack>
             </Box>
           ))}
         </Stack>

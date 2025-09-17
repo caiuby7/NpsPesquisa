@@ -445,6 +445,9 @@ const CriarAvaliacaoPage: React.FC = () => {
                   <option value="Curso">Curso</option>
                   <option value="Turma">Turma</option>
                   <option value="Coordenador">Coordenador</option>
+                  <option value="Estagio">Estágio</option>
+                  <option value="TCC">TCC</option>
+                  <option value="ProjetoExtensionista">Projeto Extensionista</option>
                   <option value="Estrutura">Estrutura</option>
                 </Select>
               </FormControl>

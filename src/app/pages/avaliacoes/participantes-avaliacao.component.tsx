@@ -152,8 +152,8 @@ const AdicionarParticipantesAvaliacaoPage: React.FC = () => {
         filtrosVisiveis.push('turma', 'disciplina');
         break;
       case 'Aluno':
-        // Alunos sempre têm turma
-        filtrosVisiveis.push('turma');
+        // Alunos sempre têm turma e podem ter disciplina específica
+        filtrosVisiveis.push('turma', 'disciplina');
         break;
       case 'Coordenador':
         // Coordenadores não precisam de turma ou disciplina
@@ -322,8 +322,25 @@ const AdicionarParticipantesAvaliacaoPage: React.FC = () => {
         return;
       }
 
-      // Adicionar participantes à avaliação
-      await api.post(`/Questionario/${id}/participantes`, participantesSelecionados);
+      // Preparar dados completos dos participantes selecionados
+      const participantesParaAdicionar = participantes
+        .filter(p => participantesSelecionados.includes(p.id))
+        .map(participante => ({
+          id: participante.id,
+          nome: participante.nome,
+          email: participante.email,
+          tipo: participante.tipo,
+          curso: participante.curso,
+          turma: participante.turma,
+          disciplina: participante.disciplina,
+          instituicao: participante.instituicao,
+          periodoLetivo: participante.periodoLetivo
+        }));
+
+      console.log('📤 Dados dos participantes para adicionar:', participantesParaAdicionar);
+
+      // Adicionar participantes à avaliação com dados completos
+      await api.post(`/Questionario/${id}/participantes-completos`, participantesParaAdicionar);
 
       toast({
         title: 'Sucesso',
@@ -335,15 +352,21 @@ const AdicionarParticipantesAvaliacaoPage: React.FC = () => {
 
       // Voltar para a lista de participantes da avaliação
       navigate(`/avaliacoes/${id}/participantes`);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('❌ Erro ao adicionar participantes:', error);
+      
+      let errorMessage = 'Erro ao adicionar participantes';
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
       toast({
         title: 'Erro',
-        description: 'Erro ao adicionar participantes',
+        description: errorMessage,
         status: 'error',
-        duration: 3000,
+        duration: 5000,
         isClosable: true,
       });
-      console.error('Erro:', error);
     }
   };
 

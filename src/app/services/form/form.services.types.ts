@@ -16,12 +16,18 @@ export enum TipoQuestionarioEnum {
 
 // Novo enum para TipoItemAvaliado
 export enum TipoItemAvaliadoEnum {
-  CURSO = "Curso",
-  TURMA = "Turma",
+  PROFESSOR = "Professor",
   DISCIPLINA = "Disciplina",
-  COORDENADOR = "Coordenador",
+  TURMADISCIPLINA = "TurmaDisciplina",
+  CURSO = "Curso",
+  ESTAGIO = "Estagio",
+  PROJETOEXTENSIONISTA = "ProjetoExtensionista",
   ESTRUTURA = "Estrutura",
-  INFRAESTRUTURA = "Infraestrutura"
+  COORDENADOR = "Coordenador",
+  ALUNOS = "Alunos",
+  TURMA = "Turma",
+  INFRAESTRUTURA = "Infraestrutura",
+  TCC = "TCC"
 }
 
 export interface FormGetParams {
@@ -101,12 +107,18 @@ export const QUESTIONARIO_TYPES = [
 ];
 
 export const ITEM_AVALIADO_TYPES = [
-  { value: TipoItemAvaliadoEnum.CURSO, label: "Curso" },
-  { value: TipoItemAvaliadoEnum.TURMA, label: "Turma" },
+  { value: TipoItemAvaliadoEnum.PROFESSOR, label: "Professor" },
   { value: TipoItemAvaliadoEnum.DISCIPLINA, label: "Disciplina" },
-  { value: TipoItemAvaliadoEnum.COORDENADOR, label: "Coordenador" },
+  { value: TipoItemAvaliadoEnum.TURMADISCIPLINA, label: "Turma/Disciplina" },
+  { value: TipoItemAvaliadoEnum.CURSO, label: "Curso" },
+  { value: TipoItemAvaliadoEnum.ESTAGIO, label: "Estágio" },
+  { value: TipoItemAvaliadoEnum.PROJETOEXTENSIONISTA, label: "Projeto Extensionista" },
   { value: TipoItemAvaliadoEnum.ESTRUTURA, label: "Estrutura" },
+  { value: TipoItemAvaliadoEnum.COORDENADOR, label: "Coordenador" },
+  { value: TipoItemAvaliadoEnum.ALUNOS, label: "Alunos" },
+  { value: TipoItemAvaliadoEnum.TURMA, label: "Turma" },
   { value: TipoItemAvaliadoEnum.INFRAESTRUTURA, label: "Infraestrutura" },
+  { value: TipoItemAvaliadoEnum.TCC, label: "TCC" },
 ];
 
 export interface QuestoesQuestionario {

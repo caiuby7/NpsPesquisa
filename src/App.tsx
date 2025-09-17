@@ -46,6 +46,20 @@ const AlunosPage = lazy(() => import("./app/pages/alunos/alunos.component"));
 // Página de teste de questões condicionais
 const TestConditionalQuestionsPage = lazy(() => import("./pages/test-conditional-questions"));
 
+// Página de exemplo de avaliação institucional
+const InstitutionalEvaluationExamplePage = lazy(() => import("./pages/institutional-evaluation-example"));
+
+// Página FAQ/Manual
+const FAQPage = lazy(() => import("./app/pages/faq/faq.component"));
+
+// Dashboards específicos por perfil
+const AlunoDashboard = lazy(() => import("./pages/dashboards/aluno-dashboard"));
+const ProfessorDashboard = lazy(() => import("./pages/dashboards/professor-dashboard"));
+const CPADashboard = lazy(() => import("./pages/dashboards/cpa-dashboard"));
+
+// Componente de roteamento por perfil
+const ProfileRouter = lazy(() => import("./components/routing/ProfileRouter"));
+
 const queryClient = new QueryClient();
 
 // Componente para rotas protegidas
@@ -80,9 +94,9 @@ function App() {
                   <Route path="/questionario/:chave" element={<QuestionarioPorChavePage />} />
                   
                   {/* Rotas protegidas com MainLayout */}
-                  <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-                  <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
-                  <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+                  <Route path="/" element={<ProtectedRoute><ProfileRouter><DashboardPage /></ProfileRouter></ProtectedRoute>} />
+                  <Route path="/home" element={<ProtectedRoute><ProfileRouter><HomePage /></ProfileRouter></ProtectedRoute>} />
+                  <Route path="/dashboard" element={<ProtectedRoute><ProfileRouter><DashboardPage /></ProfileRouter></ProtectedRoute>} />
                   
                   {/* Sistema NPS (rotas existentes) */}
                   <Route path="/formularios" element={<ProtectedRoute><FormulariosPage /></ProtectedRoute>} />
@@ -118,6 +132,17 @@ function App() {
                   
                   {/* Teste de Questões Condicionais */}
                   <Route path="/test-conditional-questions" element={<ProtectedRoute><TestConditionalQuestionsPage /></ProtectedRoute>} />
+                  
+                  {/* Página de exemplo de avaliação institucional */}
+                  <Route path="/institutional-evaluation-example" element={<ProtectedRoute><InstitutionalEvaluationExamplePage /></ProtectedRoute>} />
+                  
+                  {/* FAQ/Manual */}
+                  <Route path="/faq" element={<ProtectedRoute><FAQPage /></ProtectedRoute>} />
+                  
+                  {/* Dashboards específicos por perfil */}
+                  <Route path="/aluno/dashboard" element={<ProtectedRoute><ProfileRouter><AlunoDashboard /></ProfileRouter></ProtectedRoute>} />
+                  <Route path="/professor/dashboard" element={<ProtectedRoute><ProfileRouter><ProfessorDashboard /></ProfileRouter></ProtectedRoute>} />
+                  <Route path="/cpa/dashboard" element={<ProtectedRoute><ProfileRouter><CPADashboard /></ProfileRouter></ProtectedRoute>} />
                 </Routes>
               </Suspense>
             </Router>
