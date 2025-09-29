@@ -151,7 +151,7 @@ const InstitutionalEvaluationLayout: React.FC<InstitutionalEvaluationLayoutProps
               📚 Suas Disciplinas
             </Text>
             <Text>
-              Você está matriculado em <strong>{disciplines.length} disciplinas</strong>. 
+              Você está matriculado em <Text as="span" fontWeight="bold" bg="yellow.300" px={2} py={1} borderRadius="md">{disciplines.length} disciplinas</Text>. 
               Para cada disciplina, avalie os aspectos listados abaixo.
             </Text>
           </Box>

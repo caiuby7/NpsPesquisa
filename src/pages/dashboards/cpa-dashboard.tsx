@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Box,
   Container,
@@ -35,114 +35,29 @@ import {
   TableContainer
 } from '@chakra-ui/react';
 import {
-  BookOpen,
-  CheckCircle,
-  Clock,
-  TrendingUp,
   FileText,
   Calendar,
   Users,
-  Target,
   BarChart3,
-  Settings,
-  Plus,
   Eye,
   Edit,
-  Trash2,
-  Download,
-  Send
+  Download
 } from 'lucide-react';
 import MainLayout from '../../components/layout/main-layout.component';
 import { useAuth } from '../../contexts/AuthContext';
+import { useGetDashboardAdminStats, useGetAvaliacoesAtivas } from '../../app/services/avaliacao/avaliacao.service.hooks';
 
-interface Avaliacao {
-  id: number;
-  titulo: string;
-  descricao: string;
-  dataInicio: string;
-  dataFim: string;
-  status: 'ativa' | 'inativa' | 'finalizada';
-  tipoItemAvaliado: string;
-  totalParticipantes: number;
-  respostasRecebidas: number;
-  taxaResposta: number;
-}
-
-interface Estatistica {
-  totalAvaliacoes: number;
-  avaliacoesAtivas: number;
-  totalParticipantes: number;
-  taxaRespostaGeral: number;
-  questionariosRespondidos: number;
-  usuariosAtivos: number;
-}
 
 const CPADashboard: React.FC = () => {
   const { user } = useAuth();
-  const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([]);
-  const [estatisticas, setEstatisticas] = useState<Estatistica | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: estatisticas, isLoading: statsLoading, error: statsError } = useGetDashboardAdminStats();
+  const { data: avaliacoes, isLoading: avaliacoesLoading, error: avaliacoesError } = useGetAvaliacoesAtivas();
 
   const bgColor = useColorModeValue('gray.50', 'gray.900');
   const cardBg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
 
-  // Mock data - substituir por chamada à API
-  useEffect(() => {
-    const mockAvaliacoes: Avaliacao[] = [
-      {
-        id: 1,
-        titulo: 'Avaliação de Professores - 2024/2',
-        descricao: 'Avaliação semestral dos professores',
-        dataInicio: '2024-09-01',
-        dataFim: '2024-09-30',
-        status: 'ativa',
-        tipoItemAvaliado: 'Professor',
-        totalParticipantes: 150,
-        respostasRecebidas: 120,
-        taxaResposta: 80
-      },
-      {
-        id: 2,
-        titulo: 'Avaliação de Infraestrutura',
-        descricao: 'Avaliação da infraestrutura da instituição',
-        dataInicio: '2024-09-01',
-        dataFim: '2024-09-30',
-        status: 'ativa',
-        tipoItemAvaliado: 'Infraestrutura',
-        totalParticipantes: 200,
-        respostasRecebidas: 180,
-        taxaResposta: 90
-      },
-      {
-        id: 3,
-        titulo: 'Avaliação de Coordenadores - 2024/1',
-        descricao: 'Avaliação dos coordenadores de curso',
-        dataInicio: '2024-03-01',
-        dataFim: '2024-03-31',
-        status: 'finalizada',
-        tipoItemAvaliado: 'Coordenador',
-        totalParticipantes: 50,
-        respostasRecebidas: 45,
-        taxaResposta: 90
-      }
-    ];
-
-    const mockEstatisticas: Estatistica = {
-      totalAvaliacoes: 15,
-      avaliacoesAtivas: 8,
-      totalParticipantes: 1250,
-      taxaRespostaGeral: 78,
-      questionariosRespondidos: 980,
-      usuariosAtivos: 1250
-    };
-
-    setTimeout(() => {
-      setAvaliacoes(mockAvaliacoes);
-      setEstatisticas(mockEstatisticas);
-      setLoading(false);
-    }, 1000);
-  }, []);
+  // Remover mock data - agora usando dados reais da API
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -170,7 +85,7 @@ const CPADashboard: React.FC = () => {
     }
   };
 
-  if (loading) {
+  if (avaliacoesLoading) {
     return (
       <MainLayout>
         <Box bg={bgColor} minH="100vh" py={8}>
@@ -203,7 +118,27 @@ const CPADashboard: React.FC = () => {
             </Box>
 
             {/* Estatísticas Principais */}
-            {estatisticas && (
+            {statsLoading ? (
+              <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={6}>
+                {[1, 2, 3, 4].map((i) => (
+                  <Card bg={cardBg} border="1px solid" borderColor={borderColor} key={i}>
+                    <CardBody>
+                      <Flex align="center" justify="center" h="120px">
+                        <Spinner size="lg" color="blue.500" />
+                      </Flex>
+                    </CardBody>
+                  </Card>
+                ))}
+              </SimpleGrid>
+            ) : statsError ? (
+              <Alert status="error">
+                <AlertIcon />
+                <AlertTitle>Erro ao carregar estatísticas!</AlertTitle>
+                <AlertDescription>
+                  Não foi possível carregar as estatísticas do dashboard.
+                </AlertDescription>
+              </Alert>
+            ) : estatisticas ? (
               <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={6}>
                 <Card bg={cardBg} border="1px solid" borderColor={borderColor}>
                   <CardBody>
@@ -257,7 +192,7 @@ const CPADashboard: React.FC = () => {
                   </CardBody>
                 </Card>
               </SimpleGrid>
-            )}
+            ) : null}
 
             {/* Ações Rápidas */}
             <Box>
@@ -269,25 +204,25 @@ const CPADashboard: React.FC = () => {
                 <Button
                   colorScheme="blue"
                   size="lg"
-                  leftIcon={<Icon as={Plus} w={5} h={5} />}
+                  leftIcon={<Icon as={FileText} w={5} h={5} />}
                   onClick={() => {
-                    // Navegar para criar avaliação
-                    window.location.href = '/avaliacoes/criar';
+                    // Navegar para listar avaliações
+                    window.location.href = '/avaliacoes';
                   }}
                 >
-                  Criar Avaliação
+                  Listar Avaliações
                 </Button>
 
                 <Button
                   colorScheme="green"
                   size="lg"
-                  leftIcon={<Icon as={BarChart3} w={5} h={5} />}
+                  leftIcon={<Icon as={Edit} w={5} h={5} />}
                   onClick={() => {
-                    // Navegar para relatórios
-                    window.location.href = '/relatorios';
+                    // Navegar para listar questões
+                    window.location.href = '/questions';
                   }}
                 >
-                  Ver Relatórios
+                  Listar Questões
                 </Button>
 
                 <Button
@@ -295,23 +230,23 @@ const CPADashboard: React.FC = () => {
                   size="lg"
                   leftIcon={<Icon as={Users} w={5} h={5} />}
                   onClick={() => {
-                    // Navegar para participantes
+                    // Navegar para listar participantes
                     window.location.href = '/participantes';
                   }}
                 >
-                  Gerenciar Participantes
+                  Listar Participantes
                 </Button>
 
                 <Button
-                  colorScheme="gray"
+                  colorScheme="orange"
                   size="lg"
-                  leftIcon={<Icon as={Settings} w={5} h={5} />}
+                  leftIcon={<Icon as={BarChart3} w={5} h={5} />}
                   onClick={() => {
-                    // Navegar para configurações
-                    window.location.href = '/configuracoes';
+                    // Navegar para relatórios
+                    window.location.href = '/relatorios';
                   }}
                 >
-                  Configurações
+                  Relatórios
                 </Button>
               </SimpleGrid>
             </Box>
@@ -322,17 +257,19 @@ const CPADashboard: React.FC = () => {
                 📊 Avaliações Ativas
               </Heading>
               
-              {avaliacoes.filter(a => a.status === 'ativa').length === 0 ? (
-                <Alert status="info">
+              {avaliacoesLoading ? (
+                <Flex justify="center" py={8}>
+                  <Spinner size="lg" color="blue.500" />
+                </Flex>
+              ) : avaliacoesError ? (
+                <Alert status="error">
                   <AlertIcon />
-                  <Box>
-                    <AlertTitle>Nenhuma avaliação ativa!</AlertTitle>
-                    <AlertDescription>
-                      Não há avaliações ativas no momento. Crie uma nova avaliação para começar.
-                    </AlertDescription>
-                  </Box>
+                  <AlertTitle>Erro ao carregar avaliações!</AlertTitle>
+                  <AlertDescription>
+                    Não foi possível carregar as avaliações ativas.
+                  </AlertDescription>
                 </Alert>
-              ) : (
+              ) : avaliacoes && avaliacoes.length > 0 ? (
                 <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
                   {avaliacoes
                     .filter(a => a.status === 'ativa')
@@ -384,7 +321,7 @@ const CPADashboard: React.FC = () => {
 
                             <HStack justify="space-between">
                               <Text fontSize="sm" color="gray.600">
-                                {avaliacao.respostasRecebidas} de {avaliacao.totalParticipantes} participantes
+                                {avaliacao.totalRespostas} de {avaliacao.totalParticipantes} participantes
                               </Text>
                             </HStack>
                             
@@ -417,6 +354,20 @@ const CPADashboard: React.FC = () => {
                       </Card>
                     ))}
                 </SimpleGrid>
+              ) : (
+                <Card bg={cardBg} border="1px solid" borderColor={borderColor}>
+                  <CardBody>
+                    <VStack spacing={4} py={8}>
+                      <Icon as={FileText} boxSize={12} color="gray.400" />
+                      <Text fontSize="lg" color="gray.500" textAlign="center">
+                        Nenhuma avaliação ativa no momento
+                      </Text>
+                      <Text fontSize="sm" color="gray.400" textAlign="center">
+                        Crie uma nova avaliação para começar a coletar dados
+                      </Text>
+                    </VStack>
+                  </CardBody>
+                </Card>
               )}
             </Box>
 
@@ -440,7 +391,7 @@ const CPADashboard: React.FC = () => {
                         </Tr>
                       </Thead>
                       <Tbody>
-                        {avaliacoes.map((avaliacao) => (
+                        {avaliacoes?.map((avaliacao) => (
                           <Tr key={avaliacao.id}>
                             <Td>
                               <VStack align="start" spacing={1}>
@@ -457,7 +408,7 @@ const CPADashboard: React.FC = () => {
                             </Td>
                             <Td>
                               <Text fontSize="sm">
-                                {avaliacao.respostasRecebidas}/{avaliacao.totalParticipantes}
+                                {avaliacao.totalRespostas}/{avaliacao.totalParticipantes}
                               </Text>
                             </Td>
                             <Td>

@@ -74,6 +74,7 @@ interface Aluno {
   tipoMatricula?: number;
   dataMatricula?: string;
   statusNoPeriodoLetivo?: string;
+  nivelEnsino?: string;
   turmaAtiva: boolean;
   aceitaContato: boolean;
   ativo: boolean;
@@ -126,6 +127,7 @@ interface AlunoFormData {
   tipoMatricula: string;
   dataMatricula: string;
   statusNoPeriodoLetivo: string;
+  nivelEnsino: string;
   turmaAtiva: boolean;
   aceitaContato: boolean;
   ativo: boolean;
@@ -207,6 +209,7 @@ const AlunosPage: React.FC = () => {
     tipoMatricula: '',
     dataMatricula: '',
     statusNoPeriodoLetivo: '',
+    nivelEnsino: '',
     turmaAtiva: true,
     aceitaContato: true,
     ativo: true,
@@ -222,7 +225,7 @@ const AlunosPage: React.FC = () => {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importLoading, setImportLoading] = useState(false);
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://apiavaliacao.catolicasc.org.br/api';
   const toast = useToast();
 
   useEffect(() => {
@@ -278,7 +281,7 @@ const AlunosPage: React.FC = () => {
 
   const fetchTurmas = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/Turma`);
+      const response = await fetch(`${API_BASE_URL}/Turma/combo`);
       if (response.ok) {
         const data = await response.json();
         setTurmas(data);
@@ -418,6 +421,7 @@ const AlunosPage: React.FC = () => {
       tipoMatricula: aluno.tipoMatricula?.toString() || '',
       dataMatricula: aluno.dataMatricula ? aluno.dataMatricula.split('T')[0] : '',
       statusNoPeriodoLetivo: aluno.statusNoPeriodoLetivo || '',
+      nivelEnsino: aluno.nivelEnsino || '',
       turmaAtiva: aluno.turmaAtiva,
       aceitaContato: aluno.aceitaContato,
       ativo: aluno.ativo,
@@ -534,6 +538,7 @@ const AlunosPage: React.FC = () => {
       tipoMatricula: '',
       dataMatricula: '',
       statusNoPeriodoLetivo: '',
+      nivelEnsino: '',
       turmaAtiva: true,
       aceitaContato: true,
       ativo: true,
@@ -969,6 +974,24 @@ const AlunosPage: React.FC = () => {
                   </Box>
                 </HStack>
 
+                <HStack spacing={4}>
+                  <Box flex={1}>
+                    <Text>Nível de Ensino</Text>
+                    <Select
+                      value={formData.nivelEnsino}
+                      onChange={(e) => setFormData({...formData, nivelEnsino: e.target.value})}
+                      placeholder="Selecione o nível de ensino"
+                    >
+                      <option value="">Selecione...</option>
+                      <option value="GraduacaoPresencial">Graduação Presencial</option>
+                      <option value="GraduacaoEAD">Graduação à Distância (EAD)</option>
+                    </Select>
+                  </Box>
+                  
+                  <Box flex={1}></Box>
+                  <Box flex={1}></Box>
+                </HStack>
+
                 {/* Campos de Integração */}
                 <Heading size="sm" color="gray.700" mt={4}>Campos de Integração</Heading>
                 
@@ -1118,6 +1141,7 @@ const AlunosPage: React.FC = () => {
                <Th>Curso</Th>
                <Th>Turma</Th>
                <Th>Período</Th>
+               <Th>Nível Ensino</Th>
                <Th>Turmas-Disciplinas</Th>
                <Th>Status</Th>
                <Th>Ações</Th>
@@ -1126,7 +1150,7 @@ const AlunosPage: React.FC = () => {
           <Tbody>
                          {alunos.length === 0 ? (
                <Tr>
-                 <Td colSpan={9} textAlign="center" py={8} color="gray.500">
+                 <Td colSpan={10} textAlign="center" py={8} color="gray.500">
                    <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                    <Text>Nenhum aluno cadastrado</Text>
                    <Text fontSize="sm">Clique em "Criar Aluno" para começar</Text>
@@ -1184,6 +1208,17 @@ const AlunosPage: React.FC = () => {
                            <Calendar className="h-4 w-4 text-gray-400" />
                            <Text fontSize="sm">{aluno.periodoLetivo.nome}</Text>
                          </HStack>
+                       ) : (
+                         <Text fontSize="sm" color="gray.400">Não informado</Text>
+                       )}
+                     </Td>
+                     <Td>
+                       {aluno.nivelEnsino ? (
+                         <Badge colorScheme="purple" variant="subtle">
+                           {aluno.nivelEnsino === 'GraduacaoPresencial' ? 'Graduação Presencial' : 
+                            aluno.nivelEnsino === 'GraduacaoEAD' ? 'Graduação à Distância (EAD)' : 
+                            aluno.nivelEnsino}
+                         </Badge>
                        ) : (
                          <Text fontSize="sm" color="gray.400">Não informado</Text>
                        )}

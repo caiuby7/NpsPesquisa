@@ -61,6 +61,44 @@ export function QuestionTypeExecution({
     );
   }
 
+  // Caixa de Seleção (Checkbox)
+  if (type === 'CHECKBOX') {
+    const selectedValues = Array.isArray(value) ? value : (value ? [value] : []);
+    
+    return (
+      <Box>
+        <Text mb={2}>{question.texto}</Text>
+        <Stack gap={2}>
+          {question.opcoes?.map((opcao) => (
+            <Box key={opcao.id} as="label" cursor="pointer">
+              <input
+                type="checkbox"
+                name={question.id}
+                value={opcao.id}
+                checked={selectedValues.includes(opcao.id)}
+                onChange={(e) => {
+                  const isChecked = e.target.checked;
+                  let newValues;
+                  
+                  if (isChecked) {
+                    newValues = [...selectedValues, opcao.id];
+                  } else {
+                    newValues = selectedValues.filter(id => id !== opcao.id);
+                  }
+                  
+                  onChange(newValues);
+                }}
+              />
+              <Text ml={2} display="inline">
+                {opcao.texto}
+              </Text>
+            </Box>
+          ))}
+        </Stack>
+      </Box>
+    );
+  }
+
   // Resposta Curta
   if (type === 'SHORT_ANSWER') {
     return (

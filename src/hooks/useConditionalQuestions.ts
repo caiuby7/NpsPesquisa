@@ -14,17 +14,20 @@ export const useConditionalQuestions = (questions: QuestionResponse[] = []) => {
     questions.forEach(q => {
       if (q.opcoes) {
         q.opcoes.forEach(opcao => {
-          if (opcao.ativaCondicao && opcao.questaoCondicionalId) {
-            // Buscar a questão condicional na lista de questões principais primeiro
-            let questaoCondicional = questions.find(existing => existing.id === opcao.questaoCondicionalId);
-            
-            // Se não encontrou nas questões principais, verificar se está aninhada na opção
-            if (!questaoCondicional && (opcao as any).questaoCondicional) {
-              questaoCondicional = (opcao as any).questaoCondicional;
+          if (opcao.ativaCondicao) {
+            // Verificar se tem questão condicional aninhada (payload atual)
+            if ((opcao as any).questaoCondicional) {
+              const questaoCondicional = (opcao as any).questaoCondicional;
+              if (!extractedQuestions.find(existing => existing.id === questaoCondicional.id)) {
+                extractedQuestions.push(questaoCondicional);
+              }
             }
-            
-            if (questaoCondicional && !extractedQuestions.find(existing => existing.id === questaoCondicional.id)) {
-              extractedQuestions.push(questaoCondicional);
+            // Verificar se tem ID de questão condicional (formato antigo)
+            else if (opcao.questaoCondicionalId) {
+              let questaoCondicional = questions.find(existing => existing.id === opcao.questaoCondicionalId);
+              if (questaoCondicional && !extractedQuestions.find(existing => existing.id === questaoCondicional.id)) {
+                extractedQuestions.push(questaoCondicional);
+              }
             }
           }
         });
@@ -114,11 +117,17 @@ export const useConditionalQuestions = (questions: QuestionResponse[] = []) => {
       // Se a questão tem isCondicional = true, ela é uma questão principal que pode ativar outras
       if (answeredQuestion.isCondicional && answeredQuestion.opcoes) {
         // Primeiro, remover TODAS as questões condicionais desta questão principal
-        // Buscar questões condicionais que podem ser ativadas por esta questão principal
         const questoesCondicionaisDestaPrincipal: number[] = [];
         answeredQuestion.opcoes.forEach(opcao => {
-          if (opcao.ativaCondicao && opcao.questaoCondicionalId) {
-            questoesCondicionaisDestaPrincipal.push(opcao.questaoCondicionalId);
+          if (opcao.ativaCondicao) {
+            // Verificar se tem questão condicional aninhada (payload atual)
+            if ((opcao as any).questaoCondicional) {
+              questoesCondicionaisDestaPrincipal.push((opcao as any).questaoCondicional.id);
+            }
+            // Verificar se tem ID de questão condicional (formato antigo)
+            else if (opcao.questaoCondicionalId) {
+              questoesCondicionaisDestaPrincipal.push(opcao.questaoCondicionalId);
+            }
           }
         });
         
@@ -129,11 +138,22 @@ export const useConditionalQuestions = (questions: QuestionResponse[] = []) => {
 
         // Depois, verificar se alguma opção ativa condição e adicionar apenas as necessárias
         answeredQuestion.opcoes.forEach(opcao => {
-          if (opcao.ativaCondicao && opcao.questaoCondicionalId) {
+          if (opcao.ativaCondicao) {
             // Verificar se a resposta inclui esta opção
             const isOptionSelected = Array.isArray(answer) 
               ? answer.includes(String(opcao.id)) 
               : String(answer) === String(opcao.id);
+
+            let questaoCondicionalId: number | null = null;
+            
+            // Verificar se tem questão condicional aninhada (payload atual)
+            if ((opcao as any).questaoCondicional) {
+              questaoCondicionalId = (opcao as any).questaoCondicional.id;
+            }
+            // Verificar se tem ID de questão condicional (formato antigo)
+            else if (opcao.questaoCondicionalId) {
+              questaoCondicionalId = opcao.questaoCondicionalId;
+            }
 
             console.log('🔍 Debug Condicional:', {
               questionId,
@@ -141,14 +161,14 @@ export const useConditionalQuestions = (questions: QuestionResponse[] = []) => {
               opcaoId: opcao.id,
               opcaoTexto: opcao.texto,
               ativaCondicao: opcao.ativaCondicao,
-              questaoCondicionalId: opcao.questaoCondicionalId,
+              questaoCondicionalId,
               isOptionSelected
             });
 
-            if (isOptionSelected) {
+            if (isOptionSelected && questaoCondicionalId) {
               // Mostrar questão condicional
-              newVisibleQuestions.add(opcao.questaoCondicionalId);
-              console.log('✅ Adicionando questão condicional:', opcao.questaoCondicionalId);
+              newVisibleQuestions.add(questaoCondicionalId);
+              console.log('✅ Adicionando questão condicional:', questaoCondicionalId);
             }
           }
         });
@@ -165,34 +185,17 @@ export const useConditionalQuestions = (questions: QuestionResponse[] = []) => {
   const getVisibleQuestions = useCallback((): QuestionResponse[] => {
     if (!allQuestions || !Array.isArray(allQuestions)) return [];
     
-    const visibleQuestions = allQuestions.filter(q => q && q.id && shouldShowQuestion(q.id));
+    // Retornar apenas as questões principais (não condicionais) na ordem original
+    const mainQuestions = questions.filter(q => q && q.id);
     
     console.log('🔍 Debug - getVisibleQuestions:', {
       totalQuestions: allQuestions.length,
-      visibleQuestions: visibleQuestions.map(q => ({ id: q.id, texto: q.texto, isCondicional: q.isCondicional })),
+      mainQuestions: mainQuestions.map(q => ({ id: q.id, texto: q.texto, isCondicional: q.isCondicional })),
       visibleQuestionsSet: Array.from(state.visibleQuestions)
     });
     
-    // Ordenar questões para que as condicionais apareçam logo após a principal
-    return visibleQuestions.sort((a, b) => {
-      // Se uma questão é condicional de outra, colocar logo após
-      const aIsConditional = questions.some(q => 
-        q && q.opcoes?.some(opcao => 
-          opcao.ativaCondicao && opcao.questaoCondicionalId === a.id
-        )
-      );
-      const bIsConditional = questions.some(q => 
-        q && q.opcoes?.some(opcao => 
-          opcao.ativaCondicao && opcao.questaoCondicionalId === b.id
-        )
-      );
-      
-      if (aIsConditional && !bIsConditional) return 1;
-      if (!aIsConditional && bIsConditional) return -1;
-      
-      return a.id - b.id;
-    });
-  }, [allQuestions, questions, shouldShowQuestion, state.visibleQuestions]);
+    return mainQuestions;
+  }, [allQuestions, questions, state.visibleQuestions]);
 
   // Função para resetar estado
   const reset = useCallback(() => {

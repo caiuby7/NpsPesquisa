@@ -9,13 +9,14 @@ import { QuestionResponse } from "../../services/form";
 export const useCreateQuestionForm = (question?: QuestionResponse) =>
   useForm<FormSchemaType>({
     resolver: zodResolver(schemaWithPreprocessing as any),
-    mode: "onTouched",
+    mode: "onSubmit",
     shouldFocusError: false,
     defaultValues: {
-      texto: question?.texto,
-      tipo: question?.tipo,
-      obrigatorio: question?.obrigatorio || false,
-      isCondicional: question?.isCondicional || false
+      texto: '',
+      tipo: undefined,
+      obrigatorio: false,
+      isCondicional: false,
+      opcoes: []
     },
   });
 
@@ -81,12 +82,20 @@ const menuSuspensoSchema = tipoBase.merge(
   })
 );
 
+const caixaSelecaoSchema = tipoBase.merge(
+  z.object({
+    tipo: z.literal(QuestionTypeEnum.CHECKBOX),
+    opcoes: z.array(optionSchema),
+  })
+);
+
 const formSchema = z.discriminatedUnion("tipo", [
   matrixSchema,
   escalaLinearSchema,
   caixaTextoSchema,
   multiplaEscolhaSchema,
   menuSuspensoSchema,
+  caixaSelecaoSchema,
 ]);
 
 export const schemaWithPreprocessing: any = z.preprocess((data: any) => {

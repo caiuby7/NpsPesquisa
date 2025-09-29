@@ -7,6 +7,7 @@ import { UseFormRegister, Control, UseFormGetValues, UseFormSetValue, FieldError
 import MultipleChoiceQuestion from "../MultipleChoiceQuestion/multiple-choice-question.component";
 import SortableFieldArray from "../ArrayQuestion/array-question.component";
 import RatingLabelsEditorForm from "../LinearScale/linear-scale.component";
+import CheckboxQuestion from "../CheckboxQuestion/checkbox-question.component";
 import { QuestionTypeEnum } from "../../../services/question";
 import { 
   FormSchemaType, 
@@ -39,6 +40,10 @@ interface LinearScaleProps extends BaseQuestionProps {
 
 interface TextBoxProps extends BaseQuestionProps {
   type: QuestionTypeEnum.TEXT_BOX;
+}
+
+interface CheckboxProps extends BaseQuestionProps {
+  type: QuestionTypeEnum.CHECKBOX;
 }
 
 export function QuestionTypeForm({ type, register, control, getValues, setValue, errors, isCondicional }: BaseQuestionProps) {
@@ -82,6 +87,21 @@ export function QuestionTypeForm({ type, register, control, getValues, setValue,
         getValues={getValues as any}
         errors={errors as any}
       />
+    );
+  }
+
+  if (type === QuestionTypeEnum.CHECKBOX) {
+    return (
+      <Box>
+        <Text>Opções de seleção (múltipla escolha):</Text>
+        <CheckboxQuestion 
+          register={register as UseFormRegister<FormSchemaType>}
+          control={control as Control<FormSchemaType>}
+          errors={errors as FieldErrors<FormSchemaType>}
+          index={0}
+          isCondicional={isCondicional}
+        />
+      </Box>
     );
   }
 

@@ -1,15 +1,10 @@
-import { useParams } from "react-router-dom";
-import { AppHeader } from "../../../components/header/header.component";
-import CreateQuestionComponent from "../../../app/widgets/create-question/create-question.component";
-import { Box } from "@chakra-ui/react";
+import MainLayout from "../../../components/layout/main-layout.component";
+import EditQuestionComponent from "../../../app/widgets/edit-question/edit-question.component";
 
-export default function CreateQuestionWithIdPage() {
-  const { id } = useParams();
-
+export default function EditQuestionPage() {
   return (
-    <Box>
-      <AppHeader />
-      <CreateQuestionComponent initialData={{ id: id }} />
-    </Box>
+    <MainLayout>
+      <EditQuestionComponent />
+    </MainLayout>
   );
 } 

@@ -13,6 +13,7 @@ import {
   Textarea,
   useToast,
   Checkbox,
+  Text,
 } from "@chakra-ui/react";
 import {
   useGetQuestionById,
@@ -34,24 +35,17 @@ import { OptionItem as FormOptionItem } from "../../services/form";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const convertOptionItem = (opt: FormOptionItem | { [key: string]: any }): any => ({
-  texto: opt.texto,
-  id: (opt as any).id ?? (opt as any).idOpcao,
-  ordem: opt.ordem,
-  peso: opt.peso,
-  valor: opt.valor,
-  ehColuna: opt.ehColuna
+  texto: opt.texto || '',
+  id: (opt as any).id ?? (opt as any).idOpcao ?? Math.random().toString(),
+  ordem: opt.ordem || 0,
+  peso: opt.peso || 0,
+  valor: opt.valor || '',
+  ehColuna: opt.ehColuna || false,
+  ativaCondicao: opt.ativaCondicao || false,
+  questaoCondicionalId: opt.questaoCondicionalId
 });
 
-interface CreateQuestionComponentProps {
-  initialData?: {
-    id?: string;
-  };
-}
-
-const CreateQuestionComponent: React.FC<CreateQuestionComponentProps> = ({ initialData }) => {
-  const params = useParams();
-  const id = initialData?.id || params?.id;
-  const { data: question } = useGetQuestionById(id as string);
+const CreateQuestionComponent: React.FC = () => {
   const {
     control,
     register,
@@ -59,9 +53,8 @@ const CreateQuestionComponent: React.FC<CreateQuestionComponentProps> = ({ initi
     setValue,
     getValues,
     watch,
-    reset,
     formState: { errors },
-  } = useCreateQuestionForm(question);
+  } = useCreateQuestionForm();
 
   const toast = useToast();
   const navigate = useNavigate();
@@ -69,64 +62,6 @@ const CreateQuestionComponent: React.FC<CreateQuestionComponentProps> = ({ initi
   const [obrigatorio, setObrigatorio] = useState(false);
   const [isCondicional, setIsCondicional] = useState(false);
 
-  useEffect(() => {
-    if (question) {
-      let formData: any = {
-        texto: question.texto,
-        tipo: question.tipo,
-        obrigatorio: question.obrigatorio || false,
-        isCondicional: question.isCondicional || false,
-      };
-      setIsCondicional(question.isCondicional || false);
-      setObrigatorio(question.obrigatorio || false);
-      if (question.tipo === QuestionTypeEnum.MATRIX) {
-        formData = {
-          texto: question.texto,
-          tipo: question.tipo,
-          obrigatorio: question.obrigatorio || false,
-          isCondicional: question.isCondicional || false,
-          opcoes: question.opcoes?.filter(opt => !opt.ehColuna).map(convertOptionItem) || [],
-          colunas: question.opcoes?.filter(opt => opt.ehColuna).map(convertOptionItem) || [],
-        };
-      } else if (question.tipo === QuestionTypeEnum.LINEAR_SCALE && question.opcoes) {
-        formData = {
-          texto: question.texto,
-          tipo: question.tipo,
-          obrigatorio: question.obrigatorio || false,
-          isCondicional: question.isCondicional || false,
-          ratingLabels: {
-            min: question.opcoes[0].valor || "",
-            max: question.opcoes[1].valor || "",
-            minLabel: question.opcoes[0].texto || "",
-            maxLabel: question.opcoes[1].texto || ""
-          }
-        };
-      } else if (question.tipo === QuestionTypeEnum.MULTIPLE_CHOICE) {
-        formData = {
-          texto: question.texto,
-          tipo: question.tipo,
-          obrigatorio: question.obrigatorio || false,
-          isCondicional: question.isCondicional || false,
-          opcoes: question.opcoes?.map(convertOptionItem) || [],
-        };
-      } else if (question.tipo === QuestionTypeEnum.MENU) {
-        formData = {
-          texto: question.texto,
-          tipo: question.tipo,
-          obrigatorio: question.obrigatorio || false,
-          isCondicional: question.isCondicional || false,
-          opcoes: question.opcoes?.map(convertOptionItem) || [],
-        };
-      }
-      reset(formData);
-    } else {
-      // Para novas questões, inicializar com valores padrão
-      setObrigatorio(false);
-      setIsCondicional(false);
-      setValue('obrigatorio', false);
-      setValue('isCondicional', false);
-    }
-  }, [question, reset, setValue]);
 
   const handleMutationSuccess = () => {
     toast({
@@ -136,31 +71,21 @@ const CreateQuestionComponent: React.FC<CreateQuestionComponentProps> = ({ initi
       isClosable: true,
       position: "top"
     });
-    reset();
+    navigate("/questions");
   };
 
-  const handleMutationError = (error?: any) => {
-    let message = "Erro ao salvar a questão. Tente novamente.";
-    if (error?.response?.data?.message) {
-      message = error.response.data.message;
-    }
-    toast({
-      title: message,
-      status: "error",
-      duration: 3000,
-      isClosable: true,
-      position: "top"
-    });
-  };
 
   const { mutate: questionPost, isPending } = useQuestionPostMutate(
     handleMutationSuccess,
-    handleMutationError
-  );
-
-  const { mutate: questionPut } = useQuestionPutMutate(
-    handleMutationSuccess,
-    handleMutationError
+    () => {
+      toast({
+        title: "Erro ao salvar questão",
+        description: "Tente novamente",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
   );
 
   const type = watch("tipo");
@@ -198,10 +123,6 @@ const CreateQuestionComponent: React.FC<CreateQuestionComponentProps> = ({ initi
           },
         ],
       };
-      if (question && id) {
-        questionPut({ id: id as string, payload: payloadLinearScale });
-        return;
-      }
       questionPost(payloadLinearScale);
       return;
     }
@@ -217,10 +138,6 @@ const CreateQuestionComponent: React.FC<CreateQuestionComponentProps> = ({ initi
         ).map(toApiOption),
       };
       const { colunas, ...payloadWithoutColunas } = payloadArray;
-      if (question && id) {
-        questionPut({ id: id as string, payload: payloadWithoutColunas });
-        return;
-      }
       questionPost(payloadWithoutColunas);
       return;
     }
@@ -233,12 +150,9 @@ const CreateQuestionComponent: React.FC<CreateQuestionComponentProps> = ({ initi
       payload.opcoes = data.opcoes.map(toApiOption);
     }
     
-    if (data && id) {
-      questionPut({ id: id as string, payload });
-      return;
-    }
     questionPost(payload as QuestionPostParams);
   };
+
 
   return (
     <Box p={6} maxW="1200px" mx="auto">
@@ -263,10 +177,10 @@ const CreateQuestionComponent: React.FC<CreateQuestionComponentProps> = ({ initi
               />
               <FormErrorMessage>{errors.tipo?.message}</FormErrorMessage>
             </FormControl>
-            {(type || question?.tipo) && (
+            {type && (
               <QuestionTypeForm
                 errors={errors}
-                type={question?.tipo || (Array.isArray(type) ? type[0] : type) as QuestionType}
+                type={type as QuestionType}
                 register={register as any}
                 setValue={setValue as any}
                 getValues={getValues as any}

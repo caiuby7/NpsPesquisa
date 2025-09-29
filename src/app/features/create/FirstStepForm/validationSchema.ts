@@ -12,7 +12,7 @@ export const firstStepFormSchema = z.object({
   permitirComentarios: z.boolean().default(false),
   permitirSalvarAndamento: z.boolean().default(false),
   tipoItemAvaliado: z.nativeEnum(TipoItemAvaliadoEnum).optional(),
-  nomeItemEspecifico: z.string().optional(),
+  nomeItemEspecifico: z.string().max(2000, "O nome do item específico deve ter no máximo 2000 caracteres").optional(),
   textoBoasVindas: z.string().optional(),
   templateEmailConvite: z.string().optional(),
   templateEmailLembrete: z.string().optional(),

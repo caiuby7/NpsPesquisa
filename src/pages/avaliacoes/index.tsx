@@ -286,7 +286,7 @@ const AvaliacoesPage: React.FC = () => {
                       <HStack spacing={2}>
                         <FiUsers size={14} />
                         <Text fontSize="sm">
-                          {avaliacao.totalParticipantes}
+                          {avaliacao.totalRespostas}/{avaliacao.totalParticipantes}
                         </Text>
                       </HStack>
                     </VStack>

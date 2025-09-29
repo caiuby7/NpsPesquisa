@@ -30,6 +30,7 @@ import {
   FormControl,
   FormLabel,
   FormHelperText,
+  FormErrorMessage,
   Divider,
   Card,
   CardBody,
@@ -54,6 +55,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../../components/layout/main-layout.component';
+import Pagination from '../../components/Pagination/pagination.component';
 import { ITEM_AVALIADO_TYPES, TipoQuestionarioEnum } from '../../services/form/form.services.types';
 import { useGetQuestions } from '../../services/question';
 import { api } from '../../services/api';
@@ -93,8 +95,9 @@ interface AvaliacaoFormData {
   lembrarACadaXDias: number;
   enviarLembreteAutomatico: boolean;
   enviarLembreteParaTodos: boolean;
+  ativo: boolean;
   questoes: number[];
-  // Filtros para participantes
+  // Instituição obrigatória
   instituicaoId: string;
   periodoLetivoId: string;
   cursoId: string;
@@ -141,6 +144,7 @@ const CriarAvaliacaoPage: React.FC = () => {
     lembrarACadaXDias: 0,
     enviarLembreteAutomatico: false,
     enviarLembreteParaTodos: false,
+    ativo: true,
     questoes: [],
     instituicaoId: '',
     periodoLetivoId: '',
@@ -149,8 +153,11 @@ const CriarAvaliacaoPage: React.FC = () => {
     disciplinaId: '',
     tipoParticipante: ''
   });
+  
+  // Estado para controlar quando mostrar validações
+  const [showValidation, setShowValidation] = useState(false);
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://apiavaliacao.catolicasc.org.br/api';
   const toast = useToast();
   const { data: questionsData } = useGetQuestions();
 
@@ -189,9 +196,9 @@ const CriarAvaliacaoPage: React.FC = () => {
         fetch(`${API_BASE_URL}/Instituicao`),
         fetch(`${API_BASE_URL}/PeriodoLetivo`),
         fetch(`${API_BASE_URL}/Curso`),
-        fetch(`${API_BASE_URL}/Turma`),
-        fetch(`${API_BASE_URL}/Disciplina`),
-        fetch(`${API_BASE_URL}/Professor`),
+        fetch(`${API_BASE_URL}/Turma/combo`),
+        fetch(`${API_BASE_URL}/Disciplina/combo`),
+        fetch(`${API_BASE_URL}/Professor/combo`),
         fetch(`${API_BASE_URL}/Coordenador`)
       ]);
 
@@ -230,6 +237,21 @@ const CriarAvaliacaoPage: React.FC = () => {
 
 
   const criarAvaliacao = async () => {
+    // Ativar validação visual
+    setShowValidation(true);
+    
+    // Validar campos obrigatórios
+    if (!formData.titulo || !formData.descricao || !formData.tipoItemAvaliado || !formData.dataInicio || !formData.dataFim || !formData.instituicaoId) {
+      toast({
+        title: 'Campos obrigatórios',
+        description: 'Por favor, preencha todos os campos obrigatórios, incluindo instituição, data e hora de início e fim.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+    
     try {
       // Preparar dados no mesmo formato do create-form
       const avaliacaoData = {
@@ -242,12 +264,14 @@ const CriarAvaliacaoPage: React.FC = () => {
         permitirSalvarAndamento: formData.permitirSalvarAndamento,
         tipoItemAvaliado: formData.tipoItemAvaliado,
         nomeItemEspecifico: formData.nomeItemEspecifico,
+        instituicaoId: parseInt(formData.instituicaoId),
         textoBoasVindas: formData.textoBoasVindas,
         templateEmailConvite: formData.templateEmailConvite,
         templateEmailLembrete: formData.templateEmailLembrete,
         lembrarACadaXDias: formData.lembrarACadaXDias,
         enviarLembreteAutomatico: formData.enviarLembreteAutomatico,
         enviarLembreteParaTodos: formData.enviarLembreteParaTodos,
+        ativo: formData.ativo,
         questoes: formData.questoes.map((questaoId, index) => ({
           questaoId: questaoId,
           ordem: index + 1
@@ -295,40 +319,41 @@ const CriarAvaliacaoPage: React.FC = () => {
       textoBoasVindas: '',
       templateEmailConvite: '',
       templateEmailLembrete: '',
-          lembrarACadaXDias: 0,
-    enviarLembreteAutomatico: false,
-    enviarLembreteParaTodos: false,
-    questoes: [],
+      lembrarACadaXDias: 0,
+      enviarLembreteAutomatico: false,
+      enviarLembreteParaTodos: false,
+      ativo: true,
+      questoes: [],
       instituicaoId: '',
       periodoLetivoId: '',
       cursoId: '',
       turmaId: '',
-    disciplinaId: '',
+      disciplinaId: '',
       tipoParticipante: ''
     });
     setParticipantes([]);
   };
 
   const getFiltrosVisiveis = () => {
-    const filtrosVisiveis: string[] = [];
+    const filtrosVisiveis: string[] = ['instituicao']; // Instituição sempre obrigatória
     
     switch (formData.tipoItemAvaliado) {
       case 'Professor':
       case 'Disciplina':
       case 'TurmaDisciplina':
       case 'Curso':
-        filtrosVisiveis.push('instituicao', 'periodoLetivo', 'curso');
+        filtrosVisiveis.push('periodoLetivo', 'curso');
         if (formData.tipoItemAvaliado === 'TurmaDisciplina') {
           filtrosVisiveis.push('turma');
         }
         break;
         
       case 'Estrutura':
-        filtrosVisiveis.push('instituicao', 'periodoLetivo');
+        filtrosVisiveis.push('periodoLetivo');
         break;
         
       case 'Coordenador':
-        filtrosVisiveis.push('instituicao', 'curso');
+        filtrosVisiveis.push('curso');
         break;
         
       case 'Alunos':
@@ -391,31 +416,31 @@ const CriarAvaliacaoPage: React.FC = () => {
                 <Box>
                   <Heading size="sm" mb={4}>Informações Básicas</Heading>
                   <VStack align="stretch" spacing={4}>
-                    <FormControl isInvalid={!formData.titulo}>
+                    <FormControl isInvalid={showValidation && !formData.titulo}>
                       <FormLabel>Título da Avaliação *</FormLabel>
                       <Input
                         value={formData.titulo}
                         onChange={(e) => setFormData({...formData, titulo: e.target.value})}
                         placeholder="Digite o título da avaliação"
                       />
-                      {!formData.titulo && (
+                      {showValidation && !formData.titulo && (
                         <FormHelperText color="red.500">Título é obrigatório</FormHelperText>
                       )}
                     </FormControl>
 
-                    <FormControl isInvalid={!formData.descricao}>
+                    <FormControl isInvalid={showValidation && !formData.descricao}>
                       <FormLabel>Descrição da Avaliação *</FormLabel>
                       <Input
                         value={formData.descricao}
                         onChange={(e) => setFormData({...formData, descricao: e.target.value})}
                         placeholder="Digite a descrição da avaliação"
                       />
-                      {!formData.descricao && (
+                      {showValidation && !formData.descricao && (
                         <FormHelperText color="red.500">Descrição é obrigatória</FormHelperText>
                       )}
                     </FormControl>
 
-                    <FormControl isInvalid={!formData.tipoItemAvaliado}>
+                    <FormControl isInvalid={showValidation && !formData.tipoItemAvaliado}>
                       <FormLabel>Tipo de Item Avaliado *</FormLabel>
                       <Select
                         value={formData.tipoItemAvaliado}
@@ -428,19 +453,44 @@ const CriarAvaliacaoPage: React.FC = () => {
                           </option>
                         ))}
                       </Select>
-                      {!formData.tipoItemAvaliado && (
+                      {showValidation && !formData.tipoItemAvaliado && (
                         <FormHelperText color="red.500">Tipo de item avaliado é obrigatório</FormHelperText>
                       )}
                     </FormControl>
 
-                    <FormControl>
+                    <FormControl isInvalid={showValidation && !formData.instituicaoId}>
+                      <FormLabel>Instituição *</FormLabel>
+                      <Select
+                        value={formData.instituicaoId}
+                        onChange={(e) => setFormData({...formData, instituicaoId: e.target.value})}
+                        placeholder="Selecione a instituição"
+                      >
+                        {filtros.instituicoes.map((instituicao: any) => (
+                          <option key={instituicao.id} value={instituicao.id}>
+                            {instituicao.nome}
+                          </option>
+                        ))}
+                      </Select>
+                      {showValidation && !formData.instituicaoId && (
+                        <FormHelperText color="red.500">Instituição é obrigatória</FormHelperText>
+                      )}
+                    </FormControl>
+
+                    <FormControl isInvalid={Boolean(formData.nomeItemEspecifico && formData.nomeItemEspecifico.length > 2000)}>
                       <FormLabel>Nome Específico do Item</FormLabel>
                       <Input
                         value={formData.nomeItemEspecifico}
                         onChange={(e) => setFormData({...formData, nomeItemEspecifico: e.target.value})}
                         placeholder="Ex: Direito, Matemática, etc."
-                    />
-                  </FormControl>
+                        maxLength={2000}
+                      />
+                      <FormHelperText>
+                        {formData.nomeItemEspecifico ? `${formData.nomeItemEspecifico.length}/2000 caracteres` : 'Máximo 2000 caracteres'}
+                      </FormHelperText>
+                      {formData.nomeItemEspecifico && formData.nomeItemEspecifico.length > 2000 && (
+                        <FormErrorMessage>O nome do item deve ter no máximo 2000 caracteres</FormErrorMessage>
+                      )}
+                    </FormControl>
                   </VStack>
                 </Box>
 
@@ -451,27 +501,27 @@ const CriarAvaliacaoPage: React.FC = () => {
                   <Heading size="sm" mb={4}>Configurações da Avaliação</Heading>
                   <VStack align="stretch" spacing={4}>
                     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                      <FormControl isInvalid={!formData.dataInicio}>
-                        <FormLabel>Data de Início *</FormLabel>
+                      <FormControl isInvalid={showValidation && !formData.dataInicio}>
+                        <FormLabel>Data e Hora de Início *</FormLabel>
                         <Input
-                          type="date"
+                          type="datetime-local"
                           value={formData.dataInicio || ''}
                           onChange={(e) => setFormData({...formData, dataInicio: e.target.value})}
                         />
-                        {!formData.dataInicio && (
-                          <FormHelperText color="red.500">Data de início é obrigatória</FormHelperText>
+                        {showValidation && !formData.dataInicio && (
+                          <FormHelperText color="red.500">Data e hora de início são obrigatórias</FormHelperText>
                         )}
                       </FormControl>
                       
-                      <FormControl isInvalid={!formData.dataFim}>
-                        <FormLabel>Data de Fim *</FormLabel>
+                      <FormControl isInvalid={showValidation && !formData.dataFim}>
+                        <FormLabel>Data e Hora de Fim *</FormLabel>
                         <Input
-                          type="date"
+                          type="datetime-local"
                           value={formData.dataFim || ''}
                           onChange={(e) => setFormData({...formData, dataFim: e.target.value})}
                         />
-                        {!formData.dataFim && (
-                          <FormHelperText color="red.500">Data de fim é obrigatória</FormHelperText>
+                        {showValidation && !formData.dataFim && (
+                          <FormHelperText color="red.500">Data e hora de fim são obrigatórias</FormHelperText>
                         )}
                       </FormControl>
                   </SimpleGrid>
@@ -562,6 +612,16 @@ const CriarAvaliacaoPage: React.FC = () => {
                         onChange={(e) => setFormData({...formData, enviarLembreteParaTodos: e.target.checked})}
                       >
                         Enviar lembretes para todos os participantes
+                      </Checkbox>
+                    </FormControl>
+
+                    <FormControl>
+                      <FormLabel>Ativar avaliação</FormLabel>
+                      <Checkbox
+                        isChecked={formData.ativo}
+                        onChange={(e) => setFormData({...formData, ativo: e.target.checked})}
+                      >
+                        Ativar avaliação imediatamente após criação
                       </Checkbox>
                     </FormControl>
                   </VStack>
@@ -736,41 +796,15 @@ const CriarAvaliacaoPage: React.FC = () => {
                         </Center>
                       )}
 
-                      {totalPages > 1 && (
-                        <VStack spacing={2} mt={4}>
-                          <Text fontSize="sm" color="gray.500">
-                            Página {currentPage} de {totalPages} • {questions.length} questão(ões) total
-                          </Text>
-                          <HStack spacing={2} justify="center">
-                            <IconButton
-                              aria-label="Página anterior"
-                              icon={<ChevronLeft />}
-                              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                              isDisabled={currentPage === 1}
-                              size="sm"
-                            />
-                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                              <Button
-                                key={page}
-                                size="sm"
-                                variant={page === currentPage ? "solid" : "ghost"}
-                                colorScheme={page === currentPage ? "blue" : undefined}
-                                onClick={() => setCurrentPage(page)}
-                                minW="40px"
-                              >
-                                {page}
-                              </Button>
-                            ))}
-                            <IconButton
-                              aria-label="Próxima página"
-                              icon={<ChevronRight />}
-                              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                              isDisabled={currentPage >= totalPages}
-                              size="sm"
-                            />
-                          </HStack>
-                        </VStack>
-                      )}
+                      <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        totalItems={questions.length}
+                        itemsPerPage={itemsPerPage}
+                        onPageChange={setCurrentPage}
+                        showInfo={true}
+                        size="sm"
+                      />
                     </>
                   );
                 })()}

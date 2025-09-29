@@ -81,7 +81,7 @@ const InstituicoesPage: React.FC = () => {
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://apiavaliacao.catolicasc.org.br/api';
   const toast = useToast();
 
   useEffect(() => {

@@ -8,7 +8,7 @@ interface ProfileRouterProps {
 }
 
 const ProfileRouter: React.FC<ProfileRouterProps> = ({ children }) => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -40,6 +40,18 @@ const ProfileRouter: React.FC<ProfileRouterProps> = ({ children }) => {
       }
     }
   }, [isAuthenticated, user?.perfil, navigate, location.pathname]);
+
+  // Se está carregando, mostrar loading
+  if (isLoading) {
+    return (
+      <Box minH="100vh" bg="gray.50" display="flex" alignItems="center" justifyContent="center">
+        <VStack spacing={4}>
+          <Spinner size="xl" color="blue.500" />
+          <Text>Verificando autenticação...</Text>
+        </VStack>
+      </Box>
+    );
+  }
 
   // Se não está autenticado, mostrar loading
   if (!isAuthenticated) {

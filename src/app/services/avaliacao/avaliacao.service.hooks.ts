@@ -20,20 +20,20 @@ export interface Avaliacao {
   lembrarACadaXDias?: number;
   enviarLembreteAutomatico: boolean;
   enviarLembreteParaTodos: boolean;
-  // Campos para estatísticas (se disponíveis)
+  // Campos para instituição
+  instituicaoId: number;
+  nomeInstituicao?: string;
+  // Campos para estatísticas (opcionais pois podem não vir do endpoint de busca por ID)
   totalParticipantes?: number;
-  participantesResponderam?: number;
+  totalRespostas?: number;
 }
 
 export function useGetAvaliacoes() {
   return useQuery({
     queryKey: ["avaliacoes"],
     queryFn: async () => {
-      const response = await api.get<Avaliacao[]>("/Questionario");
-      // Filtrar apenas avaliações institucionais
-      return response.data.filter((questionario: any) => 
-        questionario.tipo === "AvaliacaoInstitucional"
-      );
+      const response = await api.get<Avaliacao[]>("/Questionario/com-estatisticas");
+      return response.data;
     },
   });
 }
@@ -46,5 +46,52 @@ export function useGetAvaliacaoById(id: number) {
       return response.data;
     },
     enabled: !!id,
+  });
+}
+
+export interface DashboardAdminStats {
+  totalAvaliacoes: number;
+  avaliacoesAtivas: number;
+  totalParticipantes: number;
+  taxaRespostaGeral: number;
+  questionariosRespondidos: number;
+  usuariosAtivos: number;
+}
+
+export function useGetDashboardAdminStats() {
+  return useQuery({
+    queryKey: ["dashboard-admin-stats"],
+    queryFn: async () => {
+      const response = await api.get<DashboardAdminStats>("/Questionario/dashboard-admin");
+      return response.data;
+    },
+  });
+}
+
+export interface AvaliacaoAtiva {
+  id: number;
+  titulo: string;
+  descricao: string;
+  dataInicio: string;
+  dataFim: string;
+  tipoItemAvaliado: string;
+  nomeItemEspecifico: string;
+  ativo: boolean;
+  dataCriacao: string;
+  instituicaoId: number;
+  nomeInstituicao: string;
+  totalParticipantes: number;
+  totalRespostas: number;
+  taxaResposta: number;
+  status: 'ativa' | 'finalizada' | 'aguardando';
+}
+
+export function useGetAvaliacoesAtivas() {
+  return useQuery({
+    queryKey: ["avaliacoes-ativas"],
+    queryFn: async () => {
+      const response = await api.get<AvaliacaoAtiva[]>("/Questionario/avaliacoes-ativas");
+      return response.data;
+    },
   });
 }

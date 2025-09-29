@@ -70,9 +70,9 @@ export default function LoginPage() {
     try {
       loginMutate(data, {
         onError: (error: any) => {
-          if (error?.response?.status === 400 && error?.response?.data?.message === "Email ou senha inválidos") {
+          if (error?.response?.status === 400 && error?.response?.data?.message === "Usuário ou senha inválidos") {
             toast({
-              title: "Email ou senha inválidos",
+              title: "Usuário ou senha inválidos",
               status: "error",
               duration: 10000,
               isClosable: true,
@@ -124,10 +124,10 @@ export default function LoginPage() {
                 <MdEmail color="#9d2235" size={24} />
               </Box>
               <Input 
-                type="email" 
+                type="text" 
                 {...register('email')} 
                 required 
-                placeholder="Digite seu email"
+                placeholder="Digite seu email ou usuário"
                 border="none"
                 _focus={{ border: "none" }}
                 fontSize="lg"

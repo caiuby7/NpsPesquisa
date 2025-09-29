@@ -134,7 +134,7 @@ const ProfessoresPage: React.FC = () => {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importLoading, setImportLoading] = useState(false);
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://apiavaliacao.catolicasc.org.br/api';
   const toast = useToast();
 
   useEffect(() => {
@@ -703,18 +703,19 @@ const ProfessoresPage: React.FC = () => {
       {/* Tabela de Professores */}
       <Box bg="white" borderRadius="lg" p={6} shadow="md">
         <Heading size="md" mb={4}>Lista de Professores</Heading>
-        <Table variant="simple">
+        <Box overflowX="auto">
+          <Table variant="simple" minW="1200px">
           <Thead>
             <Tr>
-              <Th>Nome</Th>
-              <Th>Email</Th>
-              <Th>Departamento</Th>
-              <Th>Titulação</Th>
-              <Th>Instituição</Th>
-              <Th>Telefone</Th>
-              <Th>Data Cadastro</Th>
-              <Th>Status</Th>
-              <Th>Ações</Th>
+              <Th minW="200px">Nome</Th>
+              <Th minW="250px">Email</Th>
+              <Th minW="150px">Departamento</Th>
+              <Th minW="120px">Titulação</Th>
+              <Th minW="150px">Instituição</Th>
+              <Th minW="120px">Telefone</Th>
+              <Th minW="120px">Data Cadastro</Th>
+              <Th minW="80px">Status</Th>
+              <Th minW="100px">Ações</Th>
             </Tr>
           </Thead>
           <Tbody>
@@ -733,10 +734,10 @@ const ProfessoresPage: React.FC = () => {
                     <Td>
                       <HStack>
                         <GraduationCap className="h-4 w-4 text-blue-400" />
-                        <Box>
-                          <Text fontWeight="medium">{professor.nome}</Text>
+                        <Box maxW="180px">
+                          <Text fontWeight="medium" isTruncated title={professor.nome}>{professor.nome}</Text>
                           {professor.cpf && (
-                            <Text fontSize="sm" color="gray.500">{professor.cpf}</Text>
+                            <Text fontSize="sm" color="gray.500" isTruncated>{professor.cpf}</Text>
                           )}
                         </Box>
                       </HStack>
@@ -744,14 +745,14 @@ const ProfessoresPage: React.FC = () => {
                     <Td>
                       <HStack>
                         <Mail className="h-4 w-4 text-gray-400" />
-                        <Text fontSize="sm">{professor.email}</Text>
+                        <Text fontSize="sm" isTruncated maxW="220px" title={professor.email}>{professor.email}</Text>
                       </HStack>
                     </Td>
                     <Td>
                       {professor.departamento ? (
                         <HStack>
                           <Building className="h-4 w-4 text-gray-400" />
-                          <Text fontSize="sm">{professor.departamento}</Text>
+                          <Text fontSize="sm" isTruncated maxW="120px" title={professor.departamento}>{professor.departamento}</Text>
                         </HStack>
                       ) : (
                         <Text fontSize="sm" color="gray.400">Não informado</Text>
@@ -773,7 +774,7 @@ const ProfessoresPage: React.FC = () => {
                       {professor.instituicao ? (
                         <HStack>
                           <Building className="h-4 w-4 text-gray-400" />
-                          <Text fontSize="sm">{professor.instituicao.nome}</Text>
+                          <Text fontSize="sm" isTruncated maxW="120px" title={professor.instituicao.nome}>{professor.instituicao.nome}</Text>
                         </HStack>
                       ) : (
                         <Text fontSize="sm" color="gray.400">Não informada</Text>
@@ -841,7 +842,8 @@ const ProfessoresPage: React.FC = () => {
               </>
             )}
           </Tbody>
-        </Table>
+          </Table>
+        </Box>
       </Box>
 
       {/* Modal de Importação XLS */}

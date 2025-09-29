@@ -55,8 +55,24 @@ export default function QuestionarioPorChavePage() {
       try {
         const response = await api.get(`/Questionario/por-chave/${chave}`);
         setData(response.data);
-      } catch (error) {
-        alert("Erro ao carregar questionário. O link pode ter expirado ou o questionário não existe mais.");
+      } catch (error: any) {
+        console.error('Erro ao carregar questionário:', error);
+        console.error('Detalhes do erro:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.response?.data?.message
+        });
+        
+        // Verificar se é a mensagem específica do backend
+        if (error.response?.data?.message) {
+          alert(error.response.data.message);
+        } else if (error.response?.status === 400) {
+          // Para status 400, tentar extrair a mensagem de diferentes formas
+          const message = error.response?.data?.message || error.response?.data || "Erro ao carregar questionário.";
+          alert(message);
+        } else {
+          alert("Erro ao carregar questionário. O link pode ter expirado ou o questionário não existe mais.");
+        }
       } finally {
         setLoading(false);
       }
@@ -142,9 +158,6 @@ export default function QuestionarioPorChavePage() {
                       </Text>
                       <Text fontSize="sm" color="blue.700">
                         • Todas as respostas são confidenciais
-                      </Text>
-                      <Text fontSize="sm" color="blue.700">
-                        • O questionário pode ser salvo e retomado posteriormente
                       </Text>
                     </VStack>
                   </VStack>

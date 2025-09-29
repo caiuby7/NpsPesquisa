@@ -4,6 +4,7 @@ import { UseFormRegister, Control, UseFormWatch } from "react-hook-form";
 import MultipleChoiceQuestion from "../MultipleChoiceQuestion/multiple-choice-question.component";
 import { MatrixQuestion } from "../ArrayQuestion/array-question.component";
 import { EscalaLinear } from "../LinearScale/linear-scale.component";
+import CheckboxExecution from "../CheckboxExecution/checkbox-execution.component";
 import {
   QuestionResponse,
   QuestionType,
@@ -95,6 +96,16 @@ export function QuestionTypeExecution({
         watch={watch}
         register={register} 
         index={index} 
+      />
+    );
+  }
+
+  if (type === "CaixaSelecao" && question?.opcoes) {
+    return (
+      <CheckboxExecution
+        register={register}
+        question={question}
+        index={index}
       />
     );
   }

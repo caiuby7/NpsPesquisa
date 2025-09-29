@@ -23,6 +23,14 @@ export function withAuth<
   return async (
     ctx: GetServerSidePropsContext
   ): Promise<GetServerSidePropsResult<P>> => {
+    // Verificar se estamos no cliente
+    if (typeof window === 'undefined') {
+      // No servidor, sempre permitir (a verificação será feita no cliente)
+      return {
+        props: {} as P,
+      };
+    }
+
     const token = localStorage.getItem("token");
 
     if (!token || !isTokenValid(token)) {

@@ -18,7 +18,15 @@ import {
   Select,
   SimpleGrid,
   Stack,
-  ButtonGroup
+  ButtonGroup,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  ModalCloseButton,
+  useDisclosure
 } from '@chakra-ui/react';
 import { 
   Plus,
@@ -34,7 +42,9 @@ import {
   UserPlus,
   Mail,
   Bell,
-  BarChart3
+  BarChart3,
+  Copy,
+  User
 } from 'lucide-react';
 import MainLayout from '../../../components/layout/main-layout.component';
 import { useGetAvaliacoes, Avaliacao } from '../../services/avaliacao/avaliacao.service.hooks';
@@ -47,9 +57,24 @@ const AvaliacoesPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterTipo, setFilterTipo] = useState('');
+  const [avaliacaoParaCopiar, setAvaliacaoParaCopiar] = useState<Avaliacao | null>(null);
+  const [copyForm, setCopyForm] = useState({
+    titulo: '',
+    descricao: '',
+    dataInicio: '',
+    dataFim: '',
+    instituicaoId: ''
+  });
+  const [instituicoes, setInstituicoes] = useState([]);
+  const [isCopyLoading, setIsCopyLoading] = useState(false);
 
+  const { isOpen: isCopyModalOpen, onOpen: onCopyModalOpen, onClose: onCopyModalClose } = useDisclosure();
   const toast = useToast();
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    carregarInstituicoes();
+  }, []);
 
   const handleEdit = (avaliacao: Avaliacao) => {
     // Navegar para página de edição da avaliação
@@ -149,6 +174,75 @@ const AvaliacoesPage: React.FC = () => {
       duration: 2000,
       isClosable: true,
     });
+  };
+
+  const handleCopy = (avaliacao: Avaliacao) => {
+    setAvaliacaoParaCopiar(avaliacao);
+    setCopyForm({
+      titulo: `${avaliacao.titulo} (Cópia)`,
+      descricao: avaliacao.descricao || '',
+      dataInicio: '',
+      dataFim: '',
+      instituicaoId: ''
+    });
+    onCopyModalOpen();
+  };
+
+  const carregarInstituicoes = async () => {
+    try {
+      const response = await api.get('/Instituicao');
+      setInstituicoes(response.data || []);
+    } catch (error) {
+      console.error('Erro ao carregar instituições:', error);
+    }
+  };
+
+  const handleCopySubmit = async () => {
+    if (!avaliacaoParaCopiar) return;
+
+    if (!copyForm.titulo || !copyForm.dataInicio || !copyForm.dataFim || !copyForm.instituicaoId) {
+      toast({
+        title: 'Campos obrigatórios',
+        description: 'Por favor, preencha todos os campos obrigatórios.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    try {
+      setIsCopyLoading(true);
+      const response = await api.post(`/Questionario/${avaliacaoParaCopiar.id}/copiar`, {
+        titulo: copyForm.titulo,
+        descricao: copyForm.descricao,
+        dataInicio: copyForm.dataInicio,
+        dataFim: copyForm.dataFim,
+        instituicaoId: parseInt(copyForm.instituicaoId)
+      });
+
+      toast({
+        title: 'Sucesso',
+        description: 'Avaliação copiada com sucesso!',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+
+      onCopyModalClose();
+      refetch();
+    } catch (error) {
+      toast({
+        title: 'Erro',
+        description: 'Erro ao copiar avaliação',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+      console.error('Erro:', error);
+    } finally {
+      setIsCopyLoading(false);
+    }
   };
 
 
@@ -271,31 +365,74 @@ const AvaliacoesPage: React.FC = () => {
                   borderColor={avaliacao.ativo ? "green.400" : "gray.200"}
                   position="relative"
                 >
-                  <Stack direction={{ base: "column", md: "row" }} justify="space-between" align="center" gap={4}>
-                    <Box flex="1">
-                      <HStack mb={1}>
-                        <Heading size="md">{avaliacao.titulo}</Heading>
-                        {avaliacao.ativo && <Badge colorScheme="green">Ativa</Badge>}
-                      </HStack>
-                      <Text fontSize="sm" color="gray.600">{avaliacao.descricao || 'Sem descrição'}</Text>
-                      <HStack spacing={4} mt={2}>
-                        <HStack spacing={2}>
-                          {getIconeTipoItem(avaliacao.tipoItemAvaliado || '')}
-                          <Text fontSize="xs" color="gray.500">{avaliacao.tipoItemAvaliado || 'N/A'}</Text>
+                  <HStack spacing={6} align="start" h="full">
+                    {/* Coluna Esquerda - Informações */}
+                    <VStack spacing={4} align="start" flex="1">
+                      {/* Cabeçalho */}
+                      <VStack align="start" spacing={2}>
+                        <HStack>
+                          <Heading size="md">{avaliacao.titulo}</Heading>
+                          {avaliacao.ativo && <Badge colorScheme="green">Ativa</Badge>}
                         </HStack>
-                        <HStack spacing={2}>
-                          <Calendar size={14} color="gray.400" />
-                          <Text fontSize="xs" color="gray.500">
-                            {new Date(avaliacao.dataCriacao).toLocaleDateString('pt-BR')}
-                          </Text>
-                        </HStack>
-                        <Text fontSize="xs" color="gray.500">
-                          {avaliacao.participantesResponderam || 0}/{avaliacao.totalParticipantes || 0} participantes
-                        </Text>
-                      </HStack>
-                    </Box>
-                    
-                    <Stack direction={{ base: "column", md: "row" }} spacing={2} align="center">
+                        <Text fontSize="sm" color="gray.600">{avaliacao.descricao || 'Sem descrição'}</Text>
+                      </VStack>
+
+                      {/* Metadados */}
+                      <Box 
+                        p={4} 
+                        w="full"
+                      >
+                        <VStack spacing={3} align="start">
+                          {/* Tipo de Item Avaliado */}
+                          <HStack spacing={3} align="center">
+                            {getIconeTipoItem(avaliacao.tipoItemAvaliado || '')}
+                            <Text fontSize="sm" color="gray.700">
+                              <Text as="span" fontSize="xs" color="gray.500" fontWeight="medium">
+                                Tipo:
+                              </Text>{' '}
+                              {avaliacao.tipoItemAvaliado || 'N/A'}
+                            </Text>
+                          </HStack>
+                          
+                          {/* Instituição */}
+                          <HStack spacing={3} align="center">
+                            <Building size={16} color="gray.500" />
+                            <Text fontSize="sm" color="gray.700">
+                              <Text as="span" fontSize="xs" color="gray.500" fontWeight="medium">
+                                Instituição:
+                              </Text>{' '}
+                              {avaliacao.nomeInstituicao || 'Instituição não definida'}
+                            </Text>
+                          </HStack>
+                          
+                          {/* Data de Criação */}
+                          <HStack spacing={3} align="center">
+                            <Calendar size={16} color="gray.500" />
+                            <Text fontSize="sm" color="gray.700">
+                              <Text as="span" fontSize="xs" color="gray.500" fontWeight="medium">
+                                Data de Criação:
+                              </Text>{' '}
+                              {new Date(avaliacao.dataCriacao).toLocaleDateString('pt-BR')}
+                            </Text>
+                          </HStack>
+                          
+                          {/* Participantes */}
+                          <HStack spacing={3} align="center">
+                            <User size={16} color="gray.500" />
+                            <Text fontSize="sm" color="gray.700">
+                              <Text as="span" fontSize="xs" color="gray.500" fontWeight="medium">
+                                Participantes:
+                              </Text>{' '}
+                              {avaliacao.totalRespostas}/{avaliacao.totalParticipantes} participantes
+                            </Text>
+                          </HStack>
+                        </VStack>
+                      </Box>
+                    </VStack>
+
+                    {/* Coluna Direita - Ações */}
+                    <VStack spacing={4} align="center" minW="280px">
+                      {/* Ícones de Ação */}
                       <ButtonGroup size="sm" isAttached variant="ghost">
                         <IconButton 
                           aria-label="Visualizar" 
@@ -310,54 +447,154 @@ const AvaliacoesPage: React.FC = () => {
                           icon={<Edit />}
                         />
                         <IconButton 
+                          aria-label="Copiar" 
+                          colorScheme="purple" 
+                          onClick={() => handleCopy(avaliacao)}
+                          icon={<Copy />}
+                        />
+                        <IconButton 
                           aria-label="Excluir" 
                           colorScheme="red" 
                           onClick={() => handleDelete(avaliacao.id)}
                           icon={<Trash2 />}
                         />
                       </ButtonGroup>
-                      
-                      <ButtonGroup size="sm" spacing={2}>
+
+                      {/* Botões de Ação - Centralizados */}
+                      <VStack spacing={3} align="stretch" w="full">
                         <Button 
                           colorScheme="teal" 
                           variant="solid" 
+                          size="sm"
                           leftIcon={<UserPlus size={16} />}
                           onClick={() => handleAddParticipants(avaliacao.id)}
+                          w="full"
                         >
                           Adicionar Participantes
                         </Button>
                         <Button 
                           colorScheme="orange" 
                           variant="outline" 
+                          size="sm"
                           leftIcon={<Mail size={16} />}
                           onClick={() => handleSendInvites(avaliacao.id.toString())}
+                          w="full"
                         >
                           Enviar Convites
                         </Button>
                         <Button 
                           colorScheme="green" 
                           variant="solid" 
+                          size="sm"
                           leftIcon={<Bell size={16} />}
                           onClick={() => handleSendReminder(avaliacao.id.toString())}
+                          w="full"
                         >
                           Enviar Lembrete
                         </Button>
                         <Button 
                           colorScheme="blue" 
                           variant="outline" 
+                          size="sm"
                           leftIcon={<BarChart3 size={16} />}
                           onClick={() => handleMonitor(avaliacao.id)}
+                          w="full"
                         >
                           📊 Acompanhar
                         </Button>
-                      </ButtonGroup>
-                    </Stack>
-                  </Stack>
+                      </VStack>
+                    </VStack>
+                  </HStack>
                 </Box>
               ))}
             </Stack>
           )}
         </Box>
+
+        {/* Modal de Cópia de Avaliação */}
+        <Modal isOpen={isCopyModalOpen} onClose={onCopyModalClose} size="lg">
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>Copiar Avaliação</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              <VStack spacing={4}>
+                <FormControl isRequired>
+                  <FormLabel>Título da Nova Avaliação</FormLabel>
+                  <Input
+                    value={copyForm.titulo}
+                    onChange={(e) => setCopyForm({...copyForm, titulo: e.target.value})}
+                    placeholder="Digite o título da nova avaliação"
+                  />
+                </FormControl>
+                
+                <FormControl>
+                  <FormLabel>Descrição</FormLabel>
+                  <Input
+                    value={copyForm.descricao}
+                    onChange={(e) => setCopyForm({...copyForm, descricao: e.target.value})}
+                    placeholder="Digite a descrição"
+                  />
+                </FormControl>
+
+                <FormControl isRequired>
+                  <FormLabel>Instituição</FormLabel>
+                  <Select
+                    value={copyForm.instituicaoId}
+                    onChange={(e) => setCopyForm({...copyForm, instituicaoId: e.target.value})}
+                    placeholder="Selecione a instituição"
+                  >
+                    {instituicoes.map((instituicao: any) => (
+                      <option key={instituicao.id} value={instituicao.id}>
+                        {instituicao.nome}
+                      </option>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <SimpleGrid columns={2} spacing={4} w="full">
+                  <FormControl isRequired>
+                    <FormLabel>Data de Início</FormLabel>
+                    <Input
+                      type="datetime-local"
+                      value={copyForm.dataInicio}
+                      onChange={(e) => setCopyForm({...copyForm, dataInicio: e.target.value})}
+                    />
+                  </FormControl>
+                  
+                  <FormControl isRequired>
+                    <FormLabel>Data de Fim</FormLabel>
+                    <Input
+                      type="datetime-local"
+                      value={copyForm.dataFim}
+                      onChange={(e) => setCopyForm({...copyForm, dataFim: e.target.value})}
+                    />
+                  </FormControl>
+                </SimpleGrid>
+
+                <Box p={4} bg="blue.50" borderRadius="md" w="full">
+                  <Text fontSize="sm" color="blue.700">
+                    <strong>Atenção:</strong> A nova avaliação será criada com todas as questões e configurações da avaliação original, 
+                    mas sem os participantes. Você poderá adicionar os participantes posteriormente.
+                  </Text>
+                </Box>
+              </VStack>
+            </ModalBody>
+            <ModalFooter>
+              <Button variant="ghost" mr={3} onClick={onCopyModalClose}>
+                Cancelar
+              </Button>
+              <Button 
+                colorScheme="purple" 
+                onClick={handleCopySubmit}
+                isLoading={isCopyLoading}
+                loadingText="Copiando..."
+              >
+                Copiar Avaliação
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
 
       </Box>
     </MainLayout>

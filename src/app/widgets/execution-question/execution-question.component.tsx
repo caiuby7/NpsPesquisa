@@ -1,10 +1,17 @@
-import { Box, Button, Stack, Text, Heading, VStack, HStack, Table, Thead, Tbody, Tr, Th, Td, useToast } from "@chakra-ui/react";
+import { Box, Button, Stack, Text, Heading, VStack, HStack, Table, Thead, Tbody, Tr, Th, Td, useToast, Alert, AlertIcon, AlertTitle, AlertDescription, CloseButton } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
+import Cookies from 'js-cookie';
 import { api } from "../../services/api";
 import { QuestionTypeExecution } from "./question-type-execution.component";
 import { QuestionResponse } from "../../services/form";
 import { OptionItem } from "../../services/form/form.services.types";
 import { useConditionalQuestions } from "../../../hooks/useConditionalQuestions";
+import { useQuestionarioAutoSave } from "../../../hooks/useQuestionarioAutoSave";
+
+// Interface estendida para lidar com questões condicionais completas no payload
+interface OptionItemWithConditional extends OptionItem {
+  questaoCondicional?: QuestionResponse;
+}
 
 interface ItemAvaliado {
   id: number;
@@ -31,11 +38,73 @@ interface ExecutionFormProps {
 export default function ExecutionForm({ questionarioId, participanteId, chave, tipoItemAvaliado, itensAvaliados }: ExecutionFormProps) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [responses, setResponses] = useState<Record<string | number, any>>({});
+  const [submitting, setSubmitting] = useState(false);
   const [invalidRequired, setInvalidRequired] = useState<number[]>([]);
+  const [showRecoveryAlert, setShowRecoveryAlert] = useState(false);
+  
+  // TEMPORÁRIO: Desabilitar auto-save completamente para resolver bloqueio
+  // const {
+  //   responses,
+  //   updateResponse,
+  //   clearResponses,
+  //   saveManually,
+  //   isLoading: autoSaveLoading,
+  //   hasUnsavedChanges,
+  //   lastSaved,
+  //   hasSavedResponses,
+  //   showRecoveryNotification
+  // } = useQuestionarioAutoSave({
+  //   questionarioId,
+  //   participanteId,
+  //   chave,
+  //   tipoItemAvaliado,
+  //   itensAvaliados
+  // });
+
+  // Estado local temporário
+  const [responses, setResponses] = useState<Record<string | number, any>>({});
+  const autoSaveLoading = false;
+  const hasUnsavedChanges = false;
+  const lastSaved = null;
+  const hasSavedResponses = false;
+  const showRecoveryNotification = false;
+
+  const updateResponse = (questionId: string | number, value: any) => {
+    console.log('🔄 updateResponse local:', { questionId, value });
+    setResponses(prev => ({ ...prev, [questionId]: value }));
+  };
+
+  const clearResponses = () => {
+    console.log('🗑️ clearResponses local');
+    setResponses({});
+  };
+
+  const saveManually = () => {
+    console.log('💾 saveManually local - não implementado');
+  };
   
   const questoes = data?.questionario?.questoes || [];
   const { shouldShowQuestion, handleAnswer, getVisibleQuestions } = useConditionalQuestions(questoes);
+  
+  // Debug do estado das respostas
+  console.log('🔍 Estado das respostas:', {
+    responses,
+    responsesCount: Object.keys(responses).length,
+    responsesKeys: Object.keys(responses),
+    questoesCount: questoes.length,
+    questoesIds: questoes.map((q: QuestionResponse) => q.id)
+  });
+
+  // Debug: Verificar se há questões duplicadas
+  const questoesIds = questoes.map((q: QuestionResponse) => q.id);
+  const questoesDuplicadas = questoesIds.filter((id: number, index: number) => questoesIds.indexOf(id) !== index);
+  if (questoesDuplicadas.length > 0) {
+    console.warn('⚠️ QUESTÕES DUPLICADAS ENCONTRADAS:', {
+      duplicadas: questoesDuplicadas,
+      totalQuestoes: questoes.length,
+      questoesIds: questoesIds
+    });
+  }
   
   // Determinar se deve usar estrutura agrupada por itens
   // Usar estrutura agrupada quando há itens avaliados (independente do tipo)
@@ -48,6 +117,19 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
     questoesCount: questoes.length,
     questoes: questoes.map((q: QuestionResponse) => ({ id: q.id, texto: q.texto, tipo: q.tipo, isCondicional: q.isCondicional }))
   });
+  
+  // Debug específico para questão 44
+  const questao44 = questoes.find((q: QuestionResponse) => q.id === 44);
+  if (questao44) {
+    console.log('🔍 Debug - Questão 44 encontrada:', {
+      id: questao44.id,
+      texto: questao44.texto?.substring(0, 100) + "...",
+      tipo: questao44.tipo,
+      obrigatorio: questao44.obrigatorio,
+      shouldUseGroupedStructure,
+      itensAvaliados: itensAvaliados?.map(i => ({ id: i.id, nome: i.nomeItemEspecifico }))
+    });
+  }
 
   // Debug: Log da estrutura agrupada
   console.log('🔍 Debug - Estrutura agrupada:', {
@@ -57,15 +139,41 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
     shouldUseGroupedStructure
   });
 
+  // Notificação de recuperação de respostas
+  useEffect(() => {
+    if (showRecoveryNotification && !showRecoveryAlert) {
+      setShowRecoveryAlert(true);
+    }
+  }, [showRecoveryNotification, showRecoveryAlert]);
+
   useEffect(() => {
     async function loadQuestionario() {
       try {
+        // Verificar se o token está disponível
+        const token = localStorage.getItem('token');
+        console.log('🔍 Token disponível ao carregar questionário:', !!token);
+        
         const response = await api.get(`/Questionario/por-chave/${chave}`);
         console.log('Dados do questionário:', response.data);
         setData(response.data);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Erro ao carregar questionário:', error);
-        alert("Erro ao carregar questionário. O link pode ter expirado ou o questionário não existe mais.");
+        console.error('Detalhes do erro:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.response?.data?.message
+        });
+        
+        // Verificar se é a mensagem específica do backend
+        if (error.response?.data?.message) {
+          alert(error.response.data.message);
+        } else if (error.response?.status === 400) {
+          // Para status 400, tentar extrair a mensagem de diferentes formas
+          const message = error.response?.data?.message || error.response?.data || "Erro ao carregar questionário.";
+          alert(message);
+        } else {
+          alert("Erro ao carregar questionário. O link pode ter expirado ou o questionário não existe mais.");
+        }
       } finally {
         setLoading(false);
       }
@@ -77,23 +185,29 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
   }, [chave]);
 
   const handleResponseChange = (questionId: string | number, value: any) => {
-    setResponses(prev => ({
-      ...prev,
-      [questionId]: value
-    }));
+    console.log('🔄 handleResponseChange chamado:', { questionId, value, type: typeof questionId });
+    
+    // Usar o hook de auto-save
+    updateResponse(questionId, value);
     
     // Notificar o hook de questões condicionais sobre a mudança
     // Para questões agrupadas, extrair o ID da questão da chave
     if (typeof questionId === 'number') {
+      console.log('🔢 Processando questão normal:', questionId);
       handleAnswer(questionId, value);
     } else if (typeof questionId === 'string' && questionId.includes('_')) {
       // Para questões agrupadas (formato: "questaoId_itemId"), processar a questão principal
       const questaoId = parseInt(questionId.split('_')[0]);
+      console.log('🔗 Processando questão agrupada:', { questionId, questaoId });
       handleAnswer(questaoId, value);
     }
   };
 
   const handleSubmit = async () => {
+    if (submitting) return; // Evitar múltiplos envios
+    
+    setSubmitting(true);
+    
     // Coletar todas as questões (principais + condicionais VISÍVEIS) para validação
     const todasQuestoes: QuestionResponse[] = [];
     
@@ -110,8 +224,19 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
             ? respostaQuestao.includes(String(opcao.id)) 
             : String(respostaQuestao) === String(opcao.id);
             
+          console.log(`🔍 Debug - Verificação condicional - Questão ${q.id}, Opção ${opcao.id}:`, {
+            respostaQuestao,
+            opcaoId: opcao.id,
+            isOptionSelected,
+            questaoCondicional: opcao.questaoCondicional?.id,
+            questaoCondicionalObrigatoria: opcao.questaoCondicional?.obrigatorio
+          });
+            
           if (isOptionSelected) {
             todasQuestoes.push(opcao.questaoCondicional);
+            console.log(`✅ Questão condicional ${opcao.questaoCondicional.id} adicionada à validação`);
+          } else {
+            console.log(`❌ Questão condicional ${opcao.questaoCondicional.id} NÃO adicionada (opção não selecionada)`);
           }
         }
       });
@@ -125,8 +250,19 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
             ? respostaQuestao.includes(String(coluna.id)) 
             : String(respostaQuestao) === String(coluna.id);
             
+          console.log(`🔍 Debug - Verificação condicional coluna - Questão ${q.id}, Coluna ${coluna.id}:`, {
+            respostaQuestao,
+            colunaId: coluna.id,
+            isColumnSelected,
+            questaoCondicional: coluna.questaoCondicional?.id,
+            questaoCondicionalObrigatoria: coluna.questaoCondicional?.obrigatorio
+          });
+            
           if (isColumnSelected) {
             todasQuestoes.push(coluna.questaoCondicional);
+            console.log(`✅ Questão condicional coluna ${coluna.questaoCondicional.id} adicionada à validação`);
+          } else {
+            console.log(`❌ Questão condicional coluna ${coluna.questaoCondicional.id} NÃO adicionada (coluna não selecionada)`);
           }
         }
       });
@@ -136,11 +272,116 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
     const obrigatoriasNaoRespondidas = todasQuestoes.filter((q: QuestionResponse) => {
       if (!q.obrigatorio) return false;
       
-      if (shouldUseGroupedStructure && itensAvaliados) {
+      // Verificar se é uma questão condicional que não deveria estar sendo validada
+      const isQuestaoCondicional = questoes.some((questaoPrincipal: QuestionResponse) => 
+        questaoPrincipal.opcoes?.some((opcao: any) => 
+          opcao.questaoCondicional?.id === q.id
+        ) || questaoPrincipal.colunas?.some((coluna: any) => 
+          coluna.questaoCondicional?.id === q.id
+        )
+      );
+      
+      if (isQuestaoCondicional) {
+        // Para questões condicionais, verificar se a opção que as ativa está selecionada
+        const questaoPrincipal = questoes.find((questaoPrincipal: QuestionResponse) => 
+          questaoPrincipal.opcoes?.some((opcao: any) => 
+            opcao.questaoCondicional?.id === q.id
+          ) || questaoPrincipal.colunas?.some((coluna: any) => 
+            coluna.questaoCondicional?.id === q.id
+          )
+        );
+        
+        if (questaoPrincipal) {
+          const respostaQuestao = responses[questaoPrincipal.id];
+          
+          // Verificar se alguma opção que ativa esta questão condicional está selecionada
+          const opcaoAtiva = questaoPrincipal.opcoes?.find((opcao: any) => 
+            opcao.questaoCondicional?.id === q.id && opcao.ativaCondicao
+          ) || questaoPrincipal.colunas?.find((coluna: any) => 
+            coluna.questaoCondicional?.id === q.id && coluna.ativaCondicao
+          );
+          
+          if (opcaoAtiva) {
+            const isOptionSelected = Array.isArray(respostaQuestao) 
+              ? respostaQuestao.includes(String(opcaoAtiva.id)) 
+              : String(respostaQuestao) === String(opcaoAtiva.id);
+            
+            console.log(`🔍 Validação condicional - Questão ${q.id}:`, {
+              questaoPrincipal: questaoPrincipal.id,
+              questaoPrincipalTexto: questaoPrincipal.texto?.substring(0, 50) + "...",
+              opcaoAtiva: opcaoAtiva.id,
+              opcaoAtivaTexto: opcaoAtiva.texto,
+              respostaQuestao,
+              isOptionSelected,
+              deveValidar: isOptionSelected,
+              questaoCondicionalTexto: q.texto?.substring(0, 50) + "...",
+              questaoCondicionalTipo: q.tipo
+            });
+            
+            // Só validar se a opção que ativa a condição estiver selecionada
+            if (!isOptionSelected) {
+              console.log(`❌ Questão condicional ${q.id} NÃO deve ser validada (opção não selecionada)`);
+              return false; // Não validar esta questão condicional
+            }
+          }
+        }
+      }
+      
+      // Verificar se esta questão específica está na estrutura agrupada
+      const isQuestaoAgrupada = tipoItemAvaliado !== "Curso" && tipoItemAvaliado !== "Estrutura" && tipoItemAvaliado !== "Infraestrutura" && shouldUseGroupedStructure && itensAvaliados;
+      
+      if (isQuestaoAgrupada) {
         // Para estrutura agrupada, verificar se todas as respostas para cada item foram respondidas
         const naoRespondida = itensAvaliados.some((item) => {
-          const respostaKey = `${q.id}_${item.id}`;
-          const resposta = responses[respostaKey];
+          // Verificar se é questão condicional e buscar a chave correta
+          const isQuestaoCondicional = questoes.some((questaoPrincipal: QuestionResponse) => 
+            questaoPrincipal.opcoes?.some((opcao: any) => 
+              opcao.questaoCondicional?.id === q.id
+            ) || questaoPrincipal.colunas?.some((coluna: any) => 
+              coluna.questaoCondicional?.id === q.id
+            )
+          );
+          
+          let respostaKey: string | number = `${q.id}_${item.id}`;
+          let resposta = responses[respostaKey];
+          
+          if (isQuestaoCondicional) {
+            // Buscar a questão principal que ativa esta condição
+            const questaoPrincipal = questoes.find((questaoPrincipal: QuestionResponse) => 
+              questaoPrincipal.opcoes?.some((opcao: any) => 
+                opcao.questaoCondicional?.id === q.id
+              ) || questaoPrincipal.colunas?.some((coluna: any) => 
+                coluna.questaoCondicional?.id === q.id
+              )
+            );
+            
+            if (questaoPrincipal) {
+              // Verificar se a opção que ativa esta condição está selecionada para este item
+              const respostaQuestaoPrincipal = responses[`${questaoPrincipal.id}_${item.id}`];
+              const opcaoAtiva = questaoPrincipal.opcoes?.find((opcao: any) => 
+                opcao.questaoCondicional?.id === q.id && opcao.ativaCondicao
+              ) || questaoPrincipal.colunas?.find((coluna: any) => 
+                coluna.questaoCondicional?.id === q.id && coluna.ativaCondicao
+              );
+              
+              if (opcaoAtiva) {
+                const isOptionSelected = Array.isArray(respostaQuestaoPrincipal) 
+                  ? respostaQuestaoPrincipal.includes(String(opcaoAtiva.id)) 
+                  : String(respostaQuestaoPrincipal) === String(opcaoAtiva.id);
+                
+                // Se a opção não está selecionada, não validar esta questão condicional
+                if (!isOptionSelected) {
+                  console.log(`🔍 Questão condicional ${q.id} NÃO deve ser validada para item ${item.id} (opção não selecionada)`);
+                  return false; // Não validar esta questão condicional para este item
+                }
+                
+                // Usar chave única para questão condicional (mesma ordem da renderização)
+                respostaKey = `${q.id}_${questaoPrincipal.id}_${item.id}`;
+                resposta = responses[respostaKey];
+              }
+            }
+          }
+          
           const isEmpty = resposta === undefined || resposta === "" || resposta === null ||
             (Array.isArray(resposta) && resposta.length === 0);
           
@@ -148,7 +389,9 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
             respostaKey,
             resposta,
             isEmpty,
-            obrigatorio: q.obrigatorio
+            obrigatorio: q.obrigatorio,
+            itemNome: item.nomeItemEspecifico,
+            isQuestaoCondicional
           });
           
           return isEmpty;
@@ -157,14 +400,64 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
         return naoRespondida;
       } else {
         // Para estrutura normal, verificar a resposta direta
-        const resposta = responses[q.id];
-        const isEmpty = resposta === undefined || resposta === "" || resposta === null ||
-          (Array.isArray(resposta) && resposta.length === 0);
+        // Se for questão condicional, usar chave única com questão principal
+        let respostaKey: string | number = q.id;
+        let resposta = responses[q.id];
+        
+        // Verificar se é questão condicional e buscar a chave correta
+        const isQuestaoCondicional = questoes.some((questaoPrincipal: QuestionResponse) => 
+          questaoPrincipal.opcoes?.some((opcao: any) => 
+            opcao.questaoCondicional?.id === q.id
+          ) || questaoPrincipal.colunas?.some((coluna: any) => 
+            coluna.questaoCondicional?.id === q.id
+          )
+        );
+        
+        if (isQuestaoCondicional) {
+          // Buscar a questão principal que ativa esta condição
+          const questaoPrincipal = questoes.find((questaoPrincipal: QuestionResponse) => 
+            questaoPrincipal.opcoes?.some((opcao: any) => 
+              opcao.questaoCondicional?.id === q.id
+            ) || questaoPrincipal.colunas?.some((coluna: any) => 
+              coluna.questaoCondicional?.id === q.id
+            )
+          );
+          
+          if (questaoPrincipal) {
+            respostaKey = `${q.id}_${questaoPrincipal.id}`;
+            resposta = responses[respostaKey];
+          }
+        }
+        
+        const isEmpty = resposta === undefined || 
+          resposta === "" || 
+          resposta === null || 
+          (Array.isArray(resposta) && resposta.length === 0) ||
+          (typeof resposta === 'string' && resposta.trim() === ""); // Adicionar verificação para string vazia
           
         console.log(`🔍 Validação normal - Questão ${q.id}:`, {
+          respostaKey,
           resposta,
+          tipoResposta: typeof resposta,
+          isArray: Array.isArray(resposta),
+          arrayLength: Array.isArray(resposta) ? resposta.length : 'N/A',
           isEmpty,
-          obrigatorio: q.obrigatorio
+          obrigatorio: q.obrigatorio,
+          questaoTipo: q.tipo,
+          questaoTexto: q.texto?.substring(0, 50) + "...",
+          isQuestaoCondicional,
+          // Debug específico para questão 44
+          ...(q.id === 44 && {
+            debugQuestao44: {
+              respostaExata: resposta,
+              isUndefined: resposta === undefined,
+              isEmptyString: resposta === "",
+              isNull: resposta === null,
+              isArrayEmpty: Array.isArray(resposta) && resposta.length === 0,
+              isStringEmpty: typeof resposta === 'string' && resposta.trim() === "",
+              calculoFinal: `${resposta === undefined} || ${resposta === ""} || ${resposta === null} || ${Array.isArray(resposta) && resposta.length === 0} || ${typeof resposta === 'string' && resposta.trim() === ""} = ${isEmpty}`
+            }
+          })
         });
         
         return isEmpty;
@@ -180,6 +473,21 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
     });
     
     if (obrigatoriasNaoRespondidas.length > 0) {
+      console.log('❌ QUESTÕES OBRIGATÓRIAS NÃO RESPONDIDAS:', obrigatoriasNaoRespondidas.map((q: QuestionResponse) => ({
+        id: q.id,
+        texto: q.texto?.substring(0, 100) + "...",
+        tipo: q.tipo,
+        obrigatorio: q.obrigatorio,
+        resposta: responses[q.id],
+        isCondicional: questoes.some((questaoPrincipal: QuestionResponse) => 
+          questaoPrincipal.opcoes?.some((opcao: any) => 
+            opcao.questaoCondicional?.id === q.id
+          ) || questaoPrincipal.colunas?.some((coluna: any) => 
+            coluna.questaoCondicional?.id === q.id
+          )
+        )
+      })));
+      
       setInvalidRequired(obrigatoriasNaoRespondidas.map((q: QuestionResponse) => q.id));
       alert("Por favor, responda todas as questões obrigatórias.");
       return;
@@ -199,9 +507,20 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
               if (questao.tipo === "MultiplaEscolha" || questao.tipo === "MenuSuspenso") {
                 respostas.push({ 
                   questaoId: questao.id, 
-                  opcaoId: resposta,
+                  opcaoId: Number(resposta), // Garantir que seja number
                   itemAvaliadoId: item.id
                 });
+              } else if (questao.tipo === "CaixaSelecao") {
+                // Para checkbox, resposta é um array de IDs das opções selecionadas
+                if (Array.isArray(resposta) && resposta.length > 0) {
+                  resposta.forEach(opcaoId => {
+                    respostas.push({ 
+                      questaoId: questao.id, 
+                      opcaoId: Number(opcaoId), // Garantir que seja number
+                      itemAvaliadoId: item.id
+                    });
+                  });
+                }
               } else if (questao.tipo === "EscalaLinear") {
                 const opcao = questao.opcoes?.find((o: OptionItem) => String(o.valor) === String(resposta));
                 respostas.push({
@@ -238,9 +557,42 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
       } else {
         // Processar respostas normais
         respostas = todasQuestoes.flatMap((questao: QuestionResponse): any[] => {
-          const resposta = responses[questao.id];
+          // Verificar se é questão condicional e buscar a chave correta
+          const isQuestaoCondicional = questoes.some((questaoPrincipal: QuestionResponse) => 
+            questaoPrincipal.opcoes?.some((opcao: any) => 
+              opcao.questaoCondicional?.id === questao.id
+            ) || questaoPrincipal.colunas?.some((coluna: any) => 
+              coluna.questaoCondicional?.id === questao.id
+            )
+          );
+          
+          let resposta = responses[questao.id];
+          
+          if (isQuestaoCondicional) {
+            // Buscar a questão principal que ativa esta condição
+            const questaoPrincipal = questoes.find((questaoPrincipal: QuestionResponse) => 
+              questaoPrincipal.opcoes?.some((opcao: any) => 
+                opcao.questaoCondicional?.id === questao.id
+              ) || questaoPrincipal.colunas?.some((coluna: any) => 
+                coluna.questaoCondicional?.id === questao.id
+              )
+            );
+            
+            if (questaoPrincipal) {
+              const respostaKey = `${questao.id}_${questaoPrincipal.id}`;
+              resposta = responses[respostaKey];
+            }
+          }
+          
           if (questao.tipo === "MultiplaEscolha" || questao.tipo === "MenuSuspenso") {
-            return resposta ? [{ questaoId: questao.id, opcaoId: resposta }] : [];
+            return resposta ? [{ questaoId: questao.id, opcaoId: Number(resposta), itemAvaliadoId: 0 }] : [];
+          }
+          if (questao.tipo === "CaixaSelecao") {
+            // Para checkbox, resposta é um array de IDs das opções selecionadas
+            if (Array.isArray(resposta) && resposta.length > 0) {
+              return resposta.map(opcaoId => ({ questaoId: questao.id, opcaoId: Number(opcaoId), itemAvaliadoId: 0 }));
+            }
+            return [];
           }
           if (questao.tipo === "EscalaLinear") {
             const opcao = questao.opcoes?.find((o: OptionItem) => String(o.valor) === String(resposta));
@@ -248,7 +600,8 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
               return [{
                 questaoId: questao.id,
                 opcaoId: opcao?.id,
-                valor: String(resposta)
+                valor: String(resposta),
+                itemAvaliadoId: 0
               }];
             }
             return [];
@@ -257,13 +610,13 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
             if (Array.isArray(resposta)) {
               return resposta.map((colunaId, idx) => {
                 const opcao = questao.opcoes?.[idx];
-                return colunaId && opcao ? { questaoId: questao.id, opcaoId: opcao.id, colunaId } : null;
+                return colunaId && opcao ? { questaoId: questao.id, opcaoId: opcao.id, colunaId, itemAvaliadoId: 0 } : null;
               }).filter(Boolean);
             }
             return [];
           }
           // CaixaTexto ou default
-          return resposta ? [{ questaoId: questao.id, valor: resposta }] : [];
+          return resposta ? [{ questaoId: questao.id, valor: resposta, itemAvaliadoId: 0 }] : [];
         });
       }
 
@@ -276,17 +629,74 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
       });
 
       alert("Respostas enviadas com sucesso!");
-      // Tentar fechar a janela. Se não for possível, redirecionar para a home
+      
+      // Limpar respostas salvas após envio bem-sucedido
+      clearResponses();
+      
+      // Redirecionar para o dashboard correto baseado no perfil do usuário
       setTimeout(() => {
         if (window.opener) {
           window.close();
         } else {
-          window.location.href = "/responder";
+          // Verificar se o usuário está logado e tem perfil
+          const token = Cookies.get('token') || localStorage.getItem('token');
+          console.log('🔍 Token encontrado:', !!token);
+          
+          if (token) {
+            try {
+              // Decodificar o token para obter o perfil (JWT simples)
+              const payload = JSON.parse(atob(token.split('.')[1]));
+              console.log('🔍 Payload do token:', payload);
+              
+              // O perfil está no claim "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+              const perfil = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]?.toLowerCase();
+              console.log('🔍 Perfil extraído:', perfil);
+              
+              // Redirecionar baseado no perfil
+              if (perfil === 'aluno' || perfil === 'participante') {
+                console.log('🎯 Redirecionando para /aluno/dashboard');
+                console.log('🔍 URL atual antes do redirect:', window.location.href);
+                window.location.href = "/aluno/dashboard";
+                console.log('🔍 URL após definir redirect:', window.location.href);
+              } else if (perfil === 'professor' || perfil === 'coordenacao') {
+                console.log('🎯 Redirecionando para /professor/dashboard');
+                console.log('🔍 URL atual antes do redirect:', window.location.href);
+                window.location.href = "/professor/dashboard";
+                console.log('🔍 URL após definir redirect:', window.location.href);
+              } else {
+                console.log('🎯 Perfil não reconhecido, redirecionando para /home');
+                console.log('🔍 URL atual antes do redirect:', window.location.href);
+                window.location.href = "/home";
+                console.log('🔍 URL após definir redirect:', window.location.href);
+              }
+            } catch (error) {
+              console.error('❌ Erro ao decodificar token:', error);
+              console.log('🎯 Erro na decodificação, redirecionando para /home');
+              window.location.href = "/home";
+            }
+          } else {
+            // Se não tem token, vai para a página inicial
+            console.log('❌ Token não encontrado, redirecionando para /home');
+            window.location.href = "/home";
+          }
         }
       }, 100);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao enviar respostas:', error);
-      alert("Erro ao enviar respostas. Por favor, tente novamente.");
+      
+      // Verificar se é uma mensagem específica do backend
+      if (error.response?.data?.message) {
+        alert(error.response.data.message);
+      } else if (error.response?.status === 200) {
+        // Se o status é 200, mas houve erro no parsing, pode ser sucesso
+        alert("Respostas enviadas com sucesso!");
+        clearResponses();
+        window.location.href = "/home";
+      } else {
+        alert("Erro ao enviar respostas. Por favor, tente novamente.");
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -315,12 +725,12 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
     responses: Object.keys(responses).length
   });
 
-  // Obter questões visíveis ordenadas
-  const visibleQuestions = getVisibleQuestions();
+  // Usar apenas as questões principais (não condicionais) para renderização
+  const visibleQuestions = questoes;
   
-  console.log('🔍 Debug - Questões visíveis para renderização:', {
+  console.log('🔍 Debug - Questões principais para renderização:', {
     total: visibleQuestions.length,
-    questoes: visibleQuestions.map(q => ({ id: q.id, texto: q.texto, isCondicional: q.isCondicional }))
+    questoes: visibleQuestions.map((q: QuestionResponse) => ({ id: q.id, texto: q.texto, isCondicional: q.isCondicional }))
   });
 
   // Função para renderizar questão agrupada por itens
@@ -329,9 +739,6 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
       // Se não há itens avaliados, usar renderização normal
       return renderNormalQuestion(questao);
     }
-
-    // Questões condicionais também devem ser renderizadas agrupadas quando há itens avaliados
-    // para que funcionem independentemente do item avaliado
 
     // Se for CaixaTexto, renderizar como campo de texto simples
     if (questao.tipo === "CaixaTexto") {
@@ -417,30 +824,46 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
                 type={questao.tipo}
                 question={{ ...questao, obrigatorio: questao.obrigatorio }}
                 value={responses[`${questao.id}_${item.id}`]}
-                onChange={(value) => handleResponseChange(`${questao.id}_${item.id}`, value)}
+                onChange={(value) => {
+                  handleResponseChange(`${questao.id}_${item.id}`, value);
+                }}
                 requiredAsterisk={!!questao.obrigatorio}
+                itemAvaliadoId={item.id}
               />
             </Box>
 
-            {/* Questões Condicionais - renderizar para cada item se estiverem visíveis */}
-            {questao.opcoes?.map((opcao) => {
-              if (opcao.ativaCondicao && opcao.questaoCondicionalId) {
+            {/* Questões Condicionais - lógica simples */}
+            {questao.opcoes?.map((opcao: OptionItemWithConditional) => {
+              if (opcao.ativaCondicao && opcao.questaoCondicional) {
                 // Verificar se a opção está selecionada para este item
                 const respostaQuestao = responses[`${questao.id}_${item.id}`];
                 const isOptionSelected = Array.isArray(respostaQuestao) 
                   ? respostaQuestao.includes(String(opcao.id)) 
                   : String(respostaQuestao) === String(opcao.id);
 
-                if (isOptionSelected && (opcao as any).questaoCondicional) {
-                  const questaoCondicional = (opcao as any).questaoCondicional;
+                console.log(`🔍 Questão Condicional Agrupada - Questão ${questao.id}, Item ${item.id}:`, {
+                  opcaoId: opcao.id,
+                  opcaoTexto: opcao.texto,
+                  respostaQuestao,
+                  isOptionSelected,
+                  questaoCondicionalId: opcao.questaoCondicional.id,
+                  questaoCondicionalTexto: opcao.questaoCondicional.texto?.substring(0, 50) + "..."
+                });
+
+                if (isOptionSelected) {
+                  // Usar a questão condicional diretamente do objeto opcao
+                  const questaoCondicional = opcao.questaoCondicional;
+                  
                   return (
-                    <Box key={`${questaoCondicional.id}_${item.id}`} p={4} bg="gray.50" borderTop="1px solid" borderColor="gray.200">
+                    <Box key={`${questaoCondicional.id}_${questao.id}_${item.id}`} p={4} bg="purple.50" borderTop="1px solid" borderColor="gray.200">
                       <QuestionTypeExecution
                         type={questaoCondicional.tipo}
                         question={{ ...questaoCondicional, obrigatorio: questaoCondicional.obrigatorio }}
-                        value={responses[`${questaoCondicional.id}_${item.id}`]}
-                        onChange={(value) => handleResponseChange(`${questaoCondicional.id}_${item.id}`, value)}
+                        value={responses[`${questaoCondicional.id}_${questao.id}_${item.id}`]}
+                        onChange={(value) => handleResponseChange(`${questaoCondicional.id}_${questao.id}_${item.id}`, value)}
                         requiredAsterisk={!!questaoCondicional.obrigatorio}
+                        isVisible={true}
+                        itemAvaliadoId={item.id}
                       />
                     </Box>
                   );
@@ -476,15 +899,75 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
           type={questao.tipo}
           question={{ ...questao, obrigatorio: questao.obrigatorio }}
           value={responses[questao.id]}
-          onChange={(value) => handleResponseChange(questao.id, value)}
+          onChange={(value) => {
+            console.log('🎯 QuestionTypeExecution onChange:', { 
+              questionId: questao.id, 
+              value, 
+              currentValue: responses[questao.id],
+              allResponses: responses 
+            });
+            handleResponseChange(questao.id, value);
+            // Trigger conditional logic for this specific question
+            handleAnswer(questao.id, value);
+          }}
           requiredAsterisk={!!questao.obrigatorio}
+          itemAvaliadoId={0}
         />
+        
+        {/* Questões Condicionais - lógica para renderização normal */}
+        {questao.opcoes?.map((opcao: OptionItemWithConditional) => {
+          if (opcao.ativaCondicao && opcao.questaoCondicional) {
+            // Verificar se a opção está selecionada
+            const respostaQuestao = responses[questao.id];
+            const isOptionSelected = Array.isArray(respostaQuestao) 
+              ? respostaQuestao.includes(String(opcao.id)) 
+              : String(respostaQuestao) === String(opcao.id);
+
+            if (isOptionSelected) {
+              // Usar a questão condicional diretamente do objeto opcao
+              const questaoCondicional = opcao.questaoCondicional;
+              
+              return (
+                <Box key={`${questaoCondicional.id}`} mt={4} p={4} bg="purple.50" borderRadius="md" border="1px solid" borderColor="purple.200">
+                  <QuestionTypeExecution
+                    type={questaoCondicional.tipo}
+                    question={{ ...questaoCondicional, obrigatorio: questaoCondicional.obrigatorio }}
+                    value={responses[`${questaoCondicional.id}_${questao.id}`]}
+                    onChange={(value) => handleResponseChange(`${questaoCondicional.id}_${questao.id}`, value)}
+                    requiredAsterisk={!!questaoCondicional.obrigatorio}
+                    isVisible={true}
+                    itemAvaliadoId={0}
+                  />
+                </Box>
+              );
+            }
+          }
+          return null;
+        })}
       </Box>
     );
   };
 
+  if (loading) {
+    return (
+      <Box p={4}>
+        <Text>Carregando questionário...</Text>
+      </Box>
+    );
+  }
+
+  if (!data) {
+    return (
+      <Box p={4}>
+        <Text>Erro ao carregar questionário.</Text>
+      </Box>
+    );
+  }
+
   return (
     <Box>
+      {/* TEMPORÁRIO: Desabilitar notificações de auto-save */}
+
       <Stack gap={8}>
         {visibleQuestions.map((questao: QuestionResponse) => {
           console.log(`🔍 Renderizando questão ${questao.id} (${questao.texto})`);
@@ -494,8 +977,7 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
             return renderNormalQuestion(questao);
           }
           
-          // Para todos os outros tipos (Professor, Disciplina, TurmaDisciplina, Estagio, 
-          // ProjetoExtensionista, Coordenador, Alunos, Turma, TCC), usar estrutura agrupada quando há itens avaliados
+          // Para todos os outros tipos, usar estrutura agrupada quando há itens avaliados
           if (shouldUseGroupedStructure) {
             return renderGroupedQuestion(questao);
           } else {
@@ -503,34 +985,42 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
           }
         })}
         
-        {/* Botão de Envio */}
+        {/* Botões de Ação */}
         <Box textAlign="center" mt={6}>
-          <Button
-            bg="blue.500"
-            color="white"
-            size="lg"
-            onClick={handleSubmit}
-            disabled={Object.keys(responses).length === 0}
-            px={12}
-            py={3}
-            fontSize="md"
-            fontWeight="semibold"
-            borderRadius="lg"
-            boxShadow="md"
-            _hover={{
-              bg: "blue.600",
-              transform: "translateY(-1px)",
-              boxShadow: "lg"
-            }}
-            _disabled={{
-              bg: "gray.300",
-              color: "gray.500",
-              cursor: "not-allowed"
-            }}
-            transition="all 0.2s"
-          >
-            Enviar Respostas
-          </Button>
+          <HStack spacing={4} justify="center">
+            {/* Botão de salvar manual */}
+            {/* TEMPORÁRIO: Desabilitar botão de salvar manual */}
+            
+            {/* Botão de enviar */}
+            <Button
+              bg="blue.500"
+              color="white"
+              size="lg"
+              onClick={handleSubmit}
+              disabled={Object.keys(responses).length === 0 || submitting}
+              isLoading={submitting}
+              loadingText="Enviando..."
+              px={12}
+              py={3}
+              fontSize="md"
+              fontWeight="semibold"
+              borderRadius="lg"
+              boxShadow="md"
+              _hover={{
+                bg: "blue.600",
+                transform: "translateY(-1px)",
+                boxShadow: "lg"
+              }}
+              _disabled={{
+                bg: "gray.300",
+                color: "gray.500",
+                cursor: "not-allowed"
+              }}
+              transition="all 0.2s"
+            >
+              {submitting ? "Enviando..." : "Enviar Respostas"}
+            </Button>
+          </HStack>
         </Box>
       </Stack>
     </Box>

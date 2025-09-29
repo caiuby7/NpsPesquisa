@@ -4,6 +4,7 @@ export enum QuestionTypeEnum {
   LINEAR_SCALE = "EscalaLinear",
   MENU = "MenuSuspenso",
   MATRIX = "Matriz",
+  CHECKBOX = "CaixaSelecao",
 }
 
 export type QuestionType = QuestionTypeEnum;
@@ -98,6 +99,7 @@ export const QUESTIONS_TYPES = [
   { value: QuestionTypeEnum.MENU, label: "Menu suspenso" },
   { value: QuestionTypeEnum.LINEAR_SCALE, label: "Escala linear" },
   { value: QuestionTypeEnum.MATRIX, label: "Matriz" },
+  { value: QuestionTypeEnum.CHECKBOX, label: "Caixa de Seleção" },
 ];
 
 // Novos tipos para questionários

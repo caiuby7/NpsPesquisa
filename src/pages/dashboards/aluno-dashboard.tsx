@@ -35,7 +35,7 @@ import {
   FileText,
   Calendar
 } from 'lucide-react';
-import MainLayout from '../../components/layout/main-layout.component';
+// import MainLayout from '../../components/layout/main-layout.component';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface Questionario {
@@ -47,6 +47,7 @@ interface Questionario {
   status: 'disponivel' | 'respondido' | 'expirado';
   tipoItemAvaliado: string;
   progresso?: number;
+  chave: string;
 }
 
 const AlunoDashboard: React.FC = () => {
@@ -65,8 +66,7 @@ const AlunoDashboard: React.FC = () => {
       try {
         setLoading(true);
         
-        // Primeiro tenta buscar avaliações reais da API
-        const response = await fetch('/api/AvaliacoesDisponiveis', {
+        const response = await fetch('https://apiavaliacao.catolicasc.org.br/api/AvaliacoesDisponiveis', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
@@ -74,49 +74,14 @@ const AlunoDashboard: React.FC = () => {
         
         if (response.ok) {
           const data = await response.json();
-          setQuestionarios(data);
+          setQuestionarios(data || []);
         } else {
-          // Se falhar, usa dados mock
-          throw new Error('API não disponível');
+          console.error('Erro ao buscar avaliações:', response.statusText);
+          setQuestionarios([]);
         }
       } catch (error) {
-        console.log('Usando dados mock para demonstração');
-        
-        // Dados mock para demonstração
-        const mockQuestionarios: Questionario[] = [
-          {
-            id: 1,
-            titulo: 'Avaliação de Professores - Matemática',
-            descricao: 'Avalie o desempenho do professor de Matemática',
-            dataInicio: '2024-09-01',
-            dataFim: '2024-09-30',
-            status: 'disponivel',
-            tipoItemAvaliado: 'Professor',
-            progresso: 0
-          },
-          {
-            id: 2,
-            titulo: 'Avaliação de Disciplina - Física',
-            descricao: 'Avalie a disciplina de Física',
-            dataInicio: '2024-09-01',
-            dataFim: '2024-09-30',
-            status: 'respondido',
-            tipoItemAvaliado: 'Disciplina',
-            progresso: 100
-          },
-          {
-            id: 3,
-            titulo: 'Avaliação de Infraestrutura',
-            descricao: 'Avalie a infraestrutura da instituição',
-            dataInicio: '2024-09-01',
-            dataFim: '2024-09-30',
-            status: 'disponivel',
-            tipoItemAvaliado: 'Infraestrutura',
-            progresso: 0
-          }
-        ];
-        
-        setQuestionarios(mockQuestionarios);
+        console.error('Erro ao conectar com a API:', error);
+        setQuestionarios([]);
       } finally {
         setLoading(false);
       }
@@ -157,35 +122,32 @@ const AlunoDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <MainLayout>
-        <Box bg={bgColor} minH="100vh" py={8}>
-          <Container maxW="6xl">
-            <Flex justify="center" align="center" h="400px">
-              <VStack spacing={4}>
-                <Spinner size="xl" color="blue.500" />
-                <Text>Carregando questionários...</Text>
-              </VStack>
-            </Flex>
-          </Container>
-        </Box>
-      </MainLayout>
+      <Box bg={bgColor} minH="100vh" py={8}>
+        <Container maxW="6xl">
+          <Flex justify="center" align="center" h="400px">
+            <VStack spacing={4}>
+              <Spinner size="xl" color="blue.500" />
+              <Text>Carregando questionários...</Text>
+            </VStack>
+          </Flex>
+        </Container>
+      </Box>
     );
   }
 
   return (
-    <MainLayout>
-      <Box bg={bgColor} minH="100vh" py={8}>
-        <Container maxW="6xl">
-          <VStack spacing={8} align="stretch">
-            {/* Header */}
-            <Box>
-              <Heading size="xl" color="blue.600" mb={2}>
-                Olá, {user?.name}!
-              </Heading>
-              <Text fontSize="lg" color="gray.600">
-                Aqui estão seus questionários disponíveis para responder
-              </Text>
-            </Box>
+    <Box bg={bgColor} minH="100vh" py={8}>
+      <Container maxW="6xl">
+        <VStack spacing={8} align="stretch">
+          {/* Header */}
+          <Box>
+            <Heading size="xl" color="blue.600" mb={2}>
+              Olá, {user?.name}!
+            </Heading>
+            <Text fontSize="lg" color="gray.600">
+              Aqui estão seus questionários disponíveis para responder
+            </Text>
+          </Box>
 
             {/* Estatísticas */}
             <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6}>
@@ -245,6 +207,16 @@ const AlunoDashboard: React.FC = () => {
                     </AlertDescription>
                   </Box>
                 </Alert>
+              ) : questionarios.filter(q => q.status === 'disponivel').length === 0 ? (
+                <Box textAlign="center" py={8}>
+                  <Icon as={BookOpen} w={16} h={16} color="gray.400" mb={4} />
+                  <Text fontSize="lg" color="gray.600" mb={2}>
+                    Nenhum questionário disponível
+                  </Text>
+                  <Text fontSize="sm" color="gray.500">
+                    Não há questionários disponíveis para responder no momento.
+                  </Text>
+                </Box>
               ) : (
                 <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
                   {questionarios
@@ -288,8 +260,8 @@ const AlunoDashboard: React.FC = () => {
                               size="md"
                               leftIcon={<Icon as={BookOpen} w={4} h={4} />}
                               onClick={() => {
-                                // Navegar para responder o questionário
-                                navigate(`/responder-formulario/${questionario.id}`);
+                                // Navegar para responder o questionário usando a chave
+                                navigate(`/questionario/${questionario.chave}`);
                               }}
                             >
                               Responder Questionário
@@ -303,12 +275,22 @@ const AlunoDashboard: React.FC = () => {
             </Box>
 
             {/* Questionários Respondidos */}
-            {questionariosRespondidos > 0 && (
-              <Box>
-                <Heading size="lg" mb={6} color="green.600">
-                  ✅ Questionários Respondidos
-                </Heading>
-                
+            <Box>
+              <Heading size="lg" mb={6} color="green.600">
+                ✅ Questionários Respondidos
+              </Heading>
+              
+              {questionarios.filter(q => q.status === 'respondido').length === 0 ? (
+                <Box textAlign="center" py={8}>
+                  <Icon as={CheckCircle} w={16} h={16} color="gray.400" mb={4} />
+                  <Text fontSize="lg" color="gray.600" mb={2}>
+                    Nenhum questionário respondido
+                  </Text>
+                  <Text fontSize="sm" color="gray.500">
+                    Você ainda não respondeu nenhum questionário.
+                  </Text>
+                </Box>
+              ) : (
                 <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
                   {questionarios
                     .filter(q => q.status === 'respondido')
@@ -346,29 +328,17 @@ const AlunoDashboard: React.FC = () => {
                               </HStack>
                             </HStack>
                             
-                            <Button
-                              variant="outline"
-                              colorScheme="green"
-                              size="md"
-                              leftIcon={<Icon as={TrendingUp} w={4} h={4} />}
-                              onClick={() => {
-                                // Ver histórico ou relatório
-                                console.log('Ver histórico do questionário:', questionario.id);
-                              }}
-                            >
-                              Ver Histórico
-                            </Button>
+                            {/* Botão Ver Histórico removido conforme solicitado */}
                           </VStack>
                         </CardBody>
                       </Card>
                     ))}
                 </SimpleGrid>
-              </Box>
-            )}
-          </VStack>
-        </Container>
-      </Box>
-    </MainLayout>
+              )}
+          </Box>
+        </VStack>
+      </Container>
+    </Box>
   );
 };
 

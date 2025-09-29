@@ -8,7 +8,7 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = Cookies.get('token');
+  const token = Cookies.get('token') || localStorage.getItem('token');
   console.log("🔐 Interceptor - Token encontrado:", !!token);
   console.log("🌐 URL da requisição:", config.url);
   
@@ -16,7 +16,7 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
     console.log("✅ Token adicionado aos headers");
   } else {
-    console.log("⚠️ Token não encontrado nos cookies");
+    console.log("⚠️ Token não encontrado nos cookies nem localStorage");
   }
   
   return config;
@@ -32,14 +32,27 @@ api.interceptors.response.use(
   },
   (error) => {
     console.error("❌ Erro na resposta:", error.response?.status, error.config?.url);
+    console.error("📋 Dados do erro:", error.response?.data);
     
     if (error.response?.status === 401) {
-      console.log("🔒 Usuário não autorizado, removendo cookies");
+      console.log("🔒 Usuário não autorizado, removendo cookies e localStorage");
       Cookies.remove('token');
       Cookies.remove('user');
-      window.location.href = '/login';
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      // Só redirecionar para login se não estiver em uma página de questionário
+      const currentPath = window.location.pathname;
+      const isQuestionarioPage = currentPath.includes('/questionario/') || currentPath.includes('/responder/');
+      
+      if (!isQuestionarioPage) {
+        window.location.href = '/login';
+      } else {
+        console.log("🔒 Em página de questionário, não redirecionando para login");
+      }
     }
     
+    // Preservar os dados de erro para que possam ser acessados no catch
     return Promise.reject(error);
   }
 ); 

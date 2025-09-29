@@ -99,6 +99,7 @@ interface TurmaDisciplina {
   turmaDisciplinaGerenciada?: TurmaDisciplina;
   integracaoId?: string;
   ativo: boolean;
+  nivelEnsino?: string;
 }
 
 interface TurmaDisciplinaFormData {
@@ -110,6 +111,7 @@ interface TurmaDisciplinaFormData {
   idTurmaDisciplinaGerenciada: string;
   integracaoId: string;
   ativo: boolean;
+  nivelEnsino: string;
 }
 
 const TurmaDisciplinaPage: React.FC = () => {
@@ -129,13 +131,14 @@ const TurmaDisciplinaPage: React.FC = () => {
     gerenciada: false,
     idTurmaDisciplinaGerenciada: '',
     integracaoId: '',
-    ativo: true
+    ativo: true,
+    nivelEnsino: ''
   });
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://apiavaliacao.catolicasc.org.br/api';
   const toast = useToast();
 
   useEffect(() => {
@@ -178,7 +181,7 @@ const TurmaDisciplinaPage: React.FC = () => {
 
   const fetchTurmas = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/Turma`);
+      const response = await fetch(`${API_BASE_URL}/Turma/combo`);
       if (response.ok) {
         const data = await response.json();
         setTurmas(data);
@@ -190,7 +193,7 @@ const TurmaDisciplinaPage: React.FC = () => {
 
   const fetchDisciplinas = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/Disciplina`);
+      const response = await fetch(`${API_BASE_URL}/Disciplina/combo`);
       if (response.ok) {
         const data = await response.json();
         setDisciplinas(data);
@@ -202,7 +205,7 @@ const TurmaDisciplinaPage: React.FC = () => {
 
   const fetchProfessores = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/Professor`);
+      const response = await fetch(`${API_BASE_URL}/Professor/combo`);
       if (response.ok) {
         const data = await response.json();
         setProfessores(data);
@@ -298,7 +301,8 @@ const TurmaDisciplinaPage: React.FC = () => {
       gerenciada: turmaDisciplina.gerenciada,
       idTurmaDisciplinaGerenciada: turmaDisciplina.idTurmaDisciplinaGerenciada?.toString() || '',
       integracaoId: turmaDisciplina.integracaoId || '',
-      ativo: turmaDisciplina.ativo
+      ativo: turmaDisciplina.ativo,
+      nivelEnsino: turmaDisciplina.nivelEnsino || ''
     });
     onOpen();
   };
@@ -388,7 +392,8 @@ const TurmaDisciplinaPage: React.FC = () => {
       gerenciada: false,
       idTurmaDisciplinaGerenciada: '',
       integracaoId: '',
-      ativo: true
+      ativo: true,
+      nivelEnsino: ''
     });
     setEditingTurmaDisciplina(null);
   };
@@ -470,6 +475,7 @@ const TurmaDisciplinaPage: React.FC = () => {
                 <Th>Disciplina</Th>
                 <Th>Professor</Th>
                 <Th>Período Letivo</Th>
+                <Th>Nível de Ensino</Th>
                 <Th>Gerenciada</Th>
                 <Th>Status</Th>
                 <Th width="100px">Ações</Th>
@@ -526,6 +532,17 @@ const TurmaDisciplinaPage: React.FC = () => {
                       </HStack>
                     ) : (
                       <Text fontSize="sm" color="gray.400">Período não encontrado</Text>
+                    )}
+                  </Td>
+                  <Td>
+                    {turmaDisciplina.nivelEnsino ? (
+                      <Badge colorScheme="purple" variant="subtle">
+                        {turmaDisciplina.nivelEnsino === 'GraduacaoPresencial' ? 'Graduação Presencial' : 
+                         turmaDisciplina.nivelEnsino === 'GraduacaoEAD' ? 'Graduação à Distância (EAD)' : 
+                         turmaDisciplina.nivelEnsino}
+                      </Badge>
+                    ) : (
+                      <Text fontSize="sm" color="gray.400">Não informado</Text>
                     )}
                   </Td>
                   <Td>
@@ -704,6 +721,19 @@ const TurmaDisciplinaPage: React.FC = () => {
                     onChange={(e) => setFormData({...formData, integracaoId: e.target.value})}
                     placeholder="ID do sistema externo"
                   />
+                </Box>
+
+                <Box w="full">
+                  <Text mb={2} fontWeight="medium">Nível de Ensino</Text>
+                  <Select
+                    value={formData.nivelEnsino}
+                    onChange={(e) => setFormData({...formData, nivelEnsino: e.target.value})}
+                    placeholder="Selecione o nível de ensino"
+                  >
+                    <option value="">Selecione...</option>
+                    <option value="GraduacaoPresencial">Graduação Presencial</option>
+                    <option value="GraduacaoEAD">Graduação à Distância (EAD)</option>
+                  </Select>
                 </Box>
 
                 <HStack spacing={2} w="full">

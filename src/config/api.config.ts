@@ -1,7 +1,9 @@
+import { ENVIRONMENT } from './environment';
+
 // Configuração da API
 export const API_CONFIG = {
-  // URL base da API - pode ser configurada via variável de ambiente
-  BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  // URL base da API - centralizada no arquivo environment.ts
+  BASE_URL: process.env.REACT_APP_API_URL || ENVIRONMENT.API_URL,
   
   // Timeout das requisições (em milissegundos)
   TIMEOUT: 120000, // 2 minutos para operações do TOTVS
@@ -22,5 +24,6 @@ export const ENV_CONFIG = {
 console.log("🔧 Configuração da API:", {
   BASE_URL: API_CONFIG.BASE_URL,
   NODE_ENV: process.env.NODE_ENV,
-  REACT_APP_API_URL: process.env.REACT_APP_API_URL
+  REACT_APP_API_URL: process.env.REACT_APP_API_URL,
+  ENVIRONMENT: ENVIRONMENT
 });

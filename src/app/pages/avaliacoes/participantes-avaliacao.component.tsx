@@ -39,13 +39,14 @@ import { useGetAvaliacaoById } from '../../services/avaliacao/avaliacao.service.
 import { api } from '../../services/api';
 
 interface FiltrosParticipantes {
-  instituicoes: any[];
   periodosLetivos: any[];
   cursos: any[];
   turmas: any[];
   disciplinas: any[];
+  tiposDisciplina: any[];
   professores: any[];
   coordenadores: any[];
+  niveisEnsino: string[];
 }
 
 interface Participante {
@@ -58,41 +59,47 @@ interface Participante {
   disciplina?: string;
   instituicao?: string;
   periodoLetivo?: string;
+  nivelEnsino?: string;
   selecionado?: boolean;
 }
 
 interface FiltrosFormData {
-  instituicaoId: string;
   periodoLetivoId: string;
   cursoId: string;
   turmaId: string;
   disciplinaId: string;
+  tipoDisciplina: string;
   tipoParticipante: string;
+  tipoProfessor: string;
+  nivelEnsino: string;
 }
 
 const AdicionarParticipantesAvaliacaoPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { data: avaliacao, isLoading: loadingAvaliacao } = useGetAvaliacaoById(Number(id));
   const [filtros, setFiltros] = useState<FiltrosParticipantes>({
-    instituicoes: [],
     periodosLetivos: [],
     cursos: [],
     turmas: [],
     disciplinas: [],
+    tiposDisciplina: [],
     professores: [],
-    coordenadores: []
+    coordenadores: [],
+    niveisEnsino: []
   });
   const [participantes, setParticipantes] = useState<Participante[]>([]);
   const [participantesSelecionados, setParticipantesSelecionados] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingParticipantes, setLoadingParticipantes] = useState(false);
   const [filtrosForm, setFiltrosForm] = useState<FiltrosFormData>({
-    instituicaoId: '',
     periodoLetivoId: '',
     cursoId: '',
     turmaId: '',
     disciplinaId: '',
-    tipoParticipante: 'Professor' // Default para Professor
+    tipoDisciplina: '',
+    tipoParticipante: 'Professor', // Default para Professor
+    tipoProfessor: '', // Default vazio para mostrar todos os tipos
+    nivelEnsino: ''
   });
 
   const toast = useToast();
@@ -102,24 +109,37 @@ const AdicionarParticipantesAvaliacaoPage: React.FC = () => {
     try {
       setLoading(true);
       
-      const [instituicoesRes, periodosRes, cursosRes, turmasRes, disciplinasRes, professoresRes, coordenadoresRes] = await Promise.all([
-        api.get('/Instituicao'),
+      // Validar se a avaliação tem instituição definida
+      if (!avaliacao?.instituicaoId) {
+        toast({
+          title: 'Erro',
+          description: 'Avaliação não possui instituição definida',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+        return;
+      }
+
+      // Carregar dados filtrados por instituição
+      const [periodosRes, cursosRes, turmasRes, disciplinasRes, tiposDisciplinaRes, niveisEnsinoRes] = await Promise.all([
         api.get('/PeriodoLetivo'),
-        api.get('/Curso'),
-        api.get('/Turma'),
-        api.get('/Disciplina'),
-        api.get('/Professor'),
-        api.get('/Coordenador')
+        api.get(`/Curso?instituicaoId=${avaliacao.instituicaoId}`),
+        api.get(`/Turma?instituicaoId=${avaliacao.instituicaoId}`),
+        api.get(`/Disciplina?instituicaoId=${avaliacao.instituicaoId}&tipoItemAvaliado=${avaliacao.tipoItemAvaliado || ''}`),
+        api.get(`/Disciplina/tipos?instituicaoId=${avaliacao.instituicaoId}&tipoItemAvaliado=${avaliacao.tipoItemAvaliado || ''}`),
+        api.get('/Aluno/niveis-ensino')
       ]);
 
       setFiltros({
-        instituicoes: instituicoesRes.data || [],
         periodosLetivos: periodosRes.data || [],
         cursos: cursosRes.data || [],
         turmas: turmasRes.data || [],
         disciplinas: disciplinasRes.data || [],
-        professores: professoresRes.data || [],
-        coordenadores: coordenadoresRes.data || []
+        tiposDisciplina: tiposDisciplinaRes.data || [],
+        professores: [], // Será carregado dinamicamente na busca
+        coordenadores: [], // Será carregado dinamicamente na busca
+        niveisEnsino: niveisEnsinoRes.data || []
       });
     } catch (error) {
       toast({
@@ -133,7 +153,7 @@ const AdicionarParticipantesAvaliacaoPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, avaliacao?.instituicaoId]);
 
   useEffect(() => {
     if (avaliacao) {
@@ -142,18 +162,18 @@ const AdicionarParticipantesAvaliacaoPage: React.FC = () => {
   }, [avaliacao, carregarFiltros]);
 
   const getFiltrosVisiveis = () => {
-    // Agora os filtros são baseados no tipo de participante selecionado
-    const filtrosVisiveis: string[] = ['instituicao', 'periodoLetivo', 'curso'];
+    // Instituição não é mais um filtro - sempre usa a da avaliação
+    const filtrosVisiveis: string[] = ['periodoLetivo', 'curso'];
     
     // Adicionar filtros específicos baseados no tipo de participante
     switch (filtrosForm.tipoParticipante) {
       case 'Professor':
-        // Professores podem ter turma e disciplina
-        filtrosVisiveis.push('turma', 'disciplina');
+        // Professores podem ter turma, disciplina e tipo de professor
+        filtrosVisiveis.push('tipoDisciplina', 'disciplina', 'turma', 'tipoProfessor');
         break;
       case 'Aluno':
-        // Alunos sempre têm turma e podem ter disciplina específica
-        filtrosVisiveis.push('turma', 'disciplina');
+        // Alunos sempre têm turma e podem ter disciplina específica e nível de ensino
+        filtrosVisiveis.push('tipoDisciplina', 'disciplina', 'turma', 'nivelEnsino');
         break;
       case 'Coordenador':
         // Coordenadores não precisam de turma ou disciplina
@@ -163,138 +183,24 @@ const AdicionarParticipantesAvaliacaoPage: React.FC = () => {
     return filtrosVisiveis;
   };
 
-  const pesquisarParticipantesTOTVS = async () => {
-    try {
-      setLoadingParticipantes(true);
-      
-      // Validar se o tipo de participante foi selecionado
-      if (!filtrosForm.tipoParticipante) {
-        toast({
-          title: 'Atenção',
-          description: 'Selecione o tipo de participante',
-          status: 'warning',
-          duration: 3000,
-          isClosable: true,
-        });
-        return;
-      }
-
-      // Buscar dados do período letivo selecionado
-      const periodoLetivo = filtros.periodosLetivos.find(p => p.id === Number(filtrosForm.periodoLetivoId));
-      const periodoLetivoNome = periodoLetivo?.nome || '';
-
-      // Buscar dados do curso selecionado
-      const curso = filtros.cursos.find(c => c.id === Number(filtrosForm.cursoId));
-      const cursoId = curso?.id;
-
-      // Buscar dados da turma selecionada
-      const turma = filtros.turmas.find(t => t.id === Number(filtrosForm.turmaId));
-      const turmaId = turma?.id;
-
-      // Buscar dados da disciplina selecionada
-      const disciplina = filtros.disciplinas.find(d => d.id === Number(filtrosForm.disciplinaId));
-      const disciplinaId = disciplina?.id;
-
-      // Mapear tipo de participante para o formato esperado pelo backend
-      let tipoParticipante = '';
-      switch (filtrosForm.tipoParticipante) {
-        case 'Professor':
-          tipoParticipante = 'Professor';
-          break;
-        case 'Aluno':
-          tipoParticipante = 'Aluno';
-          break;
-        case 'Coordenador':
-          tipoParticipante = 'Professor'; // Coordenadores são tratados como professores no TOTVS
-          break;
-        default:
-          toast({
-            title: 'Erro',
-            description: 'Tipo de participante não suportado',
-            status: 'error',
-            duration: 3000,
-            isClosable: true,
-          });
-          return;
-      }
-
-      // Preparar dados para a requisição ao TOTVS
-      const requestData = {
-        questionarioId: Number(id),
-        periodoLetivo: periodoLetivoNome,
-        cursoId: cursoId,
-        turmaId: turmaId,
-        disciplinaId: disciplinaId,
-        tipoParticipante: tipoParticipante,
-        nomeItemEspecifico: disciplina?.nome || turma?.nome || curso?.nome || ''
-      };
-
-      console.log('🔍 Buscando participantes no TOTVS:', requestData);
-
-      // Mostrar mensagem de progresso
-      toast({
-        title: 'Buscando no TOTVS...',
-        description: 'Esta operação pode demorar alguns minutos. Aguarde...',
-        status: 'info',
-        duration: 10000,
-        isClosable: true,
-      });
-
-      // Fazer a requisição para buscar e adicionar participantes do TOTVS
-      const response = await api.post('/ParticipanteQuestionario/buscar-e-adicionar-do-totvs', requestData, {
-        timeout: 120000 // 2 minutos de timeout específico para esta operação
-      });
-      
-      const resultado = response.data;
-      
-      toast({
-        title: 'Busca no TOTVS Concluída',
-        description: `${resultado.totalEncontrados} participantes encontrados, ${resultado.totalAdicionados} adicionados ao questionário`,
-        status: 'success',
-        duration: 5000,
-        isClosable: true,
-      });
-
-      // Converter participantes do TOTVS para o formato esperado pela interface
-      const participantesTOTVS = resultado.participantes.map((p: any) => ({
-        id: p.id,
-        nome: p.nome,
-        email: p.email,
-        tipo: p.tipo,
-        curso: curso?.nome || '',
-        turma: turma?.nome || '',
-        disciplina: disciplina?.nome || '',
-        instituicao: filtros.instituicoes.find(i => i.id === Number(filtrosForm.instituicaoId))?.nome || '',
-        periodoLetivo: periodoLetivoNome,
-        ra: p.ra,
-        login: p.login,
-        contexto: p.contexto
-      }));
-
-      setParticipantes(participantesTOTVS);
-      setParticipantesSelecionados([]);
-
-    } catch (error: any) {
-      console.error('❌ Erro ao buscar participantes no TOTVS:', error);
-      
-      let errorMessage = 'Erro ao buscar participantes no TOTVS';
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.response?.status === 500) {
-        errorMessage = 'Erro interno do servidor. Verifique a conexão com o TOTVS.';
-      }
-      
-      toast({
-        title: 'Erro na Busca TOTVS',
-        description: errorMessage,
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
-    } finally {
-      setLoadingParticipantes(false);
+  const getDisciplinasFiltradas = () => {
+    if (!filtrosForm.tipoDisciplina) {
+      return filtros.disciplinas;
     }
+    
+    return filtros.disciplinas.filter((disciplina: any) => 
+      disciplina.tipoDisciplina === filtrosForm.tipoDisciplina
+    );
   };
+
+  const handleTipoDisciplinaChange = (tipoDisciplina: string) => {
+    setFiltrosForm(prev => ({
+      ...prev,
+      tipoDisciplina,
+      disciplinaId: '' // Limpar disciplina selecionada quando mudar o tipo
+    }));
+  };
+
 
   const pesquisarParticipantes = async () => {
     try {
@@ -311,20 +217,31 @@ const AdicionarParticipantesAvaliacaoPage: React.FC = () => {
         });
         return;
       }
+
+      // Validar se a avaliação tem instituição definida
+      if (!avaliacao?.instituicaoId) {
+        toast({
+          title: 'Erro',
+          description: 'Avaliação não possui instituição definida',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+        return;
+      }
       
       // Determinar o endpoint baseado no tipo de participante selecionado
       let endpoint = '';
-      let dados: any[] = [];
       
       switch (filtrosForm.tipoParticipante) {
         case 'Professor':
-          endpoint = '/Professor';
+          endpoint = '/Professor/com-filtros';
           break;
         case 'Aluno':
-          endpoint = '/Aluno';
+          endpoint = '/Aluno/com-filtros';
           break;
         case 'Coordenador':
-          endpoint = '/Coordenador';
+          endpoint = '/Coordenador/com-filtros';
           break;
         default:
           toast({
@@ -337,66 +254,56 @@ const AdicionarParticipantesAvaliacaoPage: React.FC = () => {
           return;
       }
       
-      // Fazer a requisição para buscar os dados
-      let response;
-      if (filtrosForm.tipoParticipante === 'Professor' && filtrosForm.periodoLetivoId) {
-        // Para professores, usar endpoint específico por período letivo
-        response = await api.get(`/Professor/por-periodo-letivo/${filtrosForm.periodoLetivoId}`);
-      } else {
-        // Para outros tipos, usar endpoint padrão
-        response = await api.get(endpoint);
-      }
-      dados = response.data || [];
-      
-      // Aplicar filtros locais baseados nos filtros selecionados
-      let dadosFiltrados = dados;
-      
-      if (filtrosForm.instituicaoId) {
-        dadosFiltrados = dadosFiltrados.filter(item => 
-          item.instituicao?.id === Number(filtrosForm.instituicaoId) || 
-          item.instituicaoId === Number(filtrosForm.instituicaoId)
-        );
-      }
+      // Construir parâmetros de query
+      const params = new URLSearchParams();
+      params.append('instituicaoId', avaliacao.instituicaoId.toString());
       
       if (filtrosForm.periodoLetivoId) {
-        dadosFiltrados = dadosFiltrados.filter(item => 
-          item.periodoLetivo?.id === Number(filtrosForm.periodoLetivoId) || 
-          item.periodoLetivoId === Number(filtrosForm.periodoLetivoId)
-        );
+        params.append('periodoLetivoId', filtrosForm.periodoLetivoId);
       }
       
       if (filtrosForm.cursoId) {
-        dadosFiltrados = dadosFiltrados.filter(item => 
-          item.curso?.id === Number(filtrosForm.cursoId) || 
-          item.cursoId === Number(filtrosForm.cursoId)
-        );
+        params.append('cursoId', filtrosForm.cursoId);
       }
       
       if (filtrosForm.turmaId) {
-        dadosFiltrados = dadosFiltrados.filter(item => 
-          item.turma?.id === Number(filtrosForm.turmaId) || 
-          item.turmaId === Number(filtrosForm.turmaId)
-        );
+        params.append('turmaId', filtrosForm.turmaId);
       }
       
       if (filtrosForm.disciplinaId) {
-        dadosFiltrados = dadosFiltrados.filter(item => 
-          item.disciplina?.id === Number(filtrosForm.disciplinaId) || 
-          item.disciplinaId === Number(filtrosForm.disciplinaId)
-        );
+        params.append('disciplinaId', filtrosForm.disciplinaId);
       }
       
+      if (filtrosForm.tipoDisciplina) {
+        params.append('tipoDisciplina', filtrosForm.tipoDisciplina);
+      }
+      
+      // Adicionar filtro de tipo de professor apenas para o endpoint de professores
+      if (filtrosForm.tipoParticipante === 'Professor' && filtrosForm.tipoProfessor) {
+        params.append('tipoProfessor', filtrosForm.tipoProfessor);
+      }
+      
+      // Adicionar filtro de nível de ensino apenas para o endpoint de alunos
+      if (filtrosForm.tipoParticipante === 'Aluno' && filtrosForm.nivelEnsino) {
+        params.append('nivelEnsino', filtrosForm.nivelEnsino);
+      }
+      
+      // Fazer a requisição para buscar os dados com filtros
+      const response = await api.get(`${endpoint}?${params.toString()}`);
+      const dados = response.data || [];
+      
       // Transformar dados em formato de participantes
-      const participantesFormatados: Participante[] = dadosFiltrados.map((item: any) => ({
-        id: item.id,
-        nome: item.nome || item.titulo || item.descricao || 'Sem nome',
-        email: item.email || item.emailContato || '',
+      const participantesFormatados: Participante[] = dados.map((item: any) => ({
+        id: item.id || item.alunoId,
+        nome: item.nome || 'Sem nome',
+        email: item.email || '',
         tipo: filtrosForm.tipoParticipante,
-        curso: item.curso?.nome || item.curso || '',
-        turma: item.turma?.nome || item.turma || '',
-        disciplina: item.disciplina?.nome || item.disciplina || '',
-        instituicao: item.instituicao?.nome || item.instituicao || '',
-        periodoLetivo: item.periodoLetivo?.nome || item.periodoLetivo || '',
+        curso: item.curso?.nome || '',
+        turma: item.turma?.nome || '',
+        disciplina: item.disciplina?.nome || '',
+        instituicao: item.instituicao?.nome || avaliacao.nomeInstituicao || '',
+        periodoLetivo: item.periodoLetivo?.nome || '',
+        nivelEnsino: item.nivelEnsino || '',
         selecionado: false
       }));
       
@@ -568,21 +475,6 @@ const AdicionarParticipantesAvaliacaoPage: React.FC = () => {
                   <option value="Coordenador">Coordenador</option>
                 </Select>
               </FormControl>
-              {/* Instituição - Sempre visível */}
-              <FormControl>
-                <FormLabel>Instituição</FormLabel>
-                <Select
-                  value={filtrosForm.instituicaoId}
-                  onChange={(e) => setFiltrosForm({...filtrosForm, instituicaoId: e.target.value})}
-                  placeholder="Selecione a instituição"
-                >
-                  {filtros.instituicoes.map((instituicao) => (
-                    <option key={instituicao.id} value={instituicao.id}>
-                      {instituicao.nome}
-                    </option>
-                  ))}
-                </Select>
-              </FormControl>
 
               {/* Período Letivo - Sempre visível */}
               <FormControl>
@@ -634,7 +526,26 @@ const AdicionarParticipantesAvaliacaoPage: React.FC = () => {
                 </FormControl>
               )}
 
-              {/* Disciplina - Visível apenas para Professor */}
+              {/* Tipo Disciplina - Visível para Professor e Aluno */}
+              {filtrosVisiveis.includes('tipoDisciplina') && (
+                <FormControl>
+                  <FormLabel>Tipo Disciplina</FormLabel>
+                  <Select
+                    value={filtrosForm.tipoDisciplina}
+                    onChange={(e) => handleTipoDisciplinaChange(e.target.value)}
+                    placeholder="Selecione o tipo"
+                  >
+                    <option value="">Todos os tipos</option>
+                    {filtros.tiposDisciplina.map((tipo) => (
+                      <option key={tipo.tipo} value={tipo.tipo}>
+                        {tipo.tipo}
+                      </option>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+
+              {/* Disciplina - Visível para Professor e Aluno */}
               {filtrosVisiveis.includes('disciplina') && (
                 <FormControl>
                   <FormLabel>Disciplina</FormLabel>
@@ -643,11 +554,44 @@ const AdicionarParticipantesAvaliacaoPage: React.FC = () => {
                     onChange={(e) => setFiltrosForm({...filtrosForm, disciplinaId: e.target.value})}
                     placeholder="Selecione a disciplina"
                   >
-                    {filtros.disciplinas.map((disciplina) => (
+                    {getDisciplinasFiltradas().map((disciplina) => (
                       <option key={disciplina.id} value={disciplina.id}>
                         {disciplina.nome}
                       </option>
                     ))}
+                  </Select>
+                </FormControl>
+              )}
+
+              {/* Tipo de Professor - Visível apenas para Professor */}
+              {filtrosVisiveis.includes('tipoProfessor') && (
+                <FormControl>
+                  <FormLabel>Tipo de Professor</FormLabel>
+                  <Select
+                    value={filtrosForm.tipoProfessor}
+                    onChange={(e) => setFiltrosForm({...filtrosForm, tipoProfessor: e.target.value})}
+                    placeholder="Selecione o tipo"
+                  >
+                    <option value="">Todos os tipos</option>
+                    <option value="Tutor">Tutor</option>
+                    <option value="Titular">Titular</option>
+                    <option value="Coordenador">Coordenador</option>
+                  </Select>
+                </FormControl>
+              )}
+
+              {/* Nível de Ensino - Visível apenas para Aluno */}
+              {filtrosVisiveis.includes('nivelEnsino') && (
+                <FormControl>
+                  <FormLabel>Nível de Ensino</FormLabel>
+                  <Select
+                    value={filtrosForm.nivelEnsino}
+                    onChange={(e) => setFiltrosForm({...filtrosForm, nivelEnsino: e.target.value})}
+                    placeholder="Selecione o nível"
+                  >
+                    <option value="">Todos os níveis</option>
+                    <option value="GraduacaoPresencial">Graduação Presencial</option>
+                    <option value="GraduacaoEAD">Graduação à Distância (EAD)</option>
                   </Select>
                 </FormControl>
               )}
@@ -660,16 +604,7 @@ const AdicionarParticipantesAvaliacaoPage: React.FC = () => {
                 onClick={pesquisarParticipantes}
                 isLoading={loadingParticipantes}
               >
-                Pesquisar (Banco Local)
-              </Button>
-              <Button
-                leftIcon={<Search size={16} />}
-                colorScheme="green"
-                onClick={pesquisarParticipantesTOTVS}
-                isLoading={loadingParticipantes}
-                variant="outline"
-              >
-                Buscar no TOTVS
+                Pesquisar
               </Button>
             </HStack>
           </CardBody>
@@ -707,6 +642,7 @@ const AdicionarParticipantesAvaliacaoPage: React.FC = () => {
                       <Th>Tipo</Th>
                       <Th>Curso</Th>
                       <Th>Turma</Th>
+                      {filtrosForm.tipoParticipante === 'Aluno' && <Th>Nível Ensino</Th>}
                       <Th>Instituição</Th>
                     </Tr>
                   </Thead>
@@ -728,6 +664,19 @@ const AdicionarParticipantesAvaliacaoPage: React.FC = () => {
                         </Td>
                         <Td>{participante.curso || '-'}</Td>
                         <Td>{participante.turma || '-'}</Td>
+                        {filtrosForm.tipoParticipante === 'Aluno' && (
+                          <Td>
+                            {participante.nivelEnsino ? (
+                              <Badge colorScheme="purple" variant="subtle">
+                                {participante.nivelEnsino === 'GraduacaoPresencial' ? 'Graduação Presencial' : 
+                                 participante.nivelEnsino === 'GraduacaoEAD' ? 'Graduação à Distância (EAD)' : 
+                                 participante.nivelEnsino}
+                              </Badge>
+                            ) : (
+                              <Text fontSize="sm" color="gray.400">-</Text>
+                            )}
+                          </Td>
+                        )}
                         <Td>{participante.instituicao || '-'}</Td>
                       </Tr>
                     ))}

@@ -7,7 +7,7 @@ export const LoginServices = {
 
     const result = await api.post(BASE_PATH, payload);
 
-    if (!result.status) throw new Error("Login inválido");
+    if (result.status !== 200) throw new Error("Login inválido");
      
     return result.data
   },

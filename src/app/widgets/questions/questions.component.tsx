@@ -9,6 +9,7 @@ import {
   Button,
   Badge,
   Text,
+  useToast,
 } from "@chakra-ui/react";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import { MdEdit, MdDelete } from "react-icons/md";
@@ -20,11 +21,13 @@ import { useNavigate } from "react-router-dom";
 import { QuestionService } from "../../services/question/question.services";
 import { QuestionResponse } from "../../services/form/form.services.types";
 import { useState } from "react";
+import Pagination from "../../components/Pagination/pagination.component";
 
 export default function QuestionsWidget() {
   const { register, control, watch } = useForm();
   const { data, refetch } = useGetQuestions();
   const navigate = useNavigate();
+  const toast = useToast();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
@@ -46,10 +49,26 @@ export default function QuestionsWidget() {
 
   const handleDelete = async (id: string) => {
     try {
-      await QuestionService.delete(id);
-      refetch();
-    } catch (error) {
+      // Confirmação antes de excluir
+      if (window.confirm('Tem certeza que deseja excluir esta questão?')) {
+        await QuestionService.delete(id);
+        toast({
+          title: "Questão excluída com sucesso!",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
+        refetch();
+      }
+    } catch (error: any) {
       console.error("Erro ao excluir questão:", error);
+      toast({
+        title: "Erro ao excluir questão",
+        description: error.response?.data?.message || "Não foi possível excluir a questão. Verifique se ela não está sendo usada em algum questionário.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
 
@@ -144,33 +163,15 @@ export default function QuestionsWidget() {
             </Stack>
           </Box>
         ))}
-        {totalPages > 1 && (
-          <HStack justify="center" mt={4}>
-            <IconButton
-              aria-label="Página anterior"
-              icon={<LuChevronLeft />}
-              onClick={() => handlePageChange(currentPage - 1)}
-              isDisabled={currentPage === 1}
-            />
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page: number) => (
-              <IconButton
-                key={page}
-                aria-label={`Ir para página ${page}`}
-                variant={page === currentPage ? "solid" : "ghost"}
-                onClick={() => handlePageChange(page)}
-                size="sm"
-              >
-                {page}
-              </IconButton>
-            ))}
-            <IconButton
-              aria-label="Próxima página"
-              icon={<LuChevronRight />}
-              onClick={() => handlePageChange(currentPage + 1)}
-              isDisabled={currentPage === totalPages}
-            />
-          </HStack>
-        )}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={questions.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={handlePageChange}
+          showInfo={true}
+          size="sm"
+        />
       </Stack>
       </Box>
     </Box>

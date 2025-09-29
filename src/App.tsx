@@ -23,12 +23,14 @@ const CreateQuestionPage = lazy(() => import("./pages/create-question"));
 const CreateQuestionWithIdPage = lazy(() => import("./pages/create-question/[id]"));
 const QuestionsPage = lazy(() => import("./pages/questions"));
 const LoginPage = lazy(() => import("./pages/login"));
+const LoginTotvsPage = lazy(() => import("./pages/login-totvs"));
 const HomePage = lazy(() => import("./pages/home"));
 const ResponderPage = lazy(() => import("./pages/responder"));
 const DashboardPage = lazy(() => import("./pages/dashboard"));
 
 // Novas páginas de Avaliação Institucional
 const CriarAvaliacaoPage = lazy(() => import("./app/pages/avaliacoes/criar-avaliacao"));
+const EditarAvaliacaoPage = lazy(() => import("./pages/avaliacoes/editar/[id]"));
 const AvaliacoesPage = lazy(() => import("./app/pages/avaliacoes"));
 const ParticipantesAvaliacaoListaPage = lazy(() => import("./app/pages/avaliacoes/participantes-avaliacao-lista"));
 const AdicionarParticipantesAvaliacaoPage = lazy(() => import("./app/pages/avaliacoes/participantes-avaliacao-adicionar"));
@@ -66,7 +68,22 @@ const queryClient = new QueryClient();
 
 // Componente para rotas protegidas
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        minHeight: '100vh',
+        backgroundColor: '#f7fafc'
+      }}>
+        <div>Verificando autenticação...</div>
+      </div>
+    );
+  }
+  
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
 };
 
@@ -92,6 +109,7 @@ function App() {
                 <Routes>
                   {/* Rotas públicas */}
                   <Route path="/login" element={<LoginPage />} />
+                  <Route path="/login-totvs" element={<LoginTotvsPage />} />
                   <Route path="/responder" element={<ResponderPage />} />
                   <Route path="/questionario/:chave" element={<QuestionarioPorChavePage />} />
                   
@@ -118,6 +136,7 @@ function App() {
                   {/* Avaliação Institucional */}
                   <Route path="/avaliacoes" element={<ProtectedRoute><AvaliacoesPage /></ProtectedRoute>} />
                   <Route path="/avaliacoes/criar" element={<ProtectedRoute><CriarAvaliacaoPage /></ProtectedRoute>} />
+                  <Route path="/avaliacoes/editar/:id" element={<ProtectedRoute><EditarAvaliacaoPage /></ProtectedRoute>} />
                   <Route path="/avaliacoes/:id/participantes" element={<ProtectedRoute><ParticipantesAvaliacaoListaPage /></ProtectedRoute>} />
                   <Route path="/avaliacoes/:id/participantes/adicionar" element={<ProtectedRoute><AdicionarParticipantesAvaliacaoPage /></ProtectedRoute>} />
                   <Route path="/avaliacao-institucional" element={<ProtectedRoute><FormulariosPage /></ProtectedRoute>} />

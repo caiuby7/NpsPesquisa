@@ -158,20 +158,6 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       case 'aluno':
         return (
           <VStack spacing={6} align="stretch">
-            {/* Dashboard */}
-            <NavSection title="Dashboard" isExpanded={true}>
-              <NavItem 
-                icon={FiHome} 
-                href="/aluno/dashboard"
-                isActive={isActiveRoute('/aluno/dashboard')}
-                onClick={() => navigate('/aluno/dashboard')}
-                badge="Aluno"
-                badgeColor="blue"
-              >
-                Meu Dashboard
-              </NavItem>
-            </NavSection>
-
             {/* Questionários */}
             <NavSection title="Questionários" isExpanded={true}>
               <NavItem 
@@ -215,20 +201,6 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       case 'professor':
         return (
           <VStack spacing={6} align="stretch">
-            {/* Dashboard */}
-            <NavSection title="Dashboard" isExpanded={true}>
-              <NavItem 
-                icon={FiHome} 
-                href="/professor/dashboard"
-                isActive={isActiveRoute('/professor/dashboard')}
-                onClick={() => navigate('/professor/dashboard')}
-                badge="Professor"
-                badgeColor="green"
-              >
-                Meu Dashboard
-              </NavItem>
-            </NavSection>
-
             {/* Questionários */}
             <NavSection title="Questionários" isExpanded={true}>
               <NavItem 
@@ -287,8 +259,42 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
               </NavItem>
             </NavSection>
 
+            {/* Gestão de Questões */}
+            <NavSection title="Gestão de Questões" isExpanded={true}>
+              <NavItem 
+                icon={FiTarget} 
+                href="/create-question"
+                isActive={isActiveRoute('/create-question')}
+                onClick={() => navigate('/create-question')}
+                badge="Novo"
+                badgeColor="blue"
+              >
+                Criar Questão
+              </NavItem>
+              <NavItem 
+                icon={FiBarChart2} 
+                href="/questions"
+                isActive={isActiveRoute('/questions')}
+                onClick={() => navigate('/questions')}
+                badge="GQ"
+                badgeColor="teal"
+              >
+                Listar Questões
+              </NavItem>
+              <NavItem 
+                icon={FiTarget} 
+                href="/test-conditional-questions"
+                isActive={isActiveRoute('/test-conditional-questions')}
+                onClick={() => navigate('/test-conditional-questions')}
+                badge="Teste"
+                badgeColor="purple"
+              >
+                Testar Condicionais
+              </NavItem>
+            </NavSection>
+
             {/* Relatórios */}
-            <NavSection title="Relatórios" isExpanded={true}>
+            <NavSection title="Relatórios" isExpanded={false}>
               <NavItem 
                 icon={FiBarChart2} 
                 href="/dashboard"
@@ -346,7 +352,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             </NavSection>
 
             {/* Gestão Acadêmica */}
-            <NavSection title="Gestão Acadêmica" isExpanded={true}>
+            <NavSection title="Gestão Acadêmica" isExpanded={false}>
               <NavItem 
                 icon={FiHome} 
                 href="/instituicoes"
@@ -413,42 +419,8 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
               </NavItem>
             </NavSection>
 
-            {/* Gestão de Questões */}
-            <NavSection title="Gestão de Questões" isExpanded={true}>
-              <NavItem 
-                icon={FiTarget} 
-                href="/create-question"
-                isActive={isActiveRoute('/create-question')}
-                onClick={() => navigate('/create-question')}
-                badge="Novo"
-                badgeColor="blue"
-              >
-                Criar Questão
-              </NavItem>
-              <NavItem 
-                icon={FiBarChart2} 
-                href="/questions"
-                isActive={isActiveRoute('/questions')}
-                onClick={() => navigate('/questions')}
-                badge="GQ"
-                badgeColor="teal"
-              >
-                Listar Questões
-              </NavItem>
-              <NavItem 
-                icon={FiTarget} 
-                href="/test-conditional-questions"
-                isActive={isActiveRoute('/test-conditional-questions')}
-                onClick={() => navigate('/test-conditional-questions')}
-                badge="Teste"
-                badgeColor="purple"
-              >
-                Testar Condicionais
-              </NavItem>
-            </NavSection>
-
-            {/* Sistema */}
-            <NavSection title="Sistema" isExpanded={false}>
+            {/* FAQ */}
+            <NavSection title="FAQ" isExpanded={true}>
               <NavItem 
                 icon={FiBookOpen} 
                 href="/faq"
