@@ -203,6 +203,343 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
     }
   };
 
+  // Função para verificar se todas as questões obrigatórias foram respondidas
+  const areAllRequiredQuestionsAnswered = () => {
+    console.log('🔍 Debug - areAllRequiredQuestionsAnswered chamada');
+    console.log('📊 Estado atual:', {
+      questoes: questoes.length,
+      responses: Object.keys(responses).length,
+      tipoItemAvaliado,
+      shouldUseGroupedStructure,
+      itensAvaliados: itensAvaliados?.length
+    });
+    
+    // Debug das questões originais
+    console.log('📋 Questões originais:', questoes.map((q: QuestionResponse) => ({
+      id: q.id,
+      texto: q.texto?.substring(0, 30) + "...",
+      obrigatorio: q.obrigatorio,
+      tipo: q.tipo
+    })));
+    
+    // Coletar todas as questões (principais + condicionais VISÍVEIS) para validação
+    const todasQuestoes: QuestionResponse[] = [];
+    
+    // Adicionar questões principais
+    questoes.forEach((q: QuestionResponse) => {
+      todasQuestoes.push(q);
+      
+      // Adicionar questões condicionais das opções APENAS se a opção estiver selecionada
+      q.opcoes?.forEach((opcao: any) => {
+        if (opcao.questaoCondicional && opcao.ativaCondicao) {
+          console.log(`🔍 Verificando questão condicional da opção ${opcao.id} da questão ${q.id}:`, {
+            questaoCondicional: opcao.questaoCondicional.id,
+            questaoCondicionalTexto: opcao.questaoCondicional.texto?.substring(0, 30),
+            questaoCondicionalObrigatoria: opcao.questaoCondicional.obrigatorio,
+            respostaQuestao: responses[q.id],
+            opcaoId: opcao.id
+          });
+          
+          const respostaQuestao = responses[q.id];
+          const isOptionSelected = Array.isArray(respostaQuestao) 
+            ? respostaQuestao.includes(String(opcao.id)) 
+            : String(respostaQuestao) === String(opcao.id);
+            
+          console.log(`🔍 Opção ${opcao.id} selecionada: ${isOptionSelected}`);
+            
+          if (isOptionSelected) {
+            console.log(`✅ Adicionando questão condicional ${opcao.questaoCondicional.id} à validação`);
+            todasQuestoes.push(opcao.questaoCondicional);
+          } else {
+            console.log(`❌ Questão condicional ${opcao.questaoCondicional.id} NÃO adicionada (opção não selecionada)`);
+          }
+        }
+      });
+      
+      // Adicionar questões condicionais das colunas APENAS se a coluna estiver selecionada
+      q.colunas?.forEach((coluna: any) => {
+        if (coluna.questaoCondicional && coluna.ativaCondicao) {
+          console.log(`🔍 Verificando questão condicional da coluna ${coluna.id} da questão ${q.id}:`, {
+            questaoCondicional: coluna.questaoCondicional.id,
+            questaoCondicionalTexto: coluna.questaoCondicional.texto?.substring(0, 30),
+            questaoCondicionalObrigatoria: coluna.questaoCondicional.obrigatorio,
+            respostaQuestao: responses[q.id],
+            colunaId: coluna.id
+          });
+          
+          const respostaQuestao = responses[q.id];
+          const isColumnSelected = Array.isArray(respostaQuestao) 
+            ? respostaQuestao.includes(String(coluna.id)) 
+            : String(respostaQuestao) === String(coluna.id);
+            
+          console.log(`🔍 Coluna ${coluna.id} selecionada: ${isColumnSelected}`);
+            
+          if (isColumnSelected) {
+            console.log(`✅ Adicionando questão condicional coluna ${coluna.questaoCondicional.id} à validação`);
+            todasQuestoes.push(coluna.questaoCondicional);
+          } else {
+            console.log(`❌ Questão condicional coluna ${coluna.questaoCondicional.id} NÃO adicionada (coluna não selecionada)`);
+          }
+        }
+      });
+    });
+
+    // Verificar se todas as questões obrigatórias foram respondidas
+    const isQuestaoAgrupada = tipoItemAvaliado !== "Curso" && tipoItemAvaliado !== "Estrutura" && tipoItemAvaliado !== "Infraestrutura" && shouldUseGroupedStructure && itensAvaliados;
+    
+    return todasQuestoes.every((q: QuestionResponse) => {
+      if (!q.obrigatorio) return true;
+      
+      // Verificar se é uma questão condicional que não deveria estar sendo validada
+      const isQuestaoCondicional = questoes.some((questaoPrincipal: QuestionResponse) => 
+        questaoPrincipal.opcoes?.some((opcao: any) => 
+          opcao.questaoCondicional?.id === q.id
+        ) || questaoPrincipal.colunas?.some((coluna: any) => 
+          coluna.questaoCondicional?.id === q.id
+        )
+      );
+      
+      if (isQuestaoCondicional) {
+        // Para questões condicionais, verificar se a opção que as ativa está selecionada
+        const questaoPrincipal = questoes.find((questaoPrincipal: QuestionResponse) => 
+          questaoPrincipal.opcoes?.some((opcao: any) => 
+            opcao.questaoCondicional?.id === q.id
+          ) || questaoPrincipal.colunas?.some((coluna: any) => 
+            coluna.questaoCondicional?.id === q.id
+          )
+        );
+        
+        if (questaoPrincipal) {
+          const respostaQuestao = responses[questaoPrincipal.id];
+          const opcaoAtiva = questaoPrincipal.opcoes?.find((opcao: any) => 
+            opcao.questaoCondicional?.id === q.id && opcao.ativaCondicao
+          ) || questaoPrincipal.colunas?.find((coluna: any) => 
+            coluna.questaoCondicional?.id === q.id && coluna.ativaCondicao
+          );
+          
+          if (opcaoAtiva) {
+            const isOptionSelected = Array.isArray(respostaQuestao) 
+              ? respostaQuestao.includes(String(opcaoAtiva.id)) 
+              : String(respostaQuestao) === String(opcaoAtiva.id);
+            
+            // Só validar se a opção que ativa a condição estiver selecionada
+            if (!isOptionSelected) {
+              return true; // Não validar esta questão condicional
+            }
+          }
+        }
+      }
+      
+      if (isQuestaoAgrupada) {
+        // Para estrutura agrupada, verificar se todas as respostas para cada item foram respondidas
+        return !itensAvaliados.some((item) => {
+          const isQuestaoCondicional = questoes.some((questaoPrincipal: QuestionResponse) => 
+            questaoPrincipal.opcoes?.some((opcao: any) => 
+              opcao.questaoCondicional?.id === q.id
+            ) || questaoPrincipal.colunas?.some((coluna: any) => 
+              coluna.questaoCondicional?.id === q.id
+            )
+          );
+          
+          let respostaKey: string | number = `${q.id}_${item.id}`;
+          let resposta = responses[respostaKey];
+          
+          if (isQuestaoCondicional) {
+            const questaoPrincipal = questoes.find((questaoPrincipal: QuestionResponse) => 
+              questaoPrincipal.opcoes?.some((opcao: any) => 
+                opcao.questaoCondicional?.id === q.id
+              ) || questaoPrincipal.colunas?.some((coluna: any) => 
+                coluna.questaoCondicional?.id === q.id
+              )
+            );
+            
+            if (questaoPrincipal) {
+              const respostaQuestaoPrincipal = responses[`${questaoPrincipal.id}_${item.id}`];
+              const opcaoAtiva = questaoPrincipal.opcoes?.find((opcao: any) => 
+                opcao.questaoCondicional?.id === q.id && opcao.ativaCondicao
+              ) || questaoPrincipal.colunas?.find((coluna: any) => 
+                coluna.questaoCondicional?.id === q.id && coluna.ativaCondicao
+              );
+              
+              if (opcaoAtiva) {
+                const isOptionSelected = Array.isArray(respostaQuestaoPrincipal) 
+                  ? respostaQuestaoPrincipal.includes(String(opcaoAtiva.id)) 
+                  : String(respostaQuestaoPrincipal) === String(opcaoAtiva.id);
+                
+                if (!isOptionSelected) {
+                  return false; // Não validar esta questão condicional para este item
+                }
+                
+                respostaKey = `${q.id}_${questaoPrincipal.id}_${item.id}`;
+                resposta = responses[respostaKey];
+              }
+            }
+          }
+          
+          const isEmpty = resposta === undefined || resposta === "" || resposta === null ||
+            (Array.isArray(resposta) && resposta.length === 0);
+          
+          return isEmpty;
+        });
+      } else {
+        // Para estrutura normal, verificar se a questão foi respondida
+        const resposta = responses[q.id];
+        const isEmpty = resposta === undefined || resposta === "" || resposta === null ||
+          (Array.isArray(resposta) && resposta.length === 0);
+        
+        return !isEmpty;
+      }
+    });
+    
+    const result = todasQuestoes.every((q: QuestionResponse) => {
+      if (!q.obrigatorio) return true;
+      
+      console.log(`🔍 Validando questão ${q.id} - ${q.texto?.substring(0, 30)}... - Obrigatória: ${q.obrigatorio}`);
+      
+      // Verificar se é uma questão condicional que não deveria estar sendo validada
+      const isQuestaoCondicional = questoes.some((questaoPrincipal: QuestionResponse) => 
+        questaoPrincipal.opcoes?.some((opcao: any) => 
+          opcao.questaoCondicional?.id === q.id
+        ) || questaoPrincipal.colunas?.some((coluna: any) => 
+          coluna.questaoCondicional?.id === q.id
+        )
+      );
+      
+      if (isQuestaoCondicional) {
+        // Para questões condicionais, verificar se a opção que as ativa está selecionada
+        const questaoPrincipal = questoes.find((questaoPrincipal: QuestionResponse) => 
+          questaoPrincipal.opcoes?.some((opcao: any) => 
+            opcao.questaoCondicional?.id === q.id
+          ) || questaoPrincipal.colunas?.some((coluna: any) => 
+            coluna.questaoCondicional?.id === q.id
+          )
+        );
+        
+        if (questaoPrincipal) {
+          const respostaQuestao = responses[questaoPrincipal.id];
+          const opcaoAtiva = questaoPrincipal.opcoes?.find((opcao: any) => 
+            opcao.questaoCondicional?.id === q.id && opcao.ativaCondicao
+          ) || questaoPrincipal.colunas?.find((coluna: any) => 
+            coluna.questaoCondicional?.id === q.id && coluna.ativaCondicao
+          );
+          
+          if (opcaoAtiva) {
+            const isOptionSelected = Array.isArray(respostaQuestao) 
+              ? respostaQuestao.includes(String(opcaoAtiva.id)) 
+              : String(respostaQuestao) === String(opcaoAtiva.id);
+            
+            // Só validar se a opção que ativa a condição estiver selecionada
+            if (!isOptionSelected) {
+              return true; // Não validar esta questão condicional
+            }
+          }
+        }
+      }
+      
+      if (isQuestaoAgrupada) {
+        // Para estrutura agrupada, verificar se todas as respostas para cada item foram respondidas
+        return !itensAvaliados.some((item) => {
+          const isQuestaoCondicional = questoes.some((questaoPrincipal: QuestionResponse) => 
+            questaoPrincipal.opcoes?.some((opcao: any) => 
+              opcao.questaoCondicional?.id === q.id
+            ) || questaoPrincipal.colunas?.some((coluna: any) => 
+              coluna.questaoCondicional?.id === q.id
+            )
+          );
+          
+          let respostaKey: string | number = `${q.id}_${item.id}`;
+          let resposta = responses[respostaKey];
+          
+          if (isQuestaoCondicional) {
+            const questaoPrincipal = questoes.find((questaoPrincipal: QuestionResponse) => 
+              questaoPrincipal.opcoes?.some((opcao: any) => 
+                opcao.questaoCondicional?.id === q.id
+              ) || questaoPrincipal.colunas?.some((coluna: any) => 
+                coluna.questaoCondicional?.id === q.id
+              )
+            );
+            
+            if (questaoPrincipal) {
+              const respostaQuestaoPrincipal = responses[`${questaoPrincipal.id}_${item.id}`];
+              const opcaoAtiva = questaoPrincipal.opcoes?.find((opcao: any) => 
+                opcao.questaoCondicional?.id === q.id && opcao.ativaCondicao
+              ) || questaoPrincipal.colunas?.find((coluna: any) => 
+                coluna.questaoCondicional?.id === q.id && coluna.ativaCondicao
+              );
+              
+              if (opcaoAtiva) {
+                const isOptionSelected = Array.isArray(respostaQuestaoPrincipal) 
+                  ? respostaQuestaoPrincipal.includes(String(opcaoAtiva.id)) 
+                  : String(respostaQuestaoPrincipal) === String(opcaoAtiva.id);
+                
+                if (!isOptionSelected) {
+                  return false; // Não validar esta questão condicional para este item
+                }
+                
+                respostaKey = `${q.id}_${questaoPrincipal.id}_${item.id}`;
+                resposta = responses[respostaKey];
+              }
+            }
+          }
+          
+          const isEmpty = resposta === undefined || resposta === "" || resposta === null ||
+            (Array.isArray(resposta) && resposta.length === 0);
+          
+          return isEmpty;
+        });
+      } else {
+        // Para estrutura normal, verificar se a questão foi respondida
+        const resposta = responses[q.id];
+        const isEmpty = resposta === undefined || resposta === "" || resposta === null ||
+          (Array.isArray(resposta) && resposta.length === 0);
+        
+        return !isEmpty;
+      }
+    });
+    
+    console.log('✅ Resultado da validação:', {
+      todasQuestoes: todasQuestoes.length,
+      questoesObrigatorias: todasQuestoes.filter(q => q.obrigatorio).length,
+      result,
+      questoesObrigatoriasDetalhes: todasQuestoes.filter(q => q.obrigatorio).map(q => ({
+        id: q.id,
+        texto: q.texto?.substring(0, 50) + "...",
+        obrigatorio: q.obrigatorio
+      })),
+      // Debug adicional
+      todasQuestoesIds: todasQuestoes.map(q => q.id),
+      questoesOriginais: questoes.map((q: QuestionResponse) => ({ id: q.id, texto: q.texto?.substring(0, 30), obrigatorio: q.obrigatorio })),
+      responsesKeys: Object.keys(responses)
+    });
+    
+    // Debug específico para questões obrigatórias não respondidas
+    const questoesObrigatoriasNaoRespondidas = todasQuestoes.filter(q => {
+      if (!q.obrigatorio) return false;
+      
+      const resposta = responses[q.id];
+      const isEmpty = resposta === undefined || resposta === "" || resposta === null ||
+        (Array.isArray(resposta) && resposta.length === 0);
+      
+      return isEmpty;
+    });
+    
+    console.log('❌ Questões obrigatórias NÃO respondidas:', questoesObrigatoriasNaoRespondidas.map(q => ({
+      id: q.id,
+      texto: q.texto?.substring(0, 50) + "...",
+      resposta: responses[q.id]
+    })));
+    
+    console.log('🎯 RESULTADO FINAL DA VALIDAÇÃO:', {
+      result,
+      todasQuestoes: todasQuestoes.length,
+      questoesObrigatorias: todasQuestoes.filter(q => q.obrigatorio).length,
+      questoesNaoRespondidas: questoesObrigatoriasNaoRespondidas.length,
+      botaoDeveEstarDesabilitado: !result
+    });
+    
+    return result;
+  };
+
   const handleSubmit = async () => {
     if (submitting) return; // Evitar múltiplos envios
     
@@ -987,6 +1324,15 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
         
         {/* Botões de Ação */}
         <Box textAlign="center" mt={6}>
+          {/* Indicador de progresso das questões obrigatórias */}
+          {!areAllRequiredQuestionsAnswered() && (
+            <Box mb={4} p={3} bg="yellow.50" borderRadius="md" border="1px solid" borderColor="yellow.200">
+              <Text fontSize="sm" color="yellow.800" textAlign="center">
+                ⚠️ Responda todas as questões obrigatórias para enviar o questionário
+              </Text>
+            </Box>
+          )}
+          
           <HStack spacing={4} justify="center">
             {/* Botão de salvar manual */}
             {/* TEMPORÁRIO: Desabilitar botão de salvar manual */}
@@ -997,7 +1343,7 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
               color="white"
               size="lg"
               onClick={handleSubmit}
-              disabled={Object.keys(responses).length === 0 || submitting}
+              disabled={!areAllRequiredQuestionsAnswered() || submitting}
               isLoading={submitting}
               loadingText="Enviando..."
               px={12}

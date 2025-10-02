@@ -56,7 +56,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../../components/layout/main-layout.component';
 import Pagination from '../../components/Pagination/pagination.component';
-import { ITEM_AVALIADO_TYPES, TipoQuestionarioEnum } from '../../services/form/form.services.types';
+import { ITEM_AVALIADO_TYPES, TipoQuestionarioEnum, TIPO_TURMA_OPTIONS } from '../../services/form/form.services.types';
 import { useGetQuestions } from '../../services/question';
 import { api } from '../../services/api';
 
@@ -104,6 +104,8 @@ interface AvaliacaoFormData {
   turmaId: string;
   disciplinaId: string;
   tipoParticipante: string;
+  nivelEnsino: string;
+  tiposTurma: string[];
 }
 
 const CriarAvaliacaoPage: React.FC = () => {
@@ -151,7 +153,9 @@ const CriarAvaliacaoPage: React.FC = () => {
     cursoId: '',
     turmaId: '',
     disciplinaId: '',
-    tipoParticipante: ''
+    tipoParticipante: '',
+    nivelEnsino: '',
+    tiposTurma: []
   });
   
   // Estado para controlar quando mostrar validações
@@ -241,10 +245,10 @@ const CriarAvaliacaoPage: React.FC = () => {
     setShowValidation(true);
     
     // Validar campos obrigatórios
-    if (!formData.titulo || !formData.descricao || !formData.tipoItemAvaliado || !formData.dataInicio || !formData.dataFim || !formData.instituicaoId) {
+    if (!formData.titulo || !formData.descricao || !formData.tipoItemAvaliado || !formData.nivelEnsino || !formData.dataInicio || !formData.dataFim || !formData.instituicaoId) {
       toast({
         title: 'Campos obrigatórios',
-        description: 'Por favor, preencha todos os campos obrigatórios, incluindo instituição, data e hora de início e fim.',
+        description: 'Por favor, preencha todos os campos obrigatórios, incluindo nível de ensino, instituição, data e hora de início e fim.',
         status: 'error',
         duration: 3000,
         isClosable: true,
@@ -265,6 +269,7 @@ const CriarAvaliacaoPage: React.FC = () => {
         tipoItemAvaliado: formData.tipoItemAvaliado,
         nomeItemEspecifico: formData.nomeItemEspecifico,
         instituicaoId: parseInt(formData.instituicaoId),
+        nivelEnsino: formData.nivelEnsino,
         textoBoasVindas: formData.textoBoasVindas,
         templateEmailConvite: formData.templateEmailConvite,
         templateEmailLembrete: formData.templateEmailLembrete,
@@ -275,7 +280,8 @@ const CriarAvaliacaoPage: React.FC = () => {
         questoes: formData.questoes.map((questaoId, index) => ({
           questaoId: questaoId,
           ordem: index + 1
-        }))
+        })),
+        tiposTurma: formData.tiposTurma
       };
 
       const response = await api.post('/Questionario/com-questoes', avaliacaoData);
@@ -329,7 +335,9 @@ const CriarAvaliacaoPage: React.FC = () => {
       cursoId: '',
       turmaId: '',
       disciplinaId: '',
-      tipoParticipante: ''
+      tipoParticipante: '',
+      nivelEnsino: '',
+      tiposTurma: []
     });
     setParticipantes([]);
   };
@@ -456,6 +464,82 @@ const CriarAvaliacaoPage: React.FC = () => {
                       {showValidation && !formData.tipoItemAvaliado && (
                         <FormHelperText color="red.500">Tipo de item avaliado é obrigatório</FormHelperText>
                       )}
+                    </FormControl>
+
+                    <FormControl isInvalid={showValidation && !formData.nivelEnsino}>
+                      <FormLabel>Nível de Ensino *</FormLabel>
+                      <Select
+                        value={formData.nivelEnsino}
+                        onChange={(e) => setFormData({...formData, nivelEnsino: e.target.value})}
+                        placeholder="Selecione o nível de ensino"
+                      >
+                        <option value="GraduacaoPresencial">Graduação Presencial</option>
+                        <option value="GraduacaoEAD">Graduação à Distância (EAD)</option>
+                        <option value="PosGraduacao">Pós-graduação</option>
+                        <option value="EnsinoMedio">Ensino Médio</option>
+                        <option value="EnsinoTecnico">Ensino Técnico</option>
+                        <option value="Mestrado">Mestrado</option>
+                        <option value="Doutorado">Doutorado</option>
+                      </Select>
+                      {showValidation && !formData.nivelEnsino && (
+                        <FormHelperText color="red.500">Nível de ensino é obrigatório</FormHelperText>
+                      )}
+                    </FormControl>
+
+                    <FormControl>
+                      <FormLabel>Tipos de Turma</FormLabel>
+                      <VStack align="start" spacing={2}>
+                        <HStack spacing={2} mb={2}>
+                          <Button
+                            size="xs"
+                            variant="outline"
+                            onClick={() => {
+                              const todosTipos = TIPO_TURMA_OPTIONS.map(tipo => tipo.value);
+                              setFormData(prev => ({
+                                ...prev,
+                                tiposTurma: todosTipos
+                              }));
+                            }}
+                          >
+                            Selecionar Todos
+                          </Button>
+                          <Button
+                            size="xs"
+                            variant="outline"
+                            onClick={() => {
+                              setFormData(prev => ({
+                                ...prev,
+                                tiposTurma: []
+                              }));
+                            }}
+                          >
+                            Deselecionar Todos
+                          </Button>
+                        </HStack>
+                        <VStack align="start" spacing={2} maxH="200px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md" p={3} w="full">
+                          {TIPO_TURMA_OPTIONS.map((tipo) => (
+                            <Checkbox
+                              key={tipo.value}
+                              isChecked={formData.tiposTurma.includes(tipo.value)}
+                              onChange={() => {
+                                const novosTipos = formData.tiposTurma.includes(tipo.value)
+                                  ? formData.tiposTurma.filter(t => t !== tipo.value)
+                                  : [...formData.tiposTurma, tipo.value];
+                                setFormData(prev => ({
+                                  ...prev,
+                                  tiposTurma: novosTipos
+                                }));
+                              }}
+                              size="sm"
+                            >
+                              {tipo.label}
+                            </Checkbox>
+                          ))}
+                        </VStack>
+                      </VStack>
+                      <FormHelperText>
+                        Selecione os tipos de turma que serão incluídos nesta avaliação
+                      </FormHelperText>
                     </FormControl>
 
                     <FormControl isInvalid={showValidation && !formData.instituicaoId}>
@@ -634,7 +718,7 @@ const CriarAvaliacaoPage: React.FC = () => {
                       leftIcon={<Send size={20} />}
                       colorScheme="green"
                       onClick={onNextStep}
-                      isDisabled={!formData.titulo || !formData.descricao || !formData.tipoItemAvaliado || !formData.dataInicio || !formData.dataFim}
+                      isDisabled={!formData.titulo || !formData.descricao || !formData.tipoItemAvaliado || !formData.nivelEnsino || !formData.dataInicio || !formData.dataFim}
                       size="lg"
                     >
                       Próximo

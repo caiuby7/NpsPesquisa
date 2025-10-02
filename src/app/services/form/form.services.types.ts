@@ -28,8 +28,21 @@ export enum TipoItemAvaliadoEnum {
   ALUNOS = "Alunos",
   TURMA = "Turma",
   INFRAESTRUTURA = "Infraestrutura",
-  TCC = "TCC"
+  TCC = "TCC",
+  PACEXTENSIONISTA = "PACExtensionista"
 }
+
+export enum TipoTurmaEnum {
+  PRESENCIAL = "Presencial",
+  SEMIPRESENCIAL = "Semipresencial",
+  EAD = "EAD"
+}
+
+export const TIPO_TURMA_OPTIONS = [
+  { value: TipoTurmaEnum.PRESENCIAL, label: "Aulas Presenciais" },
+  { value: TipoTurmaEnum.SEMIPRESENCIAL, label: "Aulas Semipresenciais" },
+  { value: TipoTurmaEnum.EAD, label: "Aulas à Distância" }
+];
 
 export interface FormGetParams {
   id: string;
@@ -121,6 +134,7 @@ export const ITEM_AVALIADO_TYPES = [
   { value: TipoItemAvaliadoEnum.TURMA, label: "Turma" },
   { value: TipoItemAvaliadoEnum.INFRAESTRUTURA, label: "Infraestrutura" },
   { value: TipoItemAvaliadoEnum.TCC, label: "TCC" },
+  { value: TipoItemAvaliadoEnum.PACEXTENSIONISTA, label: "PAC Extensionista" },
 ];
 
 export interface QuestoesQuestionario {

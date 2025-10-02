@@ -55,6 +55,7 @@ interface Avaliacao {
   totalRespostas: number;
   ativo: boolean;
   dataCriacao: string;
+  nivelEnsino?: string;
 }
 
 const AvaliacoesPage: React.FC = () => {
@@ -185,7 +186,12 @@ const AvaliacoesPage: React.FC = () => {
       'Curso': 'orange',
       'Turma': 'teal',
       'Coordenador': 'pink',
-      'Estrutura': 'gray'
+      'Estrutura': 'gray',
+      'ProjetoExtensionista': 'cyan',
+      'PACExtensionista': 'yellow',
+      'Estagio': 'indigo',
+      'TCC': 'red',
+      'Infraestrutura': 'gray'
     };
 
     return (

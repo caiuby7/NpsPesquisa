@@ -1,9 +1,4 @@
 // utils/withAuth.ts
-import {
-  GetServerSideProps,
-  GetServerSidePropsContext,
-  GetServerSidePropsResult,
-} from "next";
 import { jwtDecode } from "jwt-decode";
 
 export function isTokenValid(token: string): boolean {
@@ -16,34 +11,15 @@ export function isTokenValid(token: string): boolean {
   }
 }
 
-export function withAuth<
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  P extends { [key: string]: any }
->(): GetServerSideProps<P> {
-  return async (
-    ctx: GetServerSidePropsContext
-  ): Promise<GetServerSidePropsResult<P>> => {
-    // Verificar se estamos no cliente
-    if (typeof window === 'undefined') {
-      // No servidor, sempre permitir (a verificação será feita no cliente)
-      return {
-        props: {} as P,
-      };
-    }
-
-    const token = localStorage.getItem("token");
-
-    if (!token || !isTokenValid(token)) {
-      return {
-        redirect: {
-          destination: "/login",
-          permanent: false,
-        },
-      };
-    }
-
-    return {
-      props: {} as P,
-    };
-  };
+// Hook para verificar autenticação no React
+export function useAuth() {
+  const token = localStorage.getItem("token");
+  
+  if (!token || !isTokenValid(token)) {
+    // Redirecionar para login
+    window.location.href = "/login";
+    return false;
+  }
+  
+  return true;
 }

@@ -77,6 +77,7 @@ interface AvaliacaoFormData {
   cursoId: string;
   turmaId: string;
   disciplinaId: string;
+  nivelEnsino: string;
 }
 
 interface FiltrosFormData {
@@ -155,7 +156,8 @@ const EditarAvaliacaoComponent: React.FC<EditarAvaliacaoComponentProps> = ({ id 
     periodoLetivoId: '',
     cursoId: '',
     turmaId: '',
-    disciplinaId: ''
+    disciplinaId: '',
+    nivelEnsino: ''
   });
 
   const [filtrosForm, setFiltrosForm] = useState<FiltrosFormData>({
@@ -206,7 +208,8 @@ const EditarAvaliacaoComponent: React.FC<EditarAvaliacaoComponentProps> = ({ id 
         periodoLetivoId: '',
         cursoId: '',
         turmaId: '',
-        disciplinaId: ''
+        disciplinaId: '',
+        nivelEnsino: avaliacao.nivelEnsino || ''
       });
 
       // Configurar editores de texto rico
@@ -347,7 +350,8 @@ const EditarAvaliacaoComponent: React.FC<EditarAvaliacaoComponentProps> = ({ id 
         enviarLembreteAutomatico: avaliacaoForm.enviarLembreteAutomatico,
         enviarLembreteParaTodos: avaliacaoForm.enviarLembreteParaTodos,
         ativo: avaliacaoForm.ativo,
-        instituicaoId: Number(avaliacaoForm.instituicaoId)
+        instituicaoId: Number(avaliacaoForm.instituicaoId),
+        nivelEnsino: avaliacaoForm.nivelEnsino
       };
 
       await api.put(`/Questionario/${id}`, avaliacaoData);
@@ -527,6 +531,23 @@ const EditarAvaliacaoComponent: React.FC<EditarAvaliacaoComponentProps> = ({ id 
                   </FormControl>
 
                   <FormControl isRequired>
+                    <FormLabel>Nível de Ensino</FormLabel>
+                    <Select
+                      value={avaliacaoForm.nivelEnsino}
+                      onChange={(e) => handleInputChange('nivelEnsino', e.target.value)}
+                      placeholder="Selecione o nível de ensino"
+                    >
+                      <option value="GraduacaoPresencial">Graduação Presencial</option>
+                      <option value="GraduacaoEAD">Graduação à Distância (EAD)</option>
+                      <option value="PosGraduacao">Pós-graduação</option>
+                      <option value="EnsinoMedio">Ensino Médio</option>
+                      <option value="EnsinoTecnico">Ensino Técnico</option>
+                      <option value="Mestrado">Mestrado</option>
+                      <option value="Doutorado">Doutorado</option>
+                    </Select>
+                  </FormControl>
+
+                  <FormControl isRequired>
                     <FormLabel>Instituição</FormLabel>
                     <Select
                       value={avaliacaoForm.instituicaoId}
@@ -660,7 +681,7 @@ const EditarAvaliacaoComponent: React.FC<EditarAvaliacaoComponentProps> = ({ id 
                       />
                     </Box>
                     <FormHelperText>
-                      Use o editor para criar uma descrição rica da avaliação
+                      Use o editor para criar a descrição da avaliação
                     </FormHelperText>
                   </FormControl>
 

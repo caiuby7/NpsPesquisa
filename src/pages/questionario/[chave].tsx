@@ -213,10 +213,10 @@ export default function QuestionarioPorChavePage() {
             </Text>
           </Box>
 
-          {/* Seção de Informações - Mostrar apenas para Disciplina, Turma, Estágio, TCC e Projeto Extensionista */}
+          {/* Seção de Informações - Mostrar apenas para Disciplina, Turma, Estágio, TCC, Projeto Extensionista e PAC Extensionista */}
           {(data.tipoItemAvaliado === "Disciplina" || data.tipoItemAvaliado === "Turma" || 
             data.tipoItemAvaliado === "Estagio" || data.tipoItemAvaliado === "TCC" || 
-            data.tipoItemAvaliado === "ProjetoExtensionista") && (
+            data.tipoItemAvaliado === "ProjetoExtensionista" || data.tipoItemAvaliado === "PACExtensionista") && (
             <Box bg="blue.50" p={6} borderRadius="lg" border="1px solid" borderColor="blue.200">
               <HStack spacing={3} mb={3}>
                 <Box w={6} h={6} bg="green.500" borderRadius="md" display="flex" alignItems="center" justifyContent="center">
@@ -256,6 +256,11 @@ export default function QuestionarioPorChavePage() {
                   <>
                     Você está matriculado em <Text as="span" fontWeight="bold" bg="blue.100" px={2} py={1} borderRadius="md">{data.itensAvaliados?.length || 0} projetos extensionistas</Text>. 
                     Para cada projeto extensionista, avalie os aspectos listados abaixo.
+                  </>
+                ) : data.tipoItemAvaliado === "PACExtensionista" ? (
+                  <>
+                    Você está matriculado em <Text as="span" fontWeight="bold" bg="blue.100" px={2} py={1} borderRadius="md">{data.itensAvaliados?.length || 0} PACs Extensionistas(Projeto de Aprendizagem Colaborativa Extensionista)</Text>. 
+                    Para cada PAC Extensionista, avalie os aspectos listados abaixo.
                   </>
                 ) : (
                   <>

@@ -254,6 +254,13 @@ const AvaliacoesPage: React.FC = () => {
       case 'Curso': return <GraduationCap size={16} color="gray.400" />;
       case 'Turma': return <Users size={16} color="gray.400" />;
       case 'Estrutura': return <Building size={16} color="gray.400" />;
+      case 'ProjetoExtensionista': return <Target size={16} color="gray.400" />;
+      case 'PACExtensionista': return <Target size={16} color="gray.400" />;
+      case 'Estagio': return <Target size={16} color="gray.400" />;
+      case 'TCC': return <Target size={16} color="gray.400" />;
+      case 'Coordenador': return <Users size={16} color="gray.400" />;
+      case 'Alunos': return <Users size={16} color="gray.400" />;
+      case 'Infraestrutura': return <Building size={16} color="gray.400" />;
       default: return <Target size={16} color="gray.400" />;
     }
   };
@@ -402,6 +409,26 @@ const AvaliacoesPage: React.FC = () => {
                                 Instituição:
                               </Text>{' '}
                               {avaliacao.nomeInstituicao || 'Instituição não definida'}
+                            </Text>
+                          </HStack>
+                          
+                          {/* Nível de Ensino */}
+                          <HStack spacing={3} align="center">
+                            <GraduationCap size={16} color="gray.500" />
+                            <Text fontSize="sm" color="gray.700">
+                              <Text as="span" fontSize="xs" color="gray.500" fontWeight="medium">
+                                Nível de Ensino:
+                              </Text>{' '}
+                              {avaliacao.nivelEnsino ? 
+                                avaliacao.nivelEnsino === 'GraduacaoPresencial' ? 'Graduação Presencial' :
+                                avaliacao.nivelEnsino === 'GraduacaoEAD' ? 'Graduação à Distância (EAD)' :
+                                avaliacao.nivelEnsino === 'PosGraduacao' ? 'Pós-graduação' :
+                                avaliacao.nivelEnsino === 'EnsinoMedio' ? 'Ensino Médio' :
+                                avaliacao.nivelEnsino === 'EnsinoTecnico' ? 'Ensino Técnico' :
+                                avaliacao.nivelEnsino === 'Mestrado' ? 'Mestrado' :
+                                avaliacao.nivelEnsino === 'Doutorado' ? 'Doutorado' :
+                                avaliacao.nivelEnsino
+                                : 'Não informado'}
                             </Text>
                           </HStack>
                           

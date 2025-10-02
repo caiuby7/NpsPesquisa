@@ -23,6 +23,7 @@ export interface Avaliacao {
   // Campos para instituição
   instituicaoId: number;
   nomeInstituicao?: string;
+  nivelEnsino?: string;
   // Campos para estatísticas (opcionais pois podem não vir do endpoint de busca por ID)
   totalParticipantes?: number;
   totalRespostas?: number;
