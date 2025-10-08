@@ -23,12 +23,9 @@ import {
   CardFooter,
   SimpleGrid,
   Checkbox,
-  Stack
+  Stack,
+  Textarea
 } from '@chakra-ui/react';
-import { EditorState, convertToRaw } from 'draft-js';
-import { Editor } from 'react-draft-wysiwyg';
-import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
-import draftToHtml from 'draftjs-to-html';
 import { 
   Send,
   Users,
@@ -47,7 +44,11 @@ import {
 import { ITEM_AVALIADO_TYPES, TipoQuestionarioEnum } from '../../services/form/form.services.types';
 import { useNavigate } from 'react-router-dom';
 import { useGetAvaliacaoById } from '../../services/avaliacao/avaliacao.service.hooks';
+import { useGetTiposTurma } from '../../services/lookup/lookup.service.hooks';
 import { api } from '../../services/api';
+// NOTA: RegrasFiltroQuestionario removido - Regras em cascata agora são GLOBAIS
+// Acesse: /configuracoes/regras-cascata para gerenciar
+import { useGetNiveisEnsino, useGetTiposMatricula, useGetTiposProfessor } from '../../services/lookup/lookup.service.hooks';
 
 interface EditarAvaliacaoComponentProps {
   id: string;
@@ -77,7 +78,21 @@ interface AvaliacaoFormData {
   cursoId: string;
   turmaId: string;
   disciplinaId: string;
+  tipoParticipante: string;
   nivelEnsino: string;
+  tiposTurma: string[];
+  tiposMatricula: string[];
+  tiposProfessor: string[];
+  // ===== NOVOS CAMPOS PARA REGRAS DE FILTRO =====
+  tiposDisciplinaPermitidos: string;
+  tiposProfessorPermitidos: string;
+  tiposTurmaPermitidos: string;
+  statusMatriculaPermitidos: string;
+  niveisEnsinoPermitidos: string;
+  aplicarFiltroContextoAluno: boolean;
+  contextoAlunoPermitido: string;
+  incluirTurmasGerenciadas: boolean;
+  incluirTurmasNaoGerenciadas: boolean;
 }
 
 interface FiltrosFormData {
@@ -123,7 +138,13 @@ interface QuestaoQuestionario {
 }
 
 const EditarAvaliacaoComponent: React.FC<EditarAvaliacaoComponentProps> = ({ id }) => {
+  console.log('🎯 EditarAvaliacaoComponent renderizado - ID:', id);
+  
   const { data: avaliacao, isLoading, error } = useGetAvaliacaoById(Number(id));
+  const { data: niveisEnsino = [] } = useGetNiveisEnsino();
+  const { data: tiposMatricula = [] } = useGetTiposMatricula();
+  const { data: tiposProfessor = [] } = useGetTiposProfessor();
+  const { data: tiposTurma = [] } = useGetTiposTurma();
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -157,7 +178,21 @@ const EditarAvaliacaoComponent: React.FC<EditarAvaliacaoComponentProps> = ({ id 
     cursoId: '',
     turmaId: '',
     disciplinaId: '',
-    nivelEnsino: ''
+    tipoParticipante: '',
+    nivelEnsino: '',
+    tiposTurma: [],
+    tiposMatricula: [],
+    tiposProfessor: [],
+    // ===== NOVOS CAMPOS PARA REGRAS DE FILTRO =====
+    tiposDisciplinaPermitidos: '',
+    tiposProfessorPermitidos: '',
+    tiposTurmaPermitidos: '',
+    statusMatriculaPermitidos: '',
+    niveisEnsinoPermitidos: '',
+    aplicarFiltroContextoAluno: false,
+    contextoAlunoPermitido: '',
+    incluirTurmasGerenciadas: true,
+    incluirTurmasNaoGerenciadas: true
   });
 
   const [filtrosForm, setFiltrosForm] = useState<FiltrosFormData>({
@@ -209,7 +244,21 @@ const EditarAvaliacaoComponent: React.FC<EditarAvaliacaoComponentProps> = ({ id 
         cursoId: '',
         turmaId: '',
         disciplinaId: '',
-        nivelEnsino: avaliacao.nivelEnsino || ''
+        tipoParticipante: avaliacao.tipoParticipante || '',
+        nivelEnsino: avaliacao.nivelEnsinoId?.toString() || '',
+        tiposTurma: avaliacao.tiposTurma || [],
+        tiposMatricula: avaliacao.tiposMatricula || [],
+        tiposProfessor: avaliacao.tiposProfessor || [],
+        // ===== NOVOS CAMPOS PARA REGRAS DE FILTRO =====
+        tiposDisciplinaPermitidos: avaliacao.tiposDisciplinaPermitidos || '',
+        tiposProfessorPermitidos: avaliacao.tiposProfessorPermitidos || '',
+        tiposTurmaPermitidos: avaliacao.tiposTurmaPermitidos || '',
+        statusMatriculaPermitidos: avaliacao.statusMatriculaPermitidos || '',
+        niveisEnsinoPermitidos: avaliacao.niveisEnsinoPermitidos || '',
+        aplicarFiltroContextoAluno: avaliacao.aplicarFiltroContextoAluno ?? false,
+        contextoAlunoPermitido: avaliacao.contextoAlunoPermitido || '',
+        incluirTurmasGerenciadas: avaliacao.incluirTurmasGerenciadas ?? true,
+        incluirTurmasNaoGerenciadas: avaliacao.incluirTurmasNaoGerenciadas ?? true
       });
 
       // Configurar editores de texto rico
@@ -236,23 +285,49 @@ const EditarAvaliacaoComponent: React.FC<EditarAvaliacaoComponentProps> = ({ id 
     }
   }, [avaliacao]);
 
-  // Carregar filtros e questões
+  // Carregar filtros sempre, independente do ID
   useEffect(() => {
+    console.log('🚀 useEffect executado - ID:', id);
     carregarFiltros();
     if (id) {
       carregarQuestoes();
     }
   }, [id]);
 
+  // Carregar filtros imediatamente quando o componente monta
+  useEffect(() => {
+    console.log('🎯 Componente montado - carregando filtros imediatamente');
+    carregarFiltros();
+  }, []);
+
+  // Debug: monitorar mudanças nos filtros
+  useEffect(() => {
+    console.log('🏢 Filtros atualizados:', filtros);
+  }, [filtros]);
+
   const carregarFiltros = async () => {
+    console.log('🔍 Carregando filtros...');
     try {
-      const [instituicoesRes, periodosRes, cursosRes, turmasRes, disciplinasRes] = await Promise.all([
-        api.get('/Instituicao'),
+      // Testar apenas instituições primeiro
+      console.log('🌐 Fazendo chamada para /Instituicao...');
+      const instituicoesRes = await api.get('/Instituicao');
+      console.log('✅ Resposta da API Instituicao:', instituicoesRes.data);
+
+      // Se funcionou, carregar os outros
+      const [periodosRes, cursosRes, turmasRes, disciplinasRes] = await Promise.all([
         api.get('/PeriodoLetivo'),
         api.get('/Curso'),
         api.get('/Turma'),
         api.get('/Disciplina')
       ]);
+
+      console.log('📊 Todos os dados recebidos:', {
+        instituicoes: instituicoesRes.data,
+        periodos: periodosRes.data,
+        cursos: cursosRes.data,
+        turmas: turmasRes.data,
+        disciplinas: disciplinasRes.data
+      });
 
       setFiltros({
         instituicoes: instituicoesRes.data,
@@ -261,8 +336,11 @@ const EditarAvaliacaoComponent: React.FC<EditarAvaliacaoComponentProps> = ({ id 
         turmas: turmasRes.data,
         disciplinas: disciplinasRes.data
       });
-    } catch (error) {
-      console.error('Erro ao carregar filtros:', error);
+      
+      console.log('✅ Filtros atualizados com sucesso');
+    } catch (error: any) {
+      console.error('❌ Erro ao carregar filtros:', error);
+      console.error('❌ Detalhes do erro:', error.response?.data || error.message);
     }
   };
 
@@ -292,30 +370,54 @@ const EditarAvaliacaoComponent: React.FC<EditarAvaliacaoComponentProps> = ({ id 
     }));
   };
 
+  // Função para limpar HTML desnecessário
+  const cleanHtml = (html: string) => {
+    if (!html) return '';
+    
+    // Remover <p></p> vazias
+    let cleaned = html.replace(/<p><\/p>/g, '');
+    
+    // Remover <p>&nbsp;</p>
+    cleaned = cleaned.replace(/<p>&nbsp;<\/p>/g, '');
+    
+    // Remover <p> </p> (com espaços)
+    cleaned = cleaned.replace(/<p>\s*<\/p>/g, '');
+    
+    // Se ficou vazio, retornar string vazia
+    if (cleaned.trim() === '' || cleaned.trim() === '<p></p>') {
+      return '';
+    }
+    
+    return cleaned;
+  };
+
   const handleEditorChange = (editorState: EditorState) => {
     setEditorState(editorState);
     const htmlContent = draftToHtml(convertToRaw(editorState.getCurrentContent()));
+    const cleanedHtml = cleanHtml(htmlContent);
     setAvaliacaoForm(prev => ({
       ...prev,
-      descricao: htmlContent
+      descricao: cleanedHtml
     }));
   };
 
   const handleEditorConviteChange = (editorState: EditorState) => {
     setEditorConvite(editorState);
     const htmlContent = draftToHtml(convertToRaw(editorState.getCurrentContent()));
+    const cleanedHtml = cleanHtml(htmlContent);
     setAvaliacaoForm(prev => ({
       ...prev,
-      templateEmailConvite: htmlContent
+      templateEmailConvite: cleanedHtml
     }));
   };
 
   const handleEditorLembreteChange = (editorState: EditorState) => {
     setEditorLembrete(editorState);
     const htmlContent = draftToHtml(convertToRaw(editorState.getCurrentContent()));
+    const cleanedHtml = cleanHtml(htmlContent);
     setAvaliacaoForm(prev => ({
       ...prev,
-      templateEmailLembrete: htmlContent
+      templateEmailLembrete: cleanedHtml
     }));
   };
 
@@ -351,10 +453,28 @@ const EditarAvaliacaoComponent: React.FC<EditarAvaliacaoComponentProps> = ({ id 
         enviarLembreteParaTodos: avaliacaoForm.enviarLembreteParaTodos,
         ativo: avaliacaoForm.ativo,
         instituicaoId: Number(avaliacaoForm.instituicaoId),
-        nivelEnsino: avaliacaoForm.nivelEnsino
+        tipoParticipante: avaliacaoForm.tipoParticipante,
+        nivelEnsinoId: avaliacaoForm.nivelEnsino ? parseInt(avaliacaoForm.nivelEnsino) : null,
+        tiposTurmaNomes: avaliacaoForm.tiposTurma,
+        tiposMatriculaIds: avaliacaoForm.tiposMatricula,
+        tiposProfessorIds: avaliacaoForm.tiposProfessor,
+        // Questões são obrigatórias para o endpoint /com-questoes
+        questoes: questoes.map((q, index) => ({
+          questaoId: q.questao.id,
+          ordem: q.ordem || index + 1
+        })),
+        // ===== NOVOS CAMPOS PARA REGRAS DE FILTRO =====
+        tiposDisciplinaPermitidos: avaliacaoForm.tiposDisciplinaPermitidos,
+        tiposProfessorPermitidos: avaliacaoForm.tiposProfessorPermitidos,
+        tiposTurmaPermitidos: avaliacaoForm.tiposTurmaPermitidos,
+        statusMatriculaPermitidos: avaliacaoForm.statusMatriculaPermitidos,
+        aplicarFiltroContextoAluno: avaliacaoForm.aplicarFiltroContextoAluno,
+        contextoAlunoPermitido: avaliacaoForm.contextoAlunoPermitido,
+        incluirTurmasGerenciadas: avaliacaoForm.incluirTurmasGerenciadas,
+        incluirTurmasNaoGerenciadas: avaliacaoForm.incluirTurmasNaoGerenciadas
       };
 
-      await api.put(`/Questionario/${id}`, avaliacaoData);
+      await api.put(`/Questionario/${id}/com-questoes`, avaliacaoData);
 
       toast({
         title: 'Sucesso',
@@ -537,14 +657,71 @@ const EditarAvaliacaoComponent: React.FC<EditarAvaliacaoComponentProps> = ({ id 
                       onChange={(e) => handleInputChange('nivelEnsino', e.target.value)}
                       placeholder="Selecione o nível de ensino"
                     >
-                      <option value="GraduacaoPresencial">Graduação Presencial</option>
-                      <option value="GraduacaoEAD">Graduação à Distância (EAD)</option>
-                      <option value="PosGraduacao">Pós-graduação</option>
-                      <option value="EnsinoMedio">Ensino Médio</option>
-                      <option value="EnsinoTecnico">Ensino Técnico</option>
-                      <option value="Mestrado">Mestrado</option>
-                      <option value="Doutorado">Doutorado</option>
+                      {niveisEnsino.map((nivel) => (
+                        <option key={nivel.id} value={nivel.id.toString()}>
+                          {nivel.nome}
+                        </option>
+                      ))}
                     </Select>
+                  </FormControl>
+
+                  <FormControl isRequired>
+                    <FormLabel>Tipos de Turma</FormLabel>
+                    <VStack align="start" spacing={2}>
+                      <HStack spacing={2} mb={2}>
+                        <Button
+                          size="xs"
+                          variant="outline"
+                          onClick={() => {
+                            const todosTipos = tiposTurma.map(tipo => tipo.nome);
+                            setAvaliacaoForm(prev => ({
+                              ...prev,
+                              tiposTurma: todosTipos
+                            }));
+                          }}
+                        >
+                          Selecionar Todos
+                        </Button>
+                        <Button
+                          size="xs"
+                          variant="outline"
+                          onClick={() => {
+                            setAvaliacaoForm(prev => ({
+                              ...prev,
+                              tiposTurma: []
+                            }));
+                          }}
+                        >
+                          Deselecionar Todos
+                        </Button>
+                      </HStack>
+                      <VStack align="start" spacing={2} maxH="200px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md" p={3} w="full">
+                        {tiposTurma.map((tipo) => (
+                          <Checkbox
+                            key={tipo.id}
+                            isChecked={avaliacaoForm.tiposTurma.includes(tipo.nome)}
+                            onChange={() => {
+                              const novosTipos = avaliacaoForm.tiposTurma.includes(tipo.nome)
+                                ? avaliacaoForm.tiposTurma.filter(t => t !== tipo.nome)
+                                : [...avaliacaoForm.tiposTurma, tipo.nome];
+                              setAvaliacaoForm(prev => ({
+                                ...prev,
+                                tiposTurma: novosTipos
+                              }));
+                            }}
+                            size="sm"
+                          >
+                            {tipo.nome}
+                          </Checkbox>
+                        ))}
+                      </VStack>
+                    </VStack>
+                    <FormHelperText>
+                      Selecione os tipos de turma que serão incluídos nesta avaliação
+                    </FormHelperText>
+                    {avaliacaoForm.tiposTurma.length === 0 && (
+                      <FormErrorMessage>Selecione pelo menos um tipo de turma</FormErrorMessage>
+                    )}
                   </FormControl>
 
                   <FormControl isRequired>
@@ -561,7 +738,13 @@ const EditarAvaliacaoComponent: React.FC<EditarAvaliacaoComponentProps> = ({ id 
                       ))}
                     </Select>
                   </FormControl>
+                </SimpleGrid>
+              </Box>
 
+              {/* Configurações Específicas */}
+              <Box>
+                <Text fontWeight="bold" mb={4}>Configurações Específicas</Text>
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
                   <FormControl isInvalid={Boolean(avaliacaoForm.nomeItemEspecifico && avaliacaoForm.nomeItemEspecifico.length > 2000)}>
                     <FormLabel>Nome Específico do Item</FormLabel>
                     <Input
@@ -574,8 +757,131 @@ const EditarAvaliacaoComponent: React.FC<EditarAvaliacaoComponentProps> = ({ id 
                       {avaliacaoForm.nomeItemEspecifico ? `${avaliacaoForm.nomeItemEspecifico.length}/2000 caracteres` : 'Máximo 2000 caracteres'}
                     </FormHelperText>
                     {avaliacaoForm.nomeItemEspecifico && avaliacaoForm.nomeItemEspecifico.length > 2000 && (
-                      <FormErrorMessage>O nome do item deve ter no máximo 2000 caracteres</FormErrorMessage>
+                      <FormErrorMessage>O nome específico deve ter no máximo 2000 caracteres</FormErrorMessage>
                     )}
+                  </FormControl>
+                </SimpleGrid>
+              </Box>
+
+              {/* Filtros Opcionais */}
+              <Box>
+                <Text fontWeight="bold" mb={4} color="gray.600">Filtros Opcionais</Text>
+                <Text fontSize="sm" color="gray.500" mb={4}>
+                  Configure filtros adicionais para limitar o escopo da avaliação
+                </Text>
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+                  <FormControl>
+                    <FormLabel>Tipos de Matrícula</FormLabel>
+                    <VStack align="start" spacing={2}>
+                      <HStack spacing={2} mb={2}>
+                        <Button
+                          size="xs"
+                          variant="outline"
+                          onClick={() => {
+                            const todosTipos = tiposMatricula.map(tipo => tipo.id.toString());
+                            setAvaliacaoForm(prev => ({
+                              ...prev,
+                              tiposMatricula: todosTipos
+                            }));
+                          }}
+                        >
+                          Selecionar Todos
+                        </Button>
+                        <Button
+                          size="xs"
+                          variant="outline"
+                          onClick={() => {
+                            setAvaliacaoForm(prev => ({
+                              ...prev,
+                              tiposMatricula: []
+                            }));
+                          }}
+                        >
+                          Deselecionar Todos
+                        </Button>
+                      </HStack>
+                      <VStack align="start" spacing={2} maxH="200px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md" p={3} w="full">
+                        {tiposMatricula.map((tipo) => (
+                          <Checkbox
+                            key={tipo.id}
+                            isChecked={avaliacaoForm.tiposMatricula.includes(tipo.id.toString())}
+                            onChange={() => {
+                              const tipoId = tipo.id.toString();
+                              const novosTipos = avaliacaoForm.tiposMatricula.includes(tipoId)
+                                ? avaliacaoForm.tiposMatricula.filter(t => t !== tipoId)
+                                : [...avaliacaoForm.tiposMatricula, tipoId];
+                              setAvaliacaoForm(prev => ({
+                                ...prev,
+                                tiposMatricula: novosTipos
+                              }));
+                            }}
+                            size="sm"
+                          >
+                            {tipo.nome}
+                          </Checkbox>
+                        ))}
+                      </VStack>
+                    </VStack>
+                    <FormHelperText>
+                      Deixe vazio para incluir todos os tipos de matrícula
+                    </FormHelperText>
+                  </FormControl>
+
+                  <FormControl>
+                    <FormLabel>Tipos de Professor (Opcional)</FormLabel>
+                    <VStack align="start" spacing={2}>
+                      <HStack spacing={2} mb={2}>
+                        <Button
+                          size="xs"
+                          variant="outline"
+                          onClick={() => {
+                            const todosTipos = tiposProfessor.map(tipo => tipo.id.toString());
+                            setAvaliacaoForm(prev => ({
+                              ...prev,
+                              tiposProfessor: todosTipos
+                            }));
+                          }}
+                        >
+                          Selecionar Todos
+                        </Button>
+                        <Button
+                          size="xs"
+                          variant="outline"
+                          onClick={() => {
+                            setAvaliacaoForm(prev => ({
+                              ...prev,
+                              tiposProfessor: []
+                            }));
+                          }}
+                        >
+                          Deselecionar Todos
+                        </Button>
+                      </HStack>
+                      <VStack align="start" spacing={2} maxH="200px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md" p={3} w="full">
+                        {tiposProfessor.map((tipo) => (
+                          <Checkbox
+                            key={tipo.id}
+                            isChecked={avaliacaoForm.tiposProfessor.includes(tipo.id.toString())}
+                            onChange={() => {
+                              const tipoId = tipo.id.toString();
+                              const novosTipos = avaliacaoForm.tiposProfessor.includes(tipoId)
+                                ? avaliacaoForm.tiposProfessor.filter(t => t !== tipoId)
+                                : [...avaliacaoForm.tiposProfessor, tipoId];
+                              setAvaliacaoForm(prev => ({
+                                ...prev,
+                                tiposProfessor: novosTipos
+                              }));
+                            }}
+                            size="sm"
+                          >
+                            {tipo.nome}
+                          </Checkbox>
+                        ))}
+                      </VStack>
+                    </VStack>
+                    <FormHelperText>
+                      Deixe vazio para incluir todos os tipos de professor
+                    </FormHelperText>
                   </FormControl>
                 </SimpleGrid>
               </Box>
@@ -721,6 +1027,41 @@ const EditarAvaliacaoComponent: React.FC<EditarAvaliacaoComponentProps> = ({ id 
                   </FormControl>
                 </VStack>
               </Box>
+
+              {/* NOTA: Regras de Filtro removidas daqui */}
+              {/* Regras em cascata agora são GLOBAIS e gerenciadas em /configuracoes/regras-cascata */}
+              {/* Use apenas os filtros específicos acima (Tipos permitidos, Contexto aluno, etc) */}
+              
+              {avaliacaoForm.tipo === TipoQuestionarioEnum.AVALIACAO_INSTITUCIONAL && (
+                <Box>
+                  <Divider mb={6} />
+                  <Text fontWeight="bold" mb={4} color="gray.600" fontSize="sm">
+                    ℹ️ Regras em cascata agora são configuradas globalmente
+                  </Text>
+                  <Text fontSize="sm" color="gray.500">
+                    Para gerenciar regras de combinação entre tipos, acesse:{' '}
+                    <Text as="span" fontWeight="bold" color="blue.500">/configuracoes/regras-cascata</Text>
+                  </Text>
+                  {/* Componente removido:
+                  <RegrasFiltroQuestionario
+                    regras={{...}}
+                    onRegrasChange={(novasRegras) => {
+                      setAvaliacaoForm(prev => ({
+                        ...prev,
+                        tiposDisciplinaPermitidos: JSON.stringify(novasRegras.tiposDisciplinaPermitidos),
+                        tiposProfessorPermitidos: JSON.stringify(novasRegras.tiposProfessorPermitidos),
+                        tiposTurmaPermitidos: JSON.stringify(novasRegras.tiposTurmaPermitidos),
+                        statusMatriculaPermitidos: JSON.stringify(novasRegras.statusMatriculaPermitidos),
+                        niveisEnsinoPermitidos: JSON.stringify(novasRegras.niveisEnsinoPermitidos),
+                        aplicarFiltroContextoAluno: novasRegras.aplicarFiltroContextoAluno,
+                        contextoAlunoPermitido: novasRegras.contextoAlunoPermitido,
+                        incluirTurmasGerenciadas: novasRegras.incluirTurmasGerenciadas,
+                        incluirTurmasNaoGerenciadas: novasRegras.incluirTurmasNaoGerenciadas
+                      }));
+                    }}
+                  /> */}
+                </Box>
+              )}
             </VStack>
           </CardBody>
           <CardFooter>

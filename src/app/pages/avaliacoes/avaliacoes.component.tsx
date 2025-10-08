@@ -419,16 +419,7 @@ const AvaliacoesPage: React.FC = () => {
                               <Text as="span" fontSize="xs" color="gray.500" fontWeight="medium">
                                 Nível de Ensino:
                               </Text>{' '}
-                              {avaliacao.nivelEnsino ? 
-                                avaliacao.nivelEnsino === 'GraduacaoPresencial' ? 'Graduação Presencial' :
-                                avaliacao.nivelEnsino === 'GraduacaoEAD' ? 'Graduação à Distância (EAD)' :
-                                avaliacao.nivelEnsino === 'PosGraduacao' ? 'Pós-graduação' :
-                                avaliacao.nivelEnsino === 'EnsinoMedio' ? 'Ensino Médio' :
-                                avaliacao.nivelEnsino === 'EnsinoTecnico' ? 'Ensino Técnico' :
-                                avaliacao.nivelEnsino === 'Mestrado' ? 'Mestrado' :
-                                avaliacao.nivelEnsino === 'Doutorado' ? 'Doutorado' :
-                                avaliacao.nivelEnsino
-                                : 'Não informado'}
+                              {avaliacao.nivelEnsino?.nome || avaliacao.nomeNivelEnsino || 'Não informado'}
                             </Text>
                           </HStack>
                           

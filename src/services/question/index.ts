@@ -5,6 +5,7 @@ import { QuestionResponse, QuestionType } from '../../app/services/form/form.ser
 export interface QuestionPostParams {
   texto: string;
   tipo: QuestionType;
+  obrigatorio?: boolean;
   isCondicional?: boolean;
   opcoes?: Array<{
     texto: string;

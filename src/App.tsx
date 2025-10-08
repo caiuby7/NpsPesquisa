@@ -48,6 +48,9 @@ const AlunosPage = lazy(() => import("./app/pages/alunos/alunos.component"));
 // Página de teste de questões condicionais
 const TestConditionalQuestionsPage = lazy(() => import("./pages/test-conditional-questions"));
 
+// Páginas de Configurações
+const ConfiguracoesPage = lazy(() => import("./app/pages/configuracoes"));
+
 // Página de exemplo de avaliação institucional
 const InstitutionalEvaluationExamplePage = lazy(() => import("./pages/institutional-evaluation-example"));
 
@@ -55,6 +58,9 @@ const InstitutionalEvaluationExamplePage = lazy(() => import("./pages/institutio
 const FAQPage = lazy(() => import("./app/pages/faq/faq.component"));
 const FAQAlunoPage = lazy(() => import("./app/pages/faq/faq-aluno.component"));
 const FAQProfessorPage = lazy(() => import("./app/pages/faq/faq-professor.component"));
+
+// Página de Configurações - Regras em Cascata
+const RegrasCascataAdminPage = lazy(() => import("./app/pages/configuracoes/regras-cascata-admin"));
 
 // Dashboards específicos por perfil
 const AlunoDashboard = lazy(() => import("./pages/dashboards/aluno-dashboard"));
@@ -161,6 +167,10 @@ function App() {
                   <Route path="/faq" element={<ProtectedRoute><FAQPage /></ProtectedRoute>} />
                   <Route path="/faq-aluno" element={<ProtectedRoute><FAQAlunoPage /></ProtectedRoute>} />
                   <Route path="/faq-professor" element={<ProtectedRoute><FAQProfessorPage /></ProtectedRoute>} />
+                  
+                  {/* Configurações */}
+                  <Route path="/configuracoes" element={<ProtectedRoute><ConfiguracoesPage /></ProtectedRoute>} />
+                  <Route path="/configuracoes/regras-cascata" element={<ProtectedRoute><RegrasCascataAdminPage /></ProtectedRoute>} />
                   
                   {/* Dashboards específicos por perfil */}
                   <Route path="/aluno/dashboard" element={<ProtectedRoute><ProfileRouter><AlunoDashboard /></ProfileRouter></ProtectedRoute>} />

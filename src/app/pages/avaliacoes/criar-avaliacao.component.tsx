@@ -58,7 +58,12 @@ import MainLayout from '../../../components/layout/main-layout.component';
 import Pagination from '../../components/Pagination/pagination.component';
 import { ITEM_AVALIADO_TYPES, TipoQuestionarioEnum, TIPO_TURMA_OPTIONS } from '../../services/form/form.services.types';
 import { useGetQuestions } from '../../services/question';
+import { useGetNiveisEnsino, useGetTurnos, useGetTiposMatricula, useGetTiposDisciplina, useGetTiposTurma, useGetTiposProfessor } from '../../services/lookup/lookup.service.hooks';
 import { api } from '../../services/api';
+import FiltrosAvancados from '../../../components/FiltrosAvancados/FiltrosAvancados';
+// NOTA: RegrasFiltroQuestionario removido - Regras em cascata agora são GLOBAIS
+// Acesse: /configuracoes/regras-cascata para gerenciar
+import { ENVIRONMENT } from '../../../config/environment';
 
 interface FiltrosAvaliacao {
   instituicoes: any[];
@@ -68,6 +73,28 @@ interface FiltrosAvaliacao {
   disciplinas: any[];
   professores: any[];
   coordenadores: any[];
+}
+
+interface FiltrosAvancadosData {
+  // Filtros básicos
+  instituicaoId?: number;
+  periodoLetivoId?: number;
+  cursoId?: number;
+  turmaId?: number;
+  disciplinaId?: number;
+  professorId?: number;
+  
+  // Filtros avançados
+  nivelEnsino?: string[];
+  tiposTurma?: string[];
+  tiposProfessor?: string[];
+  statusMatricula?: string[];
+  tiposDisciplina?: string[];
+  
+  // Filtros de contexto
+  contextoAluno?: string;
+  incluirTurmasGerenciadas?: boolean;
+  incluirTurmasNaoGerenciadas?: boolean;
 }
 
 interface Participante {
@@ -106,10 +133,28 @@ interface AvaliacaoFormData {
   tipoParticipante: string;
   nivelEnsino: string;
   tiposTurma: string[];
+  tiposMatricula: string[];
+  tiposProfessor: string[];
+  // ===== NOVOS CAMPOS PARA REGRAS DE FILTRO =====
+  tiposDisciplinaPermitidos: string;
+  tiposProfessorPermitidos: string;
+  tiposTurmaPermitidos: string;
+  statusMatriculaPermitidos: string;
+  aplicarFiltroContextoAluno: boolean;
+  contextoAlunoPermitido: string;
+  incluirTurmasGerenciadas: boolean;
+  incluirTurmasNaoGerenciadas: boolean;
 }
 
 const CriarAvaliacaoPage: React.FC = () => {
   const navigate = useNavigate();
+  const { data: niveisEnsino = [] } = useGetNiveisEnsino();
+  const { data: turnos = [] } = useGetTurnos();
+  const { data: tiposMatricula = [] } = useGetTiposMatricula();
+  const { data: tiposDisciplina = [] } = useGetTiposDisciplina();
+  const { data: tiposTurma = [] } = useGetTiposTurma();
+  const { data: tiposProfessor = [] } = useGetTiposProfessor();
+  
   const [filtros, setFiltros] = useState<FiltrosAvaliacao>({
     instituicoes: [],
     periodosLetivos: [],
@@ -125,6 +170,29 @@ const CriarAvaliacaoPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5; // Aumentado de 2 para 5 questões por página
   const { isOpen, onClose } = useDisclosure();
+  const [filtrosAvancados, setFiltrosAvancados] = useState<FiltrosAvancadosData>({});
+  const [usarFiltrosAvancados, setUsarFiltrosAvancados] = useState(false);
+
+  // Função para validar se a data de fim é válida
+  const isDataFimInvalida = (): boolean => {
+    if (!formData.dataFim || formData.dataFim === '') return true;
+    if (!formData.dataInicio || formData.dataInicio === '') return false;
+    return new Date(formData.dataFim) <= new Date(formData.dataInicio);
+  };
+
+  // Função para verificar se o formulário é válido
+  const isFormularioValido = () => {
+    return Boolean(
+      formData.titulo && 
+      formData.descricao && 
+      formData.tipoItemAvaliado && 
+      formData.nivelEnsino && 
+      formData.dataInicio && 
+      formData.dataFim && 
+      formData.instituicaoId &&
+      formData.tiposTurma.length > 0
+    );
+  };
   
   // Editores de texto rico
   const [editorState, setEditorState] = useState(() => EditorState.createEmpty());
@@ -155,13 +223,37 @@ const CriarAvaliacaoPage: React.FC = () => {
     disciplinaId: '',
     tipoParticipante: '',
     nivelEnsino: '',
-    tiposTurma: []
+    tiposTurma: [],
+    tiposMatricula: [],
+    tiposProfessor: [],
+    // ===== NOVOS CAMPOS PARA REGRAS DE FILTRO =====
+    tiposDisciplinaPermitidos: '',
+    tiposProfessorPermitidos: '',
+    tiposTurmaPermitidos: '',
+    statusMatriculaPermitidos: '',
+    aplicarFiltroContextoAluno: false,
+    contextoAlunoPermitido: 'Ambos',
+    incluirTurmasGerenciadas: true,
+    incluirTurmasNaoGerenciadas: true
   });
   
   // Estado para controlar quando mostrar validações
   const [showValidation, setShowValidation] = useState(false);
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://apiavaliacao.catolicasc.org.br/api';
+  // Estado para regras de filtro
+  const [regrasFiltro, setRegrasFiltro] = useState({
+    aplicarFiltroContextoAluno: false,
+    contextoAlunoPermitido: 'Ambos',
+    tiposProfessorPermitidos: [] as string[],
+    tiposDisciplinaPermitidos: [] as string[],
+    tiposTurmaPermitidos: [] as string[],
+    statusMatriculaPermitidos: [] as string[],
+    niveisEnsinoPermitidos: [] as string[],
+    incluirTurmasGerenciadas: true,
+    incluirTurmasNaoGerenciadas: true
+  });
+
+  const API_BASE_URL = ENVIRONMENT.API_URL;
   const toast = useToast();
   const { data: questionsData } = useGetQuestions();
 
@@ -169,26 +261,68 @@ const CriarAvaliacaoPage: React.FC = () => {
     carregarFiltros();
   }, []);
 
+  // Função para limpar HTML desnecessário
+  const cleanHtml = (html: string) => {
+    if (!html) return '';
+    
+    // Remover <p></p> vazias
+    let cleaned = html.replace(/<p><\/p>/g, '');
+    
+    // Remover <p>&nbsp;</p>
+    cleaned = cleaned.replace(/<p>&nbsp;<\/p>/g, '');
+    
+    // Remover <p> </p> (com espaços)
+    cleaned = cleaned.replace(/<p>\s*<\/p>/g, '');
+    
+    // Se ficou vazio, retornar string vazia
+    if (cleaned.trim() === '' || cleaned.trim() === '<p></p>') {
+      return '';
+    }
+    
+    return cleaned;
+  };
+
   // Funções para os editores de texto rico
   const handleEditorChange = (state: EditorState) => {
     setEditorState(state);
     const content = state.getCurrentContent();
     const html = draftToHtml(convertToRaw(content));
-    setFormData({...formData, textoBoasVindas: html});
+    const cleanedHtml = cleanHtml(html);
+    setFormData({...formData, textoBoasVindas: cleanedHtml});
   };
 
   const handleEditorConviteChange = (state: EditorState) => {
     setEditorConvite(state);
     const content = state.getCurrentContent();
     const html = draftToHtml(convertToRaw(content));
-    setFormData({...formData, templateEmailConvite: html});
+    const cleanedHtml = cleanHtml(html);
+    setFormData({...formData, templateEmailConvite: cleanedHtml});
   };
 
   const handleEditorLembreteChange = (state: EditorState) => {
     setEditorLembrete(state);
     const content = state.getCurrentContent();
     const html = draftToHtml(convertToRaw(content));
-    setFormData({...formData, templateEmailLembrete: html});
+    const cleanedHtml = cleanHtml(html);
+    setFormData({...formData, templateEmailLembrete: cleanedHtml});
+  };
+
+  // Função para atualizar regras de filtro e sincronizar com formData
+  const handleRegrasFiltroChange = (novasRegras: any) => {
+    setRegrasFiltro(novasRegras);
+    
+    // Sincronizar com formData (converter arrays para JSON strings)
+    setFormData(prev => ({
+      ...prev,
+      tiposDisciplinaPermitidos: JSON.stringify(novasRegras.tiposDisciplinaPermitidos),
+      tiposProfessorPermitidos: JSON.stringify(novasRegras.tiposProfessorPermitidos),
+      tiposTurmaPermitidos: JSON.stringify(novasRegras.tiposTurmaPermitidos),
+      statusMatriculaPermitidos: JSON.stringify(novasRegras.statusMatriculaPermitidos),
+      aplicarFiltroContextoAluno: novasRegras.aplicarFiltroContextoAluno,
+      contextoAlunoPermitido: novasRegras.contextoAlunoPermitido,
+      incluirTurmasGerenciadas: novasRegras.incluirTurmasGerenciadas,
+      incluirTurmasNaoGerenciadas: novasRegras.incluirTurmasNaoGerenciadas
+    }));
   };
 
   const carregarFiltros = async () => {
@@ -255,8 +389,48 @@ const CriarAvaliacaoPage: React.FC = () => {
       });
       return;
     }
+
+    // Validar se data de fim é posterior à data de início
+    const dataInicio = new Date(formData.dataInicio);
+    const dataFim = new Date(formData.dataFim);
+    
+    if (dataFim <= dataInicio) {
+      toast({
+        title: 'Data inválida',
+        description: 'A data e hora de fim deve ser posterior à data e hora de início.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    // Validar se pelo menos um tipo de turma foi selecionado
+    if (formData.tiposTurma.length === 0) {
+      toast({
+        title: 'Tipos de turma',
+        description: 'Selecione pelo menos um tipo de turma para a avaliação.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    // Validar se pelo menos uma questão foi selecionada
+    if (formData.questoes.length === 0) {
+      toast({
+        title: 'Questões obrigatórias',
+        description: 'Selecione pelo menos uma questão para a avaliação.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
     
     try {
+      setLoading(true);
       // Preparar dados no mesmo formato do create-form
       const avaliacaoData = {
         titulo: formData.titulo,
@@ -269,7 +443,7 @@ const CriarAvaliacaoPage: React.FC = () => {
         tipoItemAvaliado: formData.tipoItemAvaliado,
         nomeItemEspecifico: formData.nomeItemEspecifico,
         instituicaoId: parseInt(formData.instituicaoId),
-        nivelEnsino: formData.nivelEnsino,
+        nivelEnsinoId: formData.nivelEnsino ? parseInt(formData.nivelEnsino) : null,
         textoBoasVindas: formData.textoBoasVindas,
         templateEmailConvite: formData.templateEmailConvite,
         templateEmailLembrete: formData.templateEmailLembrete,
@@ -281,7 +455,9 @@ const CriarAvaliacaoPage: React.FC = () => {
           questaoId: questaoId,
           ordem: index + 1
         })),
-        tiposTurma: formData.tiposTurma
+        tiposTurmaNomes: formData.tiposTurma,
+        tiposMatriculaIds: formData.tiposMatricula,
+        tiposProfessorIds: formData.tiposProfessor
       };
 
       const response = await api.post('/Questionario/com-questoes', avaliacaoData);
@@ -308,6 +484,8 @@ const CriarAvaliacaoPage: React.FC = () => {
         isClosable: true,
       });
       console.error('Erro:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -337,7 +515,18 @@ const CriarAvaliacaoPage: React.FC = () => {
       disciplinaId: '',
       tipoParticipante: '',
       nivelEnsino: '',
-      tiposTurma: []
+      tiposTurma: [],
+      tiposMatricula: [],
+      tiposProfessor: [],
+      // ===== NOVOS CAMPOS PARA REGRAS DE FILTRO =====
+      tiposDisciplinaPermitidos: '',
+      tiposProfessorPermitidos: '',
+      tiposTurmaPermitidos: '',
+      statusMatriculaPermitidos: '',
+      aplicarFiltroContextoAluno: false,
+      contextoAlunoPermitido: 'Ambos',
+      incluirTurmasGerenciadas: true,
+      incluirTurmasNaoGerenciadas: true
     });
     setParticipantes([]);
   };
@@ -410,6 +599,32 @@ const CriarAvaliacaoPage: React.FC = () => {
               <Text color="gray.600">Configure uma nova avaliação institucional</Text>
             </Box>
           </HStack>
+          {/* Indicador de Progresso */}
+          <HStack spacing={2}>
+            <Box
+              bg={!showQuestionSelection ? "blue.500" : "gray.300"}
+              color="white"
+              px={3}
+              py={1}
+              borderRadius="full"
+              fontSize="sm"
+              fontWeight="medium"
+            >
+              1. Configuração
+            </Box>
+            <Text color="gray.400">→</Text>
+            <Box
+              bg={showQuestionSelection ? "blue.500" : "gray.300"}
+              color="white"
+              px={3}
+              py={1}
+              borderRadius="full"
+              fontSize="sm"
+              fontWeight="medium"
+            >
+              2. Questões
+            </Box>
+          </HStack>
         </Flex>
 
         {/* Formulário de Avaliação - Só aparece se não estiver na seleção de questões */}
@@ -473,21 +688,19 @@ const CriarAvaliacaoPage: React.FC = () => {
                         onChange={(e) => setFormData({...formData, nivelEnsino: e.target.value})}
                         placeholder="Selecione o nível de ensino"
                       >
-                        <option value="GraduacaoPresencial">Graduação Presencial</option>
-                        <option value="GraduacaoEAD">Graduação à Distância (EAD)</option>
-                        <option value="PosGraduacao">Pós-graduação</option>
-                        <option value="EnsinoMedio">Ensino Médio</option>
-                        <option value="EnsinoTecnico">Ensino Técnico</option>
-                        <option value="Mestrado">Mestrado</option>
-                        <option value="Doutorado">Doutorado</option>
+                        {niveisEnsino.map((nivel) => (
+                          <option key={nivel.id} value={nivel.id.toString()}>
+                            {nivel.nome}
+                          </option>
+                        ))}
                       </Select>
                       {showValidation && !formData.nivelEnsino && (
                         <FormHelperText color="red.500">Nível de ensino é obrigatório</FormHelperText>
                       )}
                     </FormControl>
 
-                    <FormControl>
-                      <FormLabel>Tipos de Turma</FormLabel>
+                    <FormControl isInvalid={showValidation && formData.tiposTurma.length === 0}>
+                      <FormLabel>Tipos de Turma *</FormLabel>
                       <VStack align="start" spacing={2}>
                         <HStack spacing={2} mb={2}>
                           <Button
@@ -539,6 +752,123 @@ const CriarAvaliacaoPage: React.FC = () => {
                       </VStack>
                       <FormHelperText>
                         Selecione os tipos de turma que serão incluídos nesta avaliação
+                      </FormHelperText>
+                      {showValidation && formData.tiposTurma.length === 0 && (
+                        <FormErrorMessage>Selecione pelo menos um tipo de turma</FormErrorMessage>
+                      )}
+                    </FormControl>
+
+                    <FormControl>
+                      <FormLabel>Tipos de Matrícula (Opcional)</FormLabel>
+                      <VStack align="start" spacing={2}>
+                        <HStack spacing={2} mb={2}>
+                          <Button
+                            size="xs"
+                            variant="outline"
+                            onClick={() => {
+                              const todosTipos = tiposMatricula.map(tipo => tipo.id.toString());
+                              setFormData(prev => ({
+                                ...prev,
+                                tiposMatricula: todosTipos
+                              }));
+                            }}
+                          >
+                            Selecionar Todos
+                          </Button>
+                          <Button
+                            size="xs"
+                            variant="outline"
+                            onClick={() => {
+                              setFormData(prev => ({
+                                ...prev,
+                                tiposMatricula: []
+                              }));
+                            }}
+                          >
+                            Deselecionar Todos
+                          </Button>
+                        </HStack>
+                        <VStack align="start" spacing={2} maxH="200px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md" p={3} w="full">
+                          {tiposMatricula.map((tipo) => (
+                            <Checkbox
+                              key={tipo.id}
+                              isChecked={formData.tiposMatricula.includes(tipo.id.toString())}
+                              onChange={() => {
+                                const tipoId = tipo.id.toString();
+                                const novosTipos = formData.tiposMatricula.includes(tipoId)
+                                  ? formData.tiposMatricula.filter(t => t !== tipoId)
+                                  : [...formData.tiposMatricula, tipoId];
+                                setFormData(prev => ({
+                                  ...prev,
+                                  tiposMatricula: novosTipos
+                                }));
+                              }}
+                              size="sm"
+                            >
+                              {tipo.nome}
+                            </Checkbox>
+                          ))}
+                        </VStack>
+                      </VStack>
+                      <FormHelperText>
+                        Deixe vazio para incluir todos os tipos de matrícula
+                      </FormHelperText>
+                    </FormControl>
+
+                    <FormControl>
+                      <FormLabel>Tipos de Professor (Opcional)</FormLabel>
+                      <VStack align="start" spacing={2}>
+                        <HStack spacing={2} mb={2}>
+                          <Button
+                            size="xs"
+                            variant="outline"
+                            onClick={() => {
+                              const todosTipos = tiposProfessor.map(tipo => tipo.id.toString());
+                              setFormData(prev => ({
+                                ...prev,
+                                tiposProfessor: todosTipos
+                              }));
+                            }}
+                          >
+                            Selecionar Todos
+                          </Button>
+                          <Button
+                            size="xs"
+                            variant="outline"
+                            onClick={() => {
+                              setFormData(prev => ({
+                                ...prev,
+                                tiposProfessor: []
+                              }));
+                            }}
+                          >
+                            Deselecionar Todos
+                          </Button>
+                        </HStack>
+                        <VStack align="start" spacing={2} maxH="200px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md" p={3} w="full">
+                          {tiposProfessor.map((tipo) => (
+                            <Checkbox
+                              key={tipo.id}
+                              isChecked={formData.tiposProfessor.includes(tipo.id.toString())}
+                              onChange={() => {
+                                const tipoId = tipo.id.toString();
+                                const novosTipos = formData.tiposProfessor.includes(tipoId)
+                                  ? formData.tiposProfessor.filter(t => t !== tipoId)
+                                  : [...formData.tiposProfessor, tipoId];
+                                setFormData(prev => ({
+                                  ...prev,
+                                  tiposProfessor: novosTipos
+                                }));
+                              }}
+                              size="sm"
+                            >
+                              {tipo.nome}
+                            </Checkbox>
+                          ))}
+                        </VStack>
+                      </VStack>
+                      <FormHelperText>
+                        Deixe vazio para incluir todos os tipos de professor
                       </FormHelperText>
                     </FormControl>
 
@@ -597,7 +927,7 @@ const CriarAvaliacaoPage: React.FC = () => {
                         )}
                       </FormControl>
                       
-                      <FormControl isInvalid={showValidation && !formData.dataFim}>
+                      <FormControl isInvalid={showValidation && isDataFimInvalida()}>
                         <FormLabel>Data e Hora de Fim *</FormLabel>
                         <Input
                           type="datetime-local"
@@ -606,6 +936,9 @@ const CriarAvaliacaoPage: React.FC = () => {
                         />
                         {showValidation && !formData.dataFim && (
                           <FormHelperText color="red.500">Data e hora de fim são obrigatórias</FormHelperText>
+                        )}
+                        {showValidation && formData.dataInicio && formData.dataFim && new Date(formData.dataFim) <= new Date(formData.dataInicio) && (
+                          <FormHelperText color="red.500">A data de fim deve ser posterior à data de início</FormHelperText>
                         )}
                       </FormControl>
                   </SimpleGrid>
@@ -711,17 +1044,57 @@ const CriarAvaliacaoPage: React.FC = () => {
                   </VStack>
                 </Box>
 
+                {/* Filtros Avançados */}
+                <Divider />
+                <Box>
+                  <Heading size="sm" mb={4}>Filtros de Participantes</Heading>
+                  
+                  <VStack spacing={4} align="stretch">
+                    <HStack spacing={4}>
+                      <Checkbox
+                        isChecked={usarFiltrosAvancados}
+                        onChange={(e) => setUsarFiltrosAvancados(e.target.checked)}
+                        colorScheme="blue"
+                      >
+                        Usar filtros avançados
+                      </Checkbox>
+                      <Text fontSize="sm" color="gray.600">
+                        Ative para usar filtros mais específicos baseados nas novas tabelas de relacionamento
+                      </Text>
+                    </HStack>
+
+                    {usarFiltrosAvancados ? (
+                      <FiltrosAvancados
+                        tipoItemAvaliado={formData.tipoItemAvaliado}
+                        onFiltrosChange={setFiltrosAvancados}
+                        filtrosIniciais={filtrosAvancados}
+                        isLoading={loading}
+                      />
+                    ) : (
+                      <Box p={4} bg="gray.50" borderRadius="md" border="1px solid" borderColor="gray.200">
+                        <Text fontSize="sm" color="gray.600">
+                          Os filtros básicos serão aplicados automaticamente baseados no tipo de item avaliado selecionado.
+                        </Text>
+                      </Box>
+                    )}
+                  </VStack>
+                </Box>
+
+                {/* NOTA: Regras de Filtro removidas daqui */}
+                {/* Regras em cascata agora são GLOBAIS e gerenciadas em /configuracoes/regras-cascata */}
+                {/* Use apenas os filtros específicos acima (Tipos permitidos, Contexto aluno, etc) */}
+
                 {/* Botão de Criar */}
                 <Box pt={4}>
                   <HStack justify="flex-end">
-                                    <Button
+                    <Button
                       leftIcon={<Send size={20} />}
                       colorScheme="green"
                       onClick={onNextStep}
-                      isDisabled={!formData.titulo || !formData.descricao || !formData.tipoItemAvaliado || !formData.nivelEnsino || !formData.dataInicio || !formData.dataFim}
+                      isDisabled={!isFormularioValido() || isDataFimInvalida()}
                       size="lg"
                     >
-                      Próximo
+                      Próximo: Selecionar Questões
                     </Button>
                 </HStack>
                 </Box>
@@ -900,8 +1273,10 @@ const CriarAvaliacaoPage: React.FC = () => {
                   <Button
                     colorScheme="green"
                     onClick={criarAvaliacao}
-                    leftIcon={<ArrowRight />}
+                    leftIcon={loading ? <Spinner size="sm" /> : <ArrowRight />}
                     size="lg"
+                    isLoading={loading}
+                    loadingText="Criando avaliação..."
                   >
                     {`Criar avaliação com ${formData.questoes.length} questões`}
                   </Button>

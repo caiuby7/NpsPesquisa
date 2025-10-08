@@ -1,6 +1,31 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../../services/api";
 
+export interface NivelEnsino {
+  id: number;
+  nome: string;
+}
+
+export interface Turno {
+  id: number;
+  nome: string;
+}
+
+export interface TipoMatricula {
+  id: number;
+  nome: string;
+}
+
+export interface TipoDisciplina {
+  id: number;
+  nome: string;
+}
+
+export interface TipoTurma {
+  id: number;
+  nome: string;
+}
+
 export interface Avaliacao {
   id: number;
   titulo: string;
@@ -23,7 +48,23 @@ export interface Avaliacao {
   // Campos para instituição
   instituicaoId: number;
   nomeInstituicao?: string;
-  nivelEnsino?: string;
+  nivelEnsino?: NivelEnsino;
+  nivelEnsinoId?: number;
+  nomeNivelEnsino?: string;
+  tiposTurma?: string[];
+  tiposMatricula?: string[];
+  tiposProfessor?: string[];
+  // Campos para regras de filtro
+  tipoParticipante?: string;
+  tiposDisciplinaPermitidos?: string;
+  tiposProfessorPermitidos?: string;
+  tiposTurmaPermitidos?: string;
+  statusMatriculaPermitidos?: string;
+  niveisEnsinoPermitidos?: string;
+  aplicarFiltroContextoAluno?: boolean;
+  contextoAlunoPermitido?: string;
+  incluirTurmasGerenciadas?: boolean;
+  incluirTurmasNaoGerenciadas?: boolean;
   // Campos para estatísticas (opcionais pois podem não vir do endpoint de busca por ID)
   totalParticipantes?: number;
   totalRespostas?: number;

@@ -15,6 +15,8 @@ export interface QuestionResponse {
   id: string;
   texto: string;
   tipo: QuestionType;
+  obrigatorio?: boolean;
+  isCondicional?: boolean;
   opcoes?: OptionItem[];
   colunas?: OptionItem[];
 }

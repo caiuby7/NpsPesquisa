@@ -42,25 +42,49 @@ export const FirstStepForm = ({
     }
   }, [register, watch]);
 
+  // Função para limpar HTML desnecessário
+  const cleanHtml = (html: string) => {
+    if (!html) return '';
+    
+    // Remover <p></p> vazias
+    let cleaned = html.replace(/<p><\/p>/g, '');
+    
+    // Remover <p>&nbsp;</p>
+    cleaned = cleaned.replace(/<p>&nbsp;<\/p>/g, '');
+    
+    // Remover <p> </p> (com espaços)
+    cleaned = cleaned.replace(/<p>\s*<\/p>/g, '');
+    
+    // Se ficou vazio, retornar string vazia
+    if (cleaned.trim() === '' || cleaned.trim() === '<p></p>') {
+      return '';
+    }
+    
+    return cleaned;
+  };
+
   const handleEditorChange = (state: EditorState) => {
     setEditorState(state);
     const content = state.getCurrentContent();
     const html = draftToHtml(convertToRaw(content));
-    setValue("textoBoasVindas", html);
+    const cleanedHtml = cleanHtml(html);
+    setValue("textoBoasVindas", cleanedHtml);
   };
 
   const handleEditorConviteChange = (state: EditorState) => {
     setEditorConvite(state);
     const content = state.getCurrentContent();
     const html = draftToHtml(convertToRaw(content));
-    setValue("templateEmailConvite", html);
+    const cleanedHtml = cleanHtml(html);
+    setValue("templateEmailConvite", cleanedHtml);
   };
 
   const handleEditorLembreteChange = (state: EditorState) => {
     setEditorLembrete(state);
     const content = state.getCurrentContent();
     const html = draftToHtml(convertToRaw(content));
-    setValue("templateEmailLembrete", html);
+    const cleanedHtml = cleanHtml(html);
+    setValue("templateEmailLembrete", cleanedHtml);
   };
 
   return (
