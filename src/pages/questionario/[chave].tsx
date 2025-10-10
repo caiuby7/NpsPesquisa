@@ -232,42 +232,71 @@ export default function QuestionarioPorChavePage() {
                 </Text>
               </HStack>
               <Text color="blue.700">
-                {data.tipoItemAvaliado === "Disciplina" ? (
-                  <>
-                    Você está matriculado em <Text as="span" fontWeight="bold" bg="blue.100" px={2} py={1} borderRadius="md">{data.itensAvaliados?.length || 0} disciplinas</Text>. 
-                    Para cada disciplina, avalie os aspectos listados abaixo.
-                  </>
-                ) : data.tipoItemAvaliado === "Turma" ? (
-                  <>
-                    Você está matriculado em <Text as="span" fontWeight="bold" bg="blue.100" px={2} py={1} borderRadius="md">{data.itensAvaliados?.length || 0} turmas</Text>. 
-                    Para cada turma, avalie os aspectos listados abaixo.
-                  </>
-                ) : data.tipoItemAvaliado === "Estagio" ? (
-                  <>
-                    Você está matriculado em <Text as="span" fontWeight="bold" bg="blue.100" px={2} py={1} borderRadius="md">{data.itensAvaliados?.length || 0} estágios</Text>. 
-                    Para cada estágio, avalie os aspectos listados abaixo.
-                  </>
-                ) : data.tipoItemAvaliado === "TCC" ? (
-                  <>
-                    Você está matriculado em <Text as="span" fontWeight="bold" bg="blue.100" px={2} py={1} borderRadius="md">{data.itensAvaliados?.length || 0} TCCs</Text>. 
-                    Para cada TCC, avalie os aspectos listados abaixo.
-                  </>
-                ) : data.tipoItemAvaliado === "ProjetoExtensionista" ? (
-                  <>
-                    Você está matriculado em <Text as="span" fontWeight="bold" bg="blue.100" px={2} py={1} borderRadius="md">{data.itensAvaliados?.length || 0} projetos extensionistas</Text>. 
-                    Para cada projeto extensionista, avalie os aspectos listados abaixo.
-                  </>
-                ) : data.tipoItemAvaliado === "PACExtensionista" ? (
-                  <>
-                    Você está matriculado em <Text as="span" fontWeight="bold" bg="blue.100" px={2} py={1} borderRadius="md">{data.itensAvaliados?.length || 0} PACs Extensionistas(Projeto de Aprendizagem Colaborativa Extensionista)</Text>. 
-                    Para cada PAC Extensionista, avalie os aspectos listados abaixo.
-                  </>
-                ) : (
-                  <>
-                    Você está matriculado em <Text as="span" fontWeight="bold" bg="blue.100" px={2} py={1} borderRadius="md">{data.itensAvaliados?.length || 0} itens</Text>. 
-                    Para cada item, avalie os aspectos listados abaixo.
-                  </>
-                )}
+                {(() => {
+                  const count = data.itensAvaliados?.length || 0;
+                  const isProfessor = data.participante?.tipo === "Professor";
+                  
+                  if (data.tipoItemAvaliado === "Disciplina") {
+                    const verbo = isProfessor ? "leciona" : "está matriculado em";
+                    return (
+                      <>
+                        Você {verbo} <Text as="span" fontWeight="bold" bg="blue.100" px={2} py={1} borderRadius="md">{count} {count === 1 ? 'disciplina' : 'disciplinas'}</Text>. 
+                        Para cada disciplina, avalie os aspectos listados abaixo.
+                      </>
+                    );
+                  } else if (data.tipoItemAvaliado === "Turma") {
+                    const verbo = isProfessor ? "leciona para" : "está matriculado em";
+                    return (
+                      <>
+                        Você {verbo} <Text as="span" fontWeight="bold" bg="blue.100" px={2} py={1} borderRadius="md">{count} {count === 1 ? 'turma' : 'turmas'}</Text>. 
+                        Para cada turma, avalie os aspectos listados abaixo.
+                      </>
+                    );
+                  } else if (data.tipoItemAvaliado === "Estagio") {
+                    return (
+                      <>
+                        Você está matriculado em <Text as="span" fontWeight="bold" bg="blue.100" px={2} py={1} borderRadius="md">{count} {count === 1 ? 'estágio' : 'estágios'}</Text>. 
+                        Para cada estágio, avalie os aspectos listados abaixo.
+                      </>
+                    );
+                  } else if (data.tipoItemAvaliado === "TCC") {
+                    return (
+                      <>
+                        Você está matriculado em <Text as="span" fontWeight="bold" bg="blue.100" px={2} py={1} borderRadius="md">{count} {count === 1 ? 'TCC' : 'TCCs'}</Text>. 
+                        Para cada TCC, avalie os aspectos listados abaixo.
+                      </>
+                    );
+                  } else if (data.tipoItemAvaliado === "ProjetoExtensionista") {
+                    const verbo = isProfessor ? "leciona" : "está matriculado em";
+                    return (
+                      <>
+                        Você {verbo} <Text as="span" fontWeight="bold" bg="blue.100" px={2} py={1} borderRadius="md">{count} {count === 1 ? 'projeto extensionista' : 'projetos extensionistas'}</Text>. 
+                        Para cada projeto extensionista, avalie os aspectos listados abaixo.
+                      </>
+                    );
+                  } else if (data.tipoItemAvaliado === "PACExtensionista") {
+                    return (
+                      <>
+                        Você está matriculado em <Text as="span" fontWeight="bold" bg="blue.100" px={2} py={1} borderRadius="md">{count} {count === 1 ? 'PAC Extensionista' : 'PACs Extensionistas'}</Text> (Projeto de Aprendizagem Colaborativa Extensionista). 
+                        Para cada PAC Extensionista, avalie os aspectos listados abaixo.
+                      </>
+                    );
+                  } else if (data.tipoItemAvaliado === "Professor") {
+                    return (
+                      <>
+                        Você tem <Text as="span" fontWeight="bold" bg="blue.100" px={2} py={1} borderRadius="md">{count} {count === 1 ? 'professor' : 'professores'}</Text> para avaliar. 
+                        Para cada professor, avalie os aspectos listados abaixo.
+                      </>
+                    );
+                  } else {
+                    return (
+                      <>
+                        Você tem <Text as="span" fontWeight="bold" bg="blue.100" px={2} py={1} borderRadius="md">{count} {count === 1 ? 'item' : 'itens'}</Text> para avaliar. 
+                        Para cada item, avalie os aspectos listados abaixo.
+                      </>
+                    );
+                  }
+                })()}
               </Text>
             </Box>
           )}

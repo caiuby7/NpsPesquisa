@@ -55,6 +55,7 @@ interface InstitutionalEvaluationLayoutProps {
   onPrevious: () => void;
   onNext: () => void;
   isNextDisabled?: boolean;
+  participantType?: string;
 }
 
 const InstitutionalEvaluationLayout: React.FC<InstitutionalEvaluationLayoutProps> = ({
@@ -68,7 +69,8 @@ const InstitutionalEvaluationLayout: React.FC<InstitutionalEvaluationLayoutProps
   onEvaluationChange,
   onPrevious,
   onNext,
-  isNextDisabled = false
+  isNextDisabled = false,
+  participantType
 }) => {
   const bgGradient = useColorModeValue(
     'linear(to-r, blue.500, blue.600)',
@@ -151,8 +153,17 @@ const InstitutionalEvaluationLayout: React.FC<InstitutionalEvaluationLayoutProps
               📚 Suas Disciplinas
             </Text>
             <Text>
-              Você está matriculado em <Text as="span" fontWeight="bold" bg="yellow.300" px={2} py={1} borderRadius="md">{disciplines.length} disciplinas</Text>. 
-              Para cada disciplina, avalie os aspectos listados abaixo.
+              {participantType === "Professor" ? (
+                <>
+                  Você leciona <Text as="span" fontWeight="bold" bg="yellow.300" px={2} py={1} borderRadius="md">{disciplines.length} {disciplines.length === 1 ? 'disciplina' : 'disciplinas'}</Text>. 
+                  Para cada disciplina, avalie os aspectos listados abaixo.
+                </>
+              ) : (
+                <>
+                  Você está matriculado em <Text as="span" fontWeight="bold" bg="yellow.300" px={2} py={1} borderRadius="md">{disciplines.length} {disciplines.length === 1 ? 'disciplina' : 'disciplinas'}</Text>. 
+                  Para cada disciplina, avalie os aspectos listados abaixo.
+                </>
+              )}
             </Text>
           </Box>
         </Alert>

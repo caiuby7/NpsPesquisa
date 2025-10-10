@@ -232,26 +232,46 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
       // Adicionar questões condicionais das opções APENAS se a opção estiver selecionada
       q.opcoes?.forEach((opcao: any) => {
         if (opcao.questaoCondicional && opcao.ativaCondicao) {
-          console.log(`🔍 Verificando questão condicional da opção ${opcao.id} da questão ${q.id}:`, {
-            questaoCondicional: opcao.questaoCondicional.id,
-            questaoCondicionalTexto: opcao.questaoCondicional.texto?.substring(0, 30),
-            questaoCondicionalObrigatoria: opcao.questaoCondicional.obrigatorio,
-            respostaQuestao: responses[q.id],
-            opcaoId: opcao.id
-          });
-          
-          const respostaQuestao = responses[q.id];
-          const isOptionSelected = Array.isArray(respostaQuestao) 
-            ? respostaQuestao.includes(String(opcao.id)) 
-            : String(respostaQuestao) === String(opcao.id);
-            
-          console.log(`🔍 Opção ${opcao.id} selecionada: ${isOptionSelected}`);
-            
-          if (isOptionSelected) {
-            console.log(`✅ Adicionando questão condicional ${opcao.questaoCondicional.id} à validação`);
-            todasQuestoes.push(opcao.questaoCondicional);
+          // Para estrutura agrupada, verificar cada item separadamente
+          if (shouldUseGroupedStructure && itensAvaliados) {
+            itensAvaliados.forEach((item) => {
+              const respostaKey = `${q.id}_${item.id}`;
+              const respostaQuestao = responses[respostaKey];
+              const isOptionSelected = Array.isArray(respostaQuestao) 
+                ? respostaQuestao.includes(String(opcao.id)) 
+                : String(respostaQuestao) === String(opcao.id);
+              
+              console.log(`🔍 Verificando questão condicional agrupada - Questão ${q.id}, Item ${item.id}, Opção ${opcao.id}:`, {
+                respostaKey,
+                respostaQuestao,
+                isOptionSelected,
+                questaoCondicional: opcao.questaoCondicional.id
+              });
+              
+              if (isOptionSelected && !todasQuestoes.some(tq => tq.id === opcao.questaoCondicional.id)) {
+                console.log(`✅ Adicionando questão condicional ${opcao.questaoCondicional.id} à validação (estrutura agrupada)`);
+                todasQuestoes.push(opcao.questaoCondicional);
+              }
+            });
           } else {
-            console.log(`❌ Questão condicional ${opcao.questaoCondicional.id} NÃO adicionada (opção não selecionada)`);
+            // Para estrutura normal
+            const respostaQuestao = responses[q.id];
+            const isOptionSelected = Array.isArray(respostaQuestao) 
+              ? respostaQuestao.includes(String(opcao.id)) 
+              : String(respostaQuestao) === String(opcao.id);
+              
+            console.log(`🔍 Verificando questão condicional normal - Questão ${q.id}, Opção ${opcao.id}:`, {
+              respostaQuestao,
+              isOptionSelected,
+              questaoCondicional: opcao.questaoCondicional.id
+            });
+              
+            if (isOptionSelected) {
+              console.log(`✅ Adicionando questão condicional ${opcao.questaoCondicional.id} à validação`);
+              todasQuestoes.push(opcao.questaoCondicional);
+            } else {
+              console.log(`❌ Questão condicional ${opcao.questaoCondicional.id} NÃO adicionada (opção não selecionada)`);
+            }
           }
         }
       });
@@ -259,26 +279,46 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
       // Adicionar questões condicionais das colunas APENAS se a coluna estiver selecionada
       q.colunas?.forEach((coluna: any) => {
         if (coluna.questaoCondicional && coluna.ativaCondicao) {
-          console.log(`🔍 Verificando questão condicional da coluna ${coluna.id} da questão ${q.id}:`, {
-            questaoCondicional: coluna.questaoCondicional.id,
-            questaoCondicionalTexto: coluna.questaoCondicional.texto?.substring(0, 30),
-            questaoCondicionalObrigatoria: coluna.questaoCondicional.obrigatorio,
-            respostaQuestao: responses[q.id],
-            colunaId: coluna.id
-          });
-          
-          const respostaQuestao = responses[q.id];
-          const isColumnSelected = Array.isArray(respostaQuestao) 
-            ? respostaQuestao.includes(String(coluna.id)) 
-            : String(respostaQuestao) === String(coluna.id);
-            
-          console.log(`🔍 Coluna ${coluna.id} selecionada: ${isColumnSelected}`);
-            
-          if (isColumnSelected) {
-            console.log(`✅ Adicionando questão condicional coluna ${coluna.questaoCondicional.id} à validação`);
-            todasQuestoes.push(coluna.questaoCondicional);
+          // Para estrutura agrupada, verificar cada item separadamente
+          if (shouldUseGroupedStructure && itensAvaliados) {
+            itensAvaliados.forEach((item) => {
+              const respostaKey = `${q.id}_${item.id}`;
+              const respostaQuestao = responses[respostaKey];
+              const isColumnSelected = Array.isArray(respostaQuestao) 
+                ? respostaQuestao.includes(String(coluna.id)) 
+                : String(respostaQuestao) === String(coluna.id);
+              
+              console.log(`🔍 Verificando questão condicional coluna agrupada - Questão ${q.id}, Item ${item.id}, Coluna ${coluna.id}:`, {
+                respostaKey,
+                respostaQuestao,
+                isColumnSelected,
+                questaoCondicional: coluna.questaoCondicional.id
+              });
+              
+              if (isColumnSelected && !todasQuestoes.some(tq => tq.id === coluna.questaoCondicional.id)) {
+                console.log(`✅ Adicionando questão condicional coluna ${coluna.questaoCondicional.id} à validação (estrutura agrupada)`);
+                todasQuestoes.push(coluna.questaoCondicional);
+              }
+            });
           } else {
-            console.log(`❌ Questão condicional coluna ${coluna.questaoCondicional.id} NÃO adicionada (coluna não selecionada)`);
+            // Para estrutura normal
+            const respostaQuestao = responses[q.id];
+            const isColumnSelected = Array.isArray(respostaQuestao) 
+              ? respostaQuestao.includes(String(coluna.id)) 
+              : String(respostaQuestao) === String(coluna.id);
+              
+            console.log(`🔍 Verificando questão condicional coluna normal - Questão ${q.id}, Coluna ${coluna.id}:`, {
+              respostaQuestao,
+              isColumnSelected,
+              questaoCondicional: coluna.questaoCondicional.id
+            });
+              
+            if (isColumnSelected) {
+              console.log(`✅ Adicionando questão condicional coluna ${coluna.questaoCondicional.id} à validação`);
+              todasQuestoes.push(coluna.questaoCondicional);
+            } else {
+              console.log(`❌ Questão condicional coluna ${coluna.questaoCondicional.id} NÃO adicionada (coluna não selecionada)`);
+            }
           }
         }
       });
@@ -555,25 +595,46 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
       // Adicionar questões condicionais das opções APENAS se a opção estiver selecionada
       q.opcoes?.forEach((opcao: any) => {
         if (opcao.questaoCondicional && opcao.ativaCondicao) {
-          // Verificar se a opção que ativa a condição está selecionada
-          const respostaQuestao = responses[q.id];
-          const isOptionSelected = Array.isArray(respostaQuestao) 
-            ? respostaQuestao.includes(String(opcao.id)) 
-            : String(respostaQuestao) === String(opcao.id);
-            
-          console.log(`🔍 Debug - Verificação condicional - Questão ${q.id}, Opção ${opcao.id}:`, {
-            respostaQuestao,
-            opcaoId: opcao.id,
-            isOptionSelected,
-            questaoCondicional: opcao.questaoCondicional?.id,
-            questaoCondicionalObrigatoria: opcao.questaoCondicional?.obrigatorio
-          });
-            
-          if (isOptionSelected) {
-            todasQuestoes.push(opcao.questaoCondicional);
-            console.log(`✅ Questão condicional ${opcao.questaoCondicional.id} adicionada à validação`);
+          // Para estrutura agrupada, verificar cada item separadamente
+          if (shouldUseGroupedStructure && itensAvaliados) {
+            itensAvaliados.forEach((item) => {
+              const respostaKey = `${q.id}_${item.id}`;
+              const respostaQuestao = responses[respostaKey];
+              const isOptionSelected = Array.isArray(respostaQuestao) 
+                ? respostaQuestao.includes(String(opcao.id)) 
+                : String(respostaQuestao) === String(opcao.id);
+              
+              console.log(`🔍 Submit - Verificando questão condicional agrupada - Questão ${q.id}, Item ${item.id}, Opção ${opcao.id}:`, {
+                respostaKey,
+                respostaQuestao,
+                isOptionSelected,
+                questaoCondicional: opcao.questaoCondicional.id
+              });
+              
+              if (isOptionSelected && !todasQuestoes.some(tq => tq.id === opcao.questaoCondicional.id)) {
+                console.log(`✅ Submit - Adicionando questão condicional ${opcao.questaoCondicional.id} à validação (estrutura agrupada)`);
+                todasQuestoes.push(opcao.questaoCondicional);
+              }
+            });
           } else {
-            console.log(`❌ Questão condicional ${opcao.questaoCondicional.id} NÃO adicionada (opção não selecionada)`);
+            // Para estrutura normal
+            const respostaQuestao = responses[q.id];
+            const isOptionSelected = Array.isArray(respostaQuestao) 
+              ? respostaQuestao.includes(String(opcao.id)) 
+              : String(respostaQuestao) === String(opcao.id);
+              
+            console.log(`🔍 Submit - Verificação condicional normal - Questão ${q.id}, Opção ${opcao.id}:`, {
+              respostaQuestao,
+              isOptionSelected,
+              questaoCondicional: opcao.questaoCondicional?.id
+            });
+              
+            if (isOptionSelected) {
+              todasQuestoes.push(opcao.questaoCondicional);
+              console.log(`✅ Submit - Questão condicional ${opcao.questaoCondicional.id} adicionada à validação`);
+            } else {
+              console.log(`❌ Submit - Questão condicional ${opcao.questaoCondicional.id} NÃO adicionada (opção não selecionada)`);
+            }
           }
         }
       });
@@ -581,25 +642,46 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
       // Adicionar questões condicionais das colunas APENAS se a coluna estiver selecionada
       q.colunas?.forEach((coluna: any) => {
         if (coluna.questaoCondicional && coluna.ativaCondicao) {
-          // Verificar se a coluna que ativa a condição está selecionada
-          const respostaQuestao = responses[q.id];
-          const isColumnSelected = Array.isArray(respostaQuestao) 
-            ? respostaQuestao.includes(String(coluna.id)) 
-            : String(respostaQuestao) === String(coluna.id);
-            
-          console.log(`🔍 Debug - Verificação condicional coluna - Questão ${q.id}, Coluna ${coluna.id}:`, {
-            respostaQuestao,
-            colunaId: coluna.id,
-            isColumnSelected,
-            questaoCondicional: coluna.questaoCondicional?.id,
-            questaoCondicionalObrigatoria: coluna.questaoCondicional?.obrigatorio
-          });
-            
-          if (isColumnSelected) {
-            todasQuestoes.push(coluna.questaoCondicional);
-            console.log(`✅ Questão condicional coluna ${coluna.questaoCondicional.id} adicionada à validação`);
+          // Para estrutura agrupada, verificar cada item separadamente
+          if (shouldUseGroupedStructure && itensAvaliados) {
+            itensAvaliados.forEach((item) => {
+              const respostaKey = `${q.id}_${item.id}`;
+              const respostaQuestao = responses[respostaKey];
+              const isColumnSelected = Array.isArray(respostaQuestao) 
+                ? respostaQuestao.includes(String(coluna.id)) 
+                : String(respostaQuestao) === String(coluna.id);
+              
+              console.log(`🔍 Submit - Verificando questão condicional coluna agrupada - Questão ${q.id}, Item ${item.id}, Coluna ${coluna.id}:`, {
+                respostaKey,
+                respostaQuestao,
+                isColumnSelected,
+                questaoCondicional: coluna.questaoCondicional.id
+              });
+              
+              if (isColumnSelected && !todasQuestoes.some(tq => tq.id === coluna.questaoCondicional.id)) {
+                console.log(`✅ Submit - Adicionando questão condicional coluna ${coluna.questaoCondicional.id} à validação (estrutura agrupada)`);
+                todasQuestoes.push(coluna.questaoCondicional);
+              }
+            });
           } else {
-            console.log(`❌ Questão condicional coluna ${coluna.questaoCondicional.id} NÃO adicionada (coluna não selecionada)`);
+            // Para estrutura normal
+            const respostaQuestao = responses[q.id];
+            const isColumnSelected = Array.isArray(respostaQuestao) 
+              ? respostaQuestao.includes(String(coluna.id)) 
+              : String(respostaQuestao) === String(coluna.id);
+              
+            console.log(`🔍 Submit - Verificação condicional coluna normal - Questão ${q.id}, Coluna ${coluna.id}:`, {
+              respostaQuestao,
+              isColumnSelected,
+              questaoCondicional: coluna.questaoCondicional?.id
+            });
+              
+            if (isColumnSelected) {
+              todasQuestoes.push(coluna.questaoCondicional);
+              console.log(`✅ Submit - Questão condicional coluna ${coluna.questaoCondicional.id} adicionada à validação`);
+            } else {
+              console.log(`❌ Submit - Questão condicional coluna ${coluna.questaoCondicional.id} NÃO adicionada (coluna não selecionada)`);
+            }
           }
         }
       });
@@ -837,8 +919,61 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
         // Processar respostas agrupadas por itens
         todasQuestoes.forEach((questao: QuestionResponse) => {
           itensAvaliados.forEach((item) => {
-            const respostaKey = `${questao.id}_${item.id}`;
-            const resposta = responses[respostaKey];
+            // Verificar se é questão condicional e buscar a chave correta
+            const isQuestaoCondicional = questoes.some((questaoPrincipal: QuestionResponse) => 
+              questaoPrincipal.opcoes?.some((opcao: any) => 
+                opcao.questaoCondicional?.id === questao.id
+              ) || questaoPrincipal.colunas?.some((coluna: any) => 
+                coluna.questaoCondicional?.id === questao.id
+              )
+            );
+            
+            let respostaKey = `${questao.id}_${item.id}`;
+            let resposta = responses[respostaKey];
+            
+            if (isQuestaoCondicional) {
+              // Buscar a questão principal que ativa esta condição
+              const questaoPrincipal = questoes.find((questaoPrincipal: QuestionResponse) => 
+                questaoPrincipal.opcoes?.some((opcao: any) => 
+                  opcao.questaoCondicional?.id === questao.id
+                ) || questaoPrincipal.colunas?.some((coluna: any) => 
+                  coluna.questaoCondicional?.id === questao.id
+                )
+              );
+              
+              if (questaoPrincipal) {
+                // Verificar se a opção que ativa esta condição está selecionada para este item
+                const respostaQuestaoPrincipal = responses[`${questaoPrincipal.id}_${item.id}`];
+                const opcaoAtiva = questaoPrincipal.opcoes?.find((opcao: any) => 
+                  opcao.questaoCondicional?.id === questao.id && opcao.ativaCondicao
+                ) || questaoPrincipal.colunas?.find((coluna: any) => 
+                  coluna.questaoCondicional?.id === questao.id && coluna.ativaCondicao
+                );
+                
+                if (opcaoAtiva) {
+                  const isOptionSelected = Array.isArray(respostaQuestaoPrincipal) 
+                    ? respostaQuestaoPrincipal.includes(String(opcaoAtiva.id)) 
+                    : String(respostaQuestaoPrincipal) === String(opcaoAtiva.id);
+                  
+                  // Se a opção não está selecionada, pular esta questão condicional
+                  if (!isOptionSelected) {
+                    console.log(`⏭️ Pulando questão condicional ${questao.id} para item ${item.id} (opção não selecionada)`);
+                    return; // Pular para o próximo item
+                  }
+                  
+                  // Usar chave única para questão condicional (mesma ordem da renderização)
+                  respostaKey = `${questao.id}_${questaoPrincipal.id}_${item.id}`;
+                  resposta = responses[respostaKey];
+                  
+                  console.log(`✅ Processando questão condicional ${questao.id} para item ${item.id}:`, {
+                    respostaKey,
+                    resposta,
+                    questaoPrincipal: questaoPrincipal.id,
+                    opcaoAtiva: opcaoAtiva.id
+                  });
+                }
+              }
+            }
             
             if (resposta !== undefined && resposta !== null && resposta !== "") {
               if (questao.tipo === "MultiplaEscolha" || questao.tipo === "MenuSuspenso") {

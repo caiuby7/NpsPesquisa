@@ -163,7 +163,7 @@ export const AvaliacaoInstitucionalComponent: React.FC<AvaliacaoInstitucionalPro
                 <Heading size="lg" color="blue.800" fontWeight="bold">Suas Disciplinas</Heading>
               </HStack>
               <Text color="blue.700" fontSize="md">
-                Você está matriculado em <Text as="span" fontWeight="bold" bg="yellow.300" px={2} py={1} borderRadius="md">{disciplinas.length} disciplinas</Text>. 
+                Você tem <Text as="span" fontWeight="bold" bg="yellow.300" px={2} py={1} borderRadius="md">{disciplinas.length} {disciplinas.length === 1 ? 'disciplina' : 'disciplinas'}</Text> para avaliar. 
                 Para cada disciplina, avalie os aspectos listados abaixo.
               </Text>
             </CardBody>

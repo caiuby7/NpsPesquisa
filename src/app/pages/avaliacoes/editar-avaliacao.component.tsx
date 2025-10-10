@@ -41,6 +41,10 @@ import {
   ChevronUp,
   ChevronDown
 } from 'lucide-react';
+import { Editor } from 'react-draft-wysiwyg';
+import { EditorState, convertToRaw } from 'draft-js';
+import draftToHtml from 'draftjs-to-html';
+import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
 import { ITEM_AVALIADO_TYPES, TipoQuestionarioEnum } from '../../services/form/form.services.types';
 import { useNavigate } from 'react-router-dom';
 import { useGetAvaliacaoById } from '../../services/avaliacao/avaliacao.service.hooks';
