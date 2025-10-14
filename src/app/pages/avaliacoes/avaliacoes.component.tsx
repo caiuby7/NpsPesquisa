@@ -46,11 +46,15 @@ import {
   Copy,
   User
 } from 'lucide-react';
+import { Pie } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import MainLayout from '../../../components/layout/main-layout.component';
 import { useGetAvaliacoes, Avaliacao } from '../../services/avaliacao/avaliacao.service.hooks';
 import { api } from '../../services/api';
 import { useNavigate } from 'react-router-dom';
 
+// Registrar componentes do Chart.js
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 const AvaliacoesPage: React.FC = () => {
   const { data: avaliacoes, isLoading, refetch } = useGetAvaliacoes();
@@ -67,8 +71,14 @@ const AvaliacoesPage: React.FC = () => {
   });
   const [instituicoes, setInstituicoes] = useState([]);
   const [isCopyLoading, setIsCopyLoading] = useState(false);
+  
+  // Estado para modal de acompanhamento
+  const [selectedAvaliacaoId, setSelectedAvaliacaoId] = useState<string>('');
+  const [loadingParcial, setLoadingParcial] = useState(false);
+  const [parcial, setParcial] = useState<any>(null);
 
   const { isOpen: isCopyModalOpen, onOpen: onCopyModalOpen, onClose: onCopyModalClose } = useDisclosure();
+  const { isOpen: isAcompanhamentoOpen, onOpen: onAcompanhamentoOpen, onClose: onAcompanhamentoClose } = useDisclosure();
   const toast = useToast();
   const navigate = useNavigate();
 
@@ -165,15 +175,18 @@ const AvaliacoesPage: React.FC = () => {
     navigate('/avaliacoes/criar');
   };
 
-  const handleMonitor = (avaliacaoId: number) => {
-    // Implementar acompanhamento da avaliação
-    toast({
-      title: 'Acompanhar',
-      description: `Abrindo acompanhamento da avaliação ${avaliacaoId}`,
-      status: 'info',
-      duration: 2000,
-      isClosable: true,
-    });
+  const handleMonitor = async (avaliacaoId: number) => {
+    setSelectedAvaliacaoId(avaliacaoId.toString());
+    setLoadingParcial(true);
+    onAcompanhamentoOpen();
+    
+    try {
+      const { data } = await api.get(`/Questionario/${avaliacaoId}/parcial-convites`);
+      setParcial(data);
+    } catch (e) {
+      setParcial(null);
+    }
+    setLoadingParcial(false);
   };
 
   const handleCopy = (avaliacao: Avaliacao) => {
@@ -610,6 +623,46 @@ const AvaliacoesPage: React.FC = () => {
               >
                 Copiar Avaliação
               </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+
+        {/* Modal de Acompanhamento de Respostas */}
+        <Modal isOpen={isAcompanhamentoOpen} onClose={onAcompanhamentoClose}>
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>Acompanhamento de Respostas</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              {loadingParcial && <Text>Carregando...</Text>}
+              {!loadingParcial && parcial && (
+                <>
+                  <Pie
+                    data={{
+                      labels: ['Respondidos', 'Pendentes'],
+                      datasets: [
+                        {
+                          data: [parcial.convitesRespondidos, parcial.convitesPendentes],
+                          backgroundColor: ['#38A169', '#ECC94B'],
+                        },
+                      ],
+                    }}
+                    options={{
+                      plugins: {
+                        legend: { position: 'bottom' },
+                      },
+                    }}
+                  />
+                  <Text mt={4}><b>Total Convites:</b> {parcial.totalConvites}</Text>
+                  <Text><b>Respondidos:</b> {parcial.convitesRespondidos}</Text>
+                  <Text><b>Pendentes:</b> {parcial.convitesPendentes}</Text>
+                  <Text><b>Percentual de Resposta:</b> {parcial.percentualResposta}%</Text>
+                </>
+              )}
+              {!loadingParcial && !parcial && <Text>Não foi possível carregar os dados.</Text>}
+            </ModalBody>
+            <ModalFooter>
+              <Button onClick={onAcompanhamentoClose}>Fechar</Button>
             </ModalFooter>
           </ModalContent>
         </Modal>

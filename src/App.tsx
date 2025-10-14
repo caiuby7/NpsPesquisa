@@ -48,6 +48,9 @@ const AlunosPage = lazy(() => import("./app/pages/alunos/alunos.component"));
 // Página de teste de questões condicionais
 const TestConditionalQuestionsPage = lazy(() => import("./pages/test-conditional-questions"));
 
+// Página de Relatórios
+const RelatoriosPage = lazy(() => import("./pages/relatorios"));
+
 // Páginas de Configurações
 const ConfiguracoesPage = lazy(() => import("./app/pages/configuracoes"));
 
@@ -176,6 +179,9 @@ function App() {
                   <Route path="/aluno/dashboard" element={<ProtectedRoute><ProfileRouter><AlunoDashboard /></ProfileRouter></ProtectedRoute>} />
                   <Route path="/professor/dashboard" element={<ProtectedRoute><ProfileRouter><ProfessorDashboard /></ProfileRouter></ProtectedRoute>} />
                   <Route path="/cpa/dashboard" element={<ProtectedRoute><ProfileRouter><CPADashboard /></ProfileRouter></ProtectedRoute>} />
+                  
+                  {/* Relatórios */}
+                  <Route path="/relatorios" element={<ProtectedRoute><RelatoriosPage /></ProtectedRoute>} />
                 </Routes>
               </Suspense>
             </Router>

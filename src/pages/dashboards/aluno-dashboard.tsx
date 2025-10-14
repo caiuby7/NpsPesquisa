@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_URLS } from '../../config/api-urls';
 import {
   Box,
   Container,
@@ -66,7 +67,7 @@ const AlunoDashboard: React.FC = () => {
       try {
         setLoading(true);
         
-        const response = await fetch('https://apiavaliacao.catolicasc.org.br/api/AvaliacoesDisponiveis', {
+        const response = await fetch(API_URLS.AVALIACOES_DISPONIVEIS, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }

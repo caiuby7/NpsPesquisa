@@ -556,25 +556,141 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
     const questoesObrigatoriasNaoRespondidas = todasQuestoes.filter(q => {
       if (!q.obrigatorio) return false;
       
-      const resposta = responses[q.id];
-      const isEmpty = resposta === undefined || resposta === "" || resposta === null ||
-        (Array.isArray(resposta) && resposta.length === 0);
+      // Verificar se é uma questão condicional que não deveria estar sendo validada
+      const isQuestaoCondicional = questoes.some((questaoPrincipal: QuestionResponse) => 
+        questaoPrincipal.opcoes?.some((opcao: any) => 
+          opcao.questaoCondicional?.id === q.id
+        ) || questaoPrincipal.colunas?.some((coluna: any) => 
+          coluna.questaoCondicional?.id === q.id
+        )
+      );
       
-      return isEmpty;
+      if (isQuestaoCondicional) {
+        // Para questões condicionais, verificar se a opção que as ativa está selecionada
+        const questaoPrincipal = questoes.find((questaoPrincipal: QuestionResponse) => 
+          questaoPrincipal.opcoes?.some((opcao: any) => 
+            opcao.questaoCondicional?.id === q.id
+          ) || questaoPrincipal.colunas?.some((coluna: any) => 
+            coluna.questaoCondicional?.id === q.id
+          )
+        );
+        
+        if (questaoPrincipal) {
+          const respostaQuestao = responses[questaoPrincipal.id];
+          const opcaoAtiva = questaoPrincipal.opcoes?.find((opcao: any) => 
+            opcao.questaoCondicional?.id === q.id && opcao.ativaCondicao
+          ) || questaoPrincipal.colunas?.find((coluna: any) => 
+            coluna.questaoCondicional?.id === q.id && coluna.ativaCondicao
+          );
+          
+          if (opcaoAtiva) {
+            const isOptionSelected = Array.isArray(respostaQuestao) 
+              ? respostaQuestao.includes(String(opcaoAtiva.id)) 
+              : String(respostaQuestao) === String(opcaoAtiva.id);
+            
+            // Só validar se a opção que ativa a condição estiver selecionada
+            if (!isOptionSelected) {
+              return false; // Não incluir esta questão condicional nas não respondidas
+            }
+          }
+        }
+      }
+      
+      // Verificar se é questão agrupada
+      if (isQuestaoAgrupada) {
+        // Para estrutura agrupada, verificar se todas as respostas para cada item foram respondidas
+        const algumItemNaoRespondido = itensAvaliados.some((item) => {
+          let respostaKey: string | number = `${q.id}_${item.id}`;
+          let resposta = responses[respostaKey];
+          
+          if (isQuestaoCondicional) {
+            const questaoPrincipal = questoes.find((questaoPrincipal: QuestionResponse) => 
+              questaoPrincipal.opcoes?.some((opcao: any) => 
+                opcao.questaoCondicional?.id === q.id
+              ) || questaoPrincipal.colunas?.some((coluna: any) => 
+                coluna.questaoCondicional?.id === q.id
+              )
+            );
+            
+            if (questaoPrincipal) {
+              const respostaQuestaoPrincipal = responses[`${questaoPrincipal.id}_${item.id}`];
+              const opcaoAtiva = questaoPrincipal.opcoes?.find((opcao: any) => 
+                opcao.questaoCondicional?.id === q.id && opcao.ativaCondicao
+              ) || questaoPrincipal.colunas?.find((coluna: any) => 
+                coluna.questaoCondicional?.id === q.id && coluna.ativaCondicao
+              );
+              
+              if (opcaoAtiva) {
+                const isOptionSelected = Array.isArray(respostaQuestaoPrincipal) 
+                  ? respostaQuestaoPrincipal.includes(String(opcaoAtiva.id)) 
+                  : String(respostaQuestaoPrincipal) === String(opcaoAtiva.id);
+                
+                if (!isOptionSelected) {
+                  return false; // Não validar esta questão condicional para este item
+                }
+                
+                respostaKey = `${q.id}_${questaoPrincipal.id}_${item.id}`;
+                resposta = responses[respostaKey];
+              }
+            }
+          }
+          
+          const isEmpty = resposta === undefined || resposta === "" || resposta === null ||
+            (Array.isArray(resposta) && resposta.length === 0);
+          
+          return isEmpty;
+        });
+        
+        return algumItemNaoRespondido;
+      } else {
+        // Para estrutura normal, verificar se a questão foi respondida
+        const resposta = responses[q.id];
+        const isEmpty = resposta === undefined || resposta === "" || resposta === null ||
+          (Array.isArray(resposta) && resposta.length === 0);
+        
+        return isEmpty;
+      }
     });
     
-    console.log('❌ Questões obrigatórias NÃO respondidas:', questoesObrigatoriasNaoRespondidas.map(q => ({
-      id: q.id,
-      texto: q.texto?.substring(0, 50) + "...",
-      resposta: responses[q.id]
-    })));
+    console.log('❌ QUESTÕES OBRIGATÓRIAS NÃO RESPONDIDAS:', questoesObrigatoriasNaoRespondidas.map(q => {
+      const isQuestaoCondicional = questoes.some((questaoPrincipal: QuestionResponse) => 
+        questaoPrincipal.opcoes?.some((opcao: any) => 
+          opcao.questaoCondicional?.id === q.id
+        ) || questaoPrincipal.colunas?.some((coluna: any) => 
+          coluna.questaoCondicional?.id === q.id
+        )
+      );
+      
+      return {
+        id: q.id,
+        texto: q.texto?.substring(0, 50) + "...",
+        tipo: q.tipo,
+        obrigatorio: q.obrigatorio,
+        resposta: responses[q.id],
+        isCondicional: isQuestaoCondicional,
+        respostaTipo: typeof responses[q.id],
+        isArray: Array.isArray(responses[q.id]),
+        arrayLength: Array.isArray(responses[q.id]) ? responses[q.id].length : null
+      };
+    }));
     
     console.log('🎯 RESULTADO FINAL DA VALIDAÇÃO:', {
       result,
       todasQuestoes: todasQuestoes.length,
       questoesObrigatorias: todasQuestoes.filter(q => q.obrigatorio).length,
       questoesNaoRespondidas: questoesObrigatoriasNaoRespondidas.length,
-      botaoDeveEstarDesabilitado: !result
+      botaoDeveEstarDesabilitado: !result,
+      tipoItemAvaliado,
+      shouldUseGroupedStructure,
+      itensAvaliados: itensAvaliados?.length,
+      responsesKeys: Object.keys(responses),
+      responsesValues: Object.entries(responses).map(([key, value]) => ({
+        key,
+        value,
+        tipo: typeof value,
+        isArray: Array.isArray(value),
+        arrayLength: Array.isArray(value) ? value.length : null
+      }))
     });
     
     return result;
@@ -582,6 +698,31 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
 
   const handleSubmit = async () => {
     if (submitting) return; // Evitar múltiplos envios
+    
+    console.log('🚀 INICIANDO ENVIO DO QUESTIONÁRIO');
+    console.log('📊 Estado antes do envio:', {
+      questoes: questoes.length,
+      responses: Object.keys(responses).length,
+      tipoItemAvaliado,
+      shouldUseGroupedStructure,
+      itensAvaliados: itensAvaliados?.length,
+      participanteId,
+      questionarioId,
+      chave
+    });
+    
+    // Verificar validação antes de enviar
+    const todasObrigatoriasRespondidas = areAllRequiredQuestionsAnswered();
+    console.log('✅ Validação pré-envio:', {
+      todasObrigatoriasRespondidas,
+      podeEnviar: todasObrigatoriasRespondidas && !submitting
+    });
+    
+    if (!todasObrigatoriasRespondidas) {
+      console.error('❌ BLOQUEADO: Nem todas as questões obrigatórias foram respondidas');
+      alert('Por favor, responda todas as questões obrigatórias antes de enviar.');
+      return;
+    }
     
     setSubmitting(true);
     

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { API_URLS } from '../../config/api-urls';
 import { 
   Box, 
   Heading, 
@@ -178,15 +179,15 @@ const CriarAvaliacaoPage: React.FC = () => {
   const carregarDadosIniciais = async () => {
     try {
       // Carregar instituições
-      const instituicoesResponse = await fetch('https://apiavaliacao.catolicasc.org.br/api/instituicoes');
+      const instituicoesResponse = await fetch(API_URLS.INSTITUICOES);
       const instituicoes = await instituicoesResponse.json();
       
       // Carregar períodos letivos
-      const periodosResponse = await fetch('https://apiavaliacao.catolicasc.org.br/api/periodosletivos');
+      const periodosResponse = await fetch(API_URLS.PERIODOS_LETIVOS);
       const periodos = await periodosResponse.json();
       
       // Carregar cursos
-      const cursosResponse = await fetch('https://apiavaliacao.catolicasc.org.br/api/cursos');
+      const cursosResponse = await fetch(API_URLS.CURSOS);
       const cursos = await cursosResponse.json();
 
       setDadosFiltros(prev => ({
@@ -241,7 +242,7 @@ const CriarAvaliacaoPage: React.FC = () => {
 
   const carregarTurmas = async () => {
     try {
-      const response = await fetch('https://apiavaliacao.catolicasc.org.br/api/turmas');
+      const response = await fetch(API_URLS.TURMAS);
       const turmas = await response.json();
       setDadosFiltros(prev => ({ ...prev, turmas }));
     } catch (error) {
@@ -251,7 +252,7 @@ const CriarAvaliacaoPage: React.FC = () => {
 
   const carregarDisciplinas = async () => {
     try {
-      const response = await fetch('https://apiavaliacao.catolicasc.org.br/api/disciplinas');
+      const response = await fetch(API_URLS.DISCIPLINAS);
       const disciplinas = await response.json();
       setDadosFiltros(prev => ({ ...prev, disciplinas }));
     } catch (error) {
@@ -261,7 +262,7 @@ const CriarAvaliacaoPage: React.FC = () => {
 
   const carregarProfessores = async () => {
     try {
-      const response = await fetch('https://apiavaliacao.catolicasc.org.br/api/professores');
+      const response = await fetch(API_URLS.PROFESSORES);
       const professores = await response.json();
       setDadosFiltros(prev => ({ ...prev, professores }));
     } catch (error) {
@@ -271,7 +272,7 @@ const CriarAvaliacaoPage: React.FC = () => {
 
   const carregarCoordenadores = async () => {
     try {
-      const response = await fetch('https://apiavaliacao.catolicasc.org.br/api/coordenadores');
+      const response = await fetch(API_URLS.COORDENADORES);
       const coordenadores = await response.json();
       setDadosFiltros(prev => ({ ...prev, coordenadores }));
     } catch (error) {
@@ -305,7 +306,7 @@ const CriarAvaliacaoPage: React.FC = () => {
         ...formData.filtros
       };
 
-      const response = await fetch('https://apiavaliacao.catolicasc.org.br/api/avaliacao/criar', {
+      const response = await fetch(API_URLS.AVALIACAO_CRIAR, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -349,7 +350,7 @@ const CriarAvaliacaoPage: React.FC = () => {
 
   const previewParticipantes = async () => {
     try {
-      const response = await fetch('https://apiavaliacao.catolicasc.org.br/api/avaliacao/filtros/participantes', {
+      const response = await fetch(API_URLS.AVALIACAO_FILTROS, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

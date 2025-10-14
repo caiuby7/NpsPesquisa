@@ -3,10 +3,10 @@
 // ========================================
 
 // 🚀 PRODUÇÃO
-// const API_URL = 'https://apiavaliacao.catolicasc.org.br/api';
+const API_URL = 'https://apiavaliacao.catolicasc.org.br/api';
 
 // 🛠️ DESENVOLVIMENTO
-const API_URL = 'http://localhost:5000/api';
+// const API_URL = 'http://localhost:5000/api';
 
 // ========================================
 // EXPORTANDO CONFIGURAÇÕES
