@@ -76,7 +76,7 @@ function showCurrentEnvironment() {
   let activeEnv = null;
   Object.keys(ENVIRONMENTS).forEach(env => {
     const envConfig = ENVIRONMENTS[env];
-    const isActive = content.includes(`const API_URL = '${envConfig.url}';`);
+    const isActive = content.includes(`const API_URL = '${envConfig.url}';`) && !content.includes(`// const API_URL = '${envConfig.url}';`);
     
     if (isActive) {
       activeEnv = { env, config: envConfig };

@@ -45,7 +45,7 @@ export default function LoginPage() {
     // Redirecionar baseado no perfil
     switch (data.perfil.toLowerCase()) {
       case 'aluno':
-        navigate("/aluno/dashboard");
+        navigate("/participante/dashboard");
         break;
       case 'professor':
         navigate("/professor/dashboard");

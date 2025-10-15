@@ -1267,9 +1267,9 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
               
               // Redirecionar baseado no perfil
               if (perfil === 'aluno' || perfil === 'participante') {
-                console.log('🎯 Redirecionando para /aluno/dashboard');
+                console.log('🎯 Redirecionando para /participante/dashboard');
                 console.log('🔍 URL atual antes do redirect:', window.location.href);
-                window.location.href = "/aluno/dashboard";
+                window.location.href = "/participante/dashboard";
                 console.log('🔍 URL após definir redirect:', window.location.href);
               } else if (perfil === 'professor' || perfil === 'coordenacao') {
                 console.log('🎯 Redirecionando para /professor/dashboard');

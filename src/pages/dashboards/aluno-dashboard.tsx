@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_URLS } from '../../config/api-urls';
+import { apiFetch } from '../../utils/api-fetch';
 import {
   Box,
   Container,
@@ -67,11 +68,7 @@ const AlunoDashboard: React.FC = () => {
       try {
         setLoading(true);
         
-        const response = await fetch(API_URLS.AVALIACOES_DISPONIVEIS, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
+        const response = await apiFetch(API_URLS.AVALIACOES_DISPONIVEIS);
         
         if (response.ok) {
           const data = await response.json();

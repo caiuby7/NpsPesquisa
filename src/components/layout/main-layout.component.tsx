@@ -306,6 +306,16 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                 Dashboard Geral
               </NavItem>
               <NavItem 
+                icon={FiUsers} 
+                href="/relatorios/acompanhamento"
+                isActive={isActiveRoute('/relatorios/acompanhamento')}
+                onClick={() => navigate('/relatorios/acompanhamento')}
+                badge="ACOMP"
+                badgeColor="blue"
+              >
+                Acompanhamento
+              </NavItem>
+              <NavItem 
                 icon={FiFileText} 
                 href="/institutional-evaluation-example"
                 isActive={isActiveRoute('/institutional-evaluation-example')}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { API_URLS } from '../../config/api-urls';
+import { apiFetch, apiFetchJson } from '../../utils/api-fetch';
 import { 
   Box, 
   Heading, 
@@ -179,16 +180,13 @@ const CriarAvaliacaoPage: React.FC = () => {
   const carregarDadosIniciais = async () => {
     try {
       // Carregar instituições
-      const instituicoesResponse = await fetch(API_URLS.INSTITUICOES);
-      const instituicoes = await instituicoesResponse.json();
+      const instituicoes = await apiFetchJson(API_URLS.INSTITUICOES);
       
       // Carregar períodos letivos
-      const periodosResponse = await fetch(API_URLS.PERIODOS_LETIVOS);
-      const periodos = await periodosResponse.json();
+      const periodos = await apiFetchJson(API_URLS.PERIODOS_LETIVOS);
       
       // Carregar cursos
-      const cursosResponse = await fetch(API_URLS.CURSOS);
-      const cursos = await cursosResponse.json();
+      const cursos = await apiFetchJson(API_URLS.CURSOS);
 
       setDadosFiltros(prev => ({
         ...prev,
@@ -242,8 +240,7 @@ const CriarAvaliacaoPage: React.FC = () => {
 
   const carregarTurmas = async () => {
     try {
-      const response = await fetch(API_URLS.TURMAS);
-      const turmas = await response.json();
+      const turmas = await apiFetchJson(API_URLS.TURMAS);
       setDadosFiltros(prev => ({ ...prev, turmas }));
     } catch (error) {
       console.error('Erro ao carregar turmas:', error);
@@ -252,8 +249,7 @@ const CriarAvaliacaoPage: React.FC = () => {
 
   const carregarDisciplinas = async () => {
     try {
-      const response = await fetch(API_URLS.DISCIPLINAS);
-      const disciplinas = await response.json();
+      const disciplinas = await apiFetchJson(API_URLS.DISCIPLINAS);
       setDadosFiltros(prev => ({ ...prev, disciplinas }));
     } catch (error) {
       console.error('Erro ao carregar disciplinas:', error);
@@ -262,8 +258,7 @@ const CriarAvaliacaoPage: React.FC = () => {
 
   const carregarProfessores = async () => {
     try {
-      const response = await fetch(API_URLS.PROFESSORES);
-      const professores = await response.json();
+      const professores = await apiFetchJson(API_URLS.PROFESSORES);
       setDadosFiltros(prev => ({ ...prev, professores }));
     } catch (error) {
       console.error('Erro ao carregar professores:', error);
@@ -272,8 +267,7 @@ const CriarAvaliacaoPage: React.FC = () => {
 
   const carregarCoordenadores = async () => {
     try {
-      const response = await fetch(API_URLS.COORDENADORES);
-      const coordenadores = await response.json();
+      const coordenadores = await apiFetchJson(API_URLS.COORDENADORES);
       setDadosFiltros(prev => ({ ...prev, coordenadores }));
     } catch (error) {
       console.error('Erro ao carregar coordenadores:', error);
@@ -306,11 +300,8 @@ const CriarAvaliacaoPage: React.FC = () => {
         ...formData.filtros
       };
 
-      const response = await fetch(API_URLS.AVALIACAO_CRIAR, {
+      const response = await apiFetch(API_URLS.AVALIACAO_CRIAR, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(requestData),
       });
 
@@ -350,11 +341,8 @@ const CriarAvaliacaoPage: React.FC = () => {
 
   const previewParticipantes = async () => {
     try {
-      const response = await fetch(API_URLS.AVALIACAO_FILTROS, {
+      const response = await apiFetch(API_URLS.AVALIACAO_FILTROS, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(formData.filtros),
       });
 

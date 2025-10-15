@@ -13,6 +13,7 @@ export const API_URLS = {
   BASE: ENVIRONMENT.API_URL,
   
   // Endpoints específicos
+  AVALIACOES: `${ENVIRONMENT.API_URL}/Questionario/com-estatisticas`,
   AVALIACOES_DISPONIVEIS: `${ENVIRONMENT.API_URL}/AvaliacoesDisponiveis`,
   INSTITUICOES: `${ENVIRONMENT.API_URL}/instituicoes`,
   PERIODOS_LETIVOS: `${ENVIRONMENT.API_URL}/periodosletivos`,
@@ -48,6 +49,8 @@ export const API_URLS = {
   RELATORIO_POR_CURSO: `${ENVIRONMENT.API_URL}/Questionario/relatorio-por-curso`,
   RELATORIO_POR_TURNO: `${ENVIRONMENT.API_URL}/Questionario/relatorio-por-turno`,
   RELATORIO_POR_CAMPUS: `${ENVIRONMENT.API_URL}/Questionario/relatorio-por-campus`,
+  RELATORIO_ACOMPANHAMENTO: `${ENVIRONMENT.API_URL}/Questionario/relatorio-acompanhamento`,
+  RELATORIO_ACOMPANHAMENTO_EXCEL: `${ENVIRONMENT.API_URL}/Questionario/relatorio-acompanhamento/excel`,
 };
 
 /**

@@ -35,20 +35,25 @@ api.interceptors.response.use(
     console.error("📋 Dados do erro:", error.response?.data);
     
     if (error.response?.status === 401) {
-      console.log("🔒 Usuário não autorizado, removendo cookies e localStorage");
+      console.log("🔒 Usuário não autorizado (401), limpando dados de autenticação");
+      
+      // Limpar todos os dados de autenticação
       Cookies.remove('token');
       Cookies.remove('user');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       
-      // Só redirecionar para login se não estiver em uma página de questionário
+      // Verificar se já está na página de login para evitar loop
       const currentPath = window.location.pathname;
-      const isQuestionarioPage = currentPath.includes('/questionario/') || currentPath.includes('/responder/');
+      const isLoginPage = currentPath === '/login' || currentPath === '/login-totvs';
       
-      if (!isQuestionarioPage) {
-        window.location.href = '/login';
+      if (!isLoginPage) {
+        console.log("🔄 Redirecionando para página de login");
+        
+        // Usar replace para evitar voltar para a página anterior
+        window.location.replace('/login');
       } else {
-        console.log("🔒 Em página de questionário, não redirecionando para login");
+        console.log("🔒 Já está na página de login, não redirecionando");
       }
     }
     

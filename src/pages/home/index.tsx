@@ -1,8 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { MdFormatAlignJustify } from "react-icons/md";
+import { MdFormatAlignJustify, MdPeople, MdFormatShapes } from "react-icons/md";
 import { TbPencilQuestion } from "react-icons/tb";
-import { MdFormatShapes } from "react-icons/md";
-import { MdPeople } from "react-icons/md";
 import { Box, Button, Heading, HStack, Text, VStack, SimpleGrid } from "@chakra-ui/react";
 import { useColorModeValue } from "../../components/ui/color-mode";
 import { MainLayout } from "../../components/layout/main-layout.component";
@@ -217,6 +215,13 @@ export default function HomePage() {
               description="Visualize métricas e relatórios gerais"
               onClick={() => handleNavigate("/dashboard")}
               colorScheme="orange"
+            />
+            <CardButton
+              icon={<MdPeople size={24} />}
+              title="Acompanhamento"
+              description="Relatórios de acompanhamento de respondentes"
+              onClick={() => handleNavigate("/relatorios/acompanhamento")}
+              colorScheme="blue"
             />
           </SimpleGrid>
         </Box>

@@ -22,7 +22,7 @@ const ProfileRouter: React.FC<ProfileRouterProps> = ({ children }) => {
         switch (perfil) {
           case 'aluno':
           case 'participante':
-            navigate('/aluno/dashboard', { replace: true });
+            navigate('/participante/dashboard', { replace: true });
             break;
           case 'professor':
           case 'coordenacao':
