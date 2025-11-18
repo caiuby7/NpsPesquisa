@@ -43,6 +43,7 @@ import {
   Eye
 } from 'lucide-react';
 import MainLayout from '../../../components/layout/main-layout.component';
+import { ENVIRONMENT } from '../../../config/environment';
 
 interface Curso {
   id: number;
@@ -98,7 +99,7 @@ const TurmasPage: React.FC = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://apiavaliacao.catolicasc.org.br/api';
+  const API_BASE_URL = process.env.REACT_APP_API_URL || ENVIRONMENT.API_URL;
 
   useEffect(() => {
     fetchTurmas();

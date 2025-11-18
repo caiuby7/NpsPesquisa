@@ -51,6 +51,7 @@ import {
   Users
 } from 'lucide-react';
 import MainLayout from '../../../components/layout/main-layout.component';
+import { ENVIRONMENT } from '../../../config/environment';
 
 interface Aluno {
   alunoId: number;
@@ -225,7 +226,7 @@ const AlunosPage: React.FC = () => {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importLoading, setImportLoading] = useState(false);
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://apiavaliacao.catolicasc.org.br/api';
+  const API_BASE_URL = process.env.REACT_APP_API_URL || ENVIRONMENT.API_URL;
   const toast = useToast();
 
   useEffect(() => {

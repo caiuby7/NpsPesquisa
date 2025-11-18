@@ -26,7 +26,10 @@ import {
   FiChevronDown,
   FiChevronRight,
   FiMenu,
-  FiX
+  FiX,
+  FiLink,
+  FiPieChart,
+  FiTable
 } from 'react-icons/fi';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -282,6 +285,26 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                 Listar Questões
               </NavItem>
               <NavItem 
+                icon={FiLink} 
+                href="/questoes-vinculos"
+                isActive={isActiveRoute('/questoes-vinculos')}
+                onClick={() => navigate('/questoes-vinculos')}
+                badge="VINC"
+                badgeColor="cyan"
+              >
+                Vincular Questões
+              </NavItem>
+              <NavItem
+                icon={FiBarChart2}
+                href="/questoes-vinculos/lista"
+                isActive={isActiveRoute('/questoes-vinculos/lista')}
+                onClick={() => navigate('/questoes-vinculos/lista')}
+                badge="VINC"
+                badgeColor="blue"
+              >
+                Listar Vínculos
+              </NavItem>
+              <NavItem 
                 icon={FiTarget} 
                 href="/test-conditional-questions"
                 isActive={isActiveRoute('/test-conditional-questions')}
@@ -314,6 +337,66 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                 badgeColor="blue"
               >
                 Acompanhamento
+              </NavItem>
+              <NavItem 
+                icon={FiPieChart} 
+                href="/relatorios/avaliacao/graficos"
+                isActive={isActiveRoute('/relatorios/avaliacao/graficos')}
+                onClick={() => navigate('/relatorios/avaliacao/graficos')}
+                badge="VIS"
+                badgeColor="green"
+              >
+                Avaliação (Gráficos)
+              </NavItem>
+              <NavItem 
+                icon={FiTable} 
+                href="/relatorios/avaliacao/tabelas"
+                isActive={isActiveRoute('/relatorios/avaliacao/tabelas') && !isActiveRoute('/relatorios/avaliacao/tabelas/por-curso') && !isActiveRoute('/relatorios/avaliacao/tabelas/por-curso-turno') && !isActiveRoute('/relatorios/avaliacao/tabelas/por-turma') && !isActiveRoute('/relatorios/avaliacao/tabelas/por-disciplina')}
+                onClick={() => navigate('/relatorios/avaliacao/tabelas')}
+                badge="TAB"
+                badgeColor="purple"
+              >
+                Avaliação (Tabela)
+              </NavItem>
+              <NavItem 
+                icon={FiTable} 
+                href="/relatorios/avaliacao/tabelas/por-curso"
+                isActive={isActiveRoute('/relatorios/avaliacao/tabelas/por-curso')}
+                onClick={() => navigate('/relatorios/avaliacao/tabelas/por-curso')}
+                badge="CURSO"
+                badgeColor="purple"
+              >
+                Por Curso
+              </NavItem>
+              <NavItem 
+                icon={FiTable} 
+                href="/relatorios/avaliacao/tabelas/por-curso-turno"
+                isActive={isActiveRoute('/relatorios/avaliacao/tabelas/por-curso-turno')}
+                onClick={() => navigate('/relatorios/avaliacao/tabelas/por-curso-turno')}
+                badge="CUR-TUR"
+                badgeColor="purple"
+              >
+                Por Curso-Turno
+              </NavItem>
+              <NavItem 
+                icon={FiTable} 
+                href="/relatorios/avaliacao/tabelas/por-turma"
+                isActive={isActiveRoute('/relatorios/avaliacao/tabelas/por-turma')}
+                onClick={() => navigate('/relatorios/avaliacao/tabelas/por-turma')}
+                badge="TURMA"
+                badgeColor="purple"
+              >
+                Por Turma
+              </NavItem>
+              <NavItem 
+                icon={FiTable} 
+                href="/relatorios/avaliacao/tabelas/por-disciplina"
+                isActive={isActiveRoute('/relatorios/avaliacao/tabelas/por-disciplina')}
+                onClick={() => navigate('/relatorios/avaliacao/tabelas/por-disciplina')}
+                badge="DISC"
+                badgeColor="purple"
+              >
+                Por Disciplina
               </NavItem>
               <NavItem 
                 icon={FiFileText} 

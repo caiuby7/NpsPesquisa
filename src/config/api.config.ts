@@ -1,29 +1,35 @@
 import { ENVIRONMENT } from './environment';
 
-// Configuração da API
+// ========================================
+// CONFIGURAÇÃO DA API - CENTRALIZADA
+// ========================================
+// ⚠️  IMPORTANTE: Todas as configurações vêm do environment.ts
+
 export const API_CONFIG = {
-  // URL base da API - centralizada no arquivo environment.ts
-  BASE_URL: process.env.REACT_APP_API_URL || ENVIRONMENT.API_URL,
+  // URL base da API - ÚNICA FONTE DE VERDADE
+  BASE_URL: ENVIRONMENT.API_URL,
   
-  // Timeout das requisições (em milissegundos)
-  TIMEOUT: 120000, // 2 minutos para operações do TOTVS
+  // Timeout das requisições
+  TIMEOUT: ENVIRONMENT.API_TIMEOUT,
   
   // Configurações de retry
-  RETRY_ATTEMPTS: 3,
-  RETRY_DELAY: 1000,
+  RETRY_ATTEMPTS: ENVIRONMENT.API_RETRY_ATTEMPTS,
+  RETRY_DELAY: ENVIRONMENT.API_RETRY_DELAY,
 };
 
-// Configurações de ambiente
+// Re-exportar configurações do environment para compatibilidade
 export const ENV_CONFIG = {
-  IS_DEVELOPMENT: process.env.NODE_ENV === 'development',
-  IS_PRODUCTION: process.env.NODE_ENV === 'production',
-  API_URL: API_CONFIG.BASE_URL,
+  IS_DEVELOPMENT: ENVIRONMENT.IS_DEVELOPMENT,
+  IS_PRODUCTION: ENVIRONMENT.IS_PRODUCTION,
+  API_URL: ENVIRONMENT.API_URL,
+  DEBUG: ENVIRONMENT.DEBUG,
 };
 
-// Log da configuração atual
-console.log("🔧 Configuração da API:", {
-  BASE_URL: API_CONFIG.BASE_URL,
-  NODE_ENV: process.env.NODE_ENV,
-  REACT_APP_API_URL: process.env.REACT_APP_API_URL,
-  ENVIRONMENT: ENVIRONMENT
-});
+// Log apenas em desenvolvimento
+if (ENVIRONMENT.IS_DEVELOPMENT) {
+  console.log("🔧 API Config carregada:", {
+    BASE_URL: API_CONFIG.BASE_URL,
+    TIMEOUT: API_CONFIG.TIMEOUT,
+    ENVIRONMENT: ENVIRONMENT
+  });
+}

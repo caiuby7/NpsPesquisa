@@ -1,3 +1,5 @@
+import { API_URL } from '../../config/api-url';
+
 interface TotvsLoginResponse {
   token: string;
   nome: string;
@@ -6,7 +8,7 @@ interface TotvsLoginResponse {
 }
 
 export class TotvsLoginService {
-  private static readonly API_BASE = process.env.REACT_APP_API_URL || 'https://apiavaliacao.catolicasc.org.br/api';
+  private static readonly API_BASE = API_URL;
 
   static async login(context: string, key: string): Promise<TotvsLoginResponse> {
     console.log('TotvsLoginService - Fazendo requisição para:', `${this.API_BASE}/auth/login-totvs`);

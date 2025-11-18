@@ -19,6 +19,7 @@ import {
   SimpleGrid,
   Stack,
   ButtonGroup,
+  Divider,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -533,6 +534,80 @@ const AvaliacoesPage: React.FC = () => {
                         >
                           📊 Acompanhar
                         </Button>
+                        <Divider />
+                        <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={1}>
+                          Relatórios
+                        </Text>
+                        <Button 
+                          colorScheme="purple" 
+                          variant="ghost" 
+                          size="sm"
+                          leftIcon={<BarChart3 size={16} />}
+                          onClick={() => navigate(`/relatorios/avaliacao/graficos?questionarioId=${avaliacao.id}`)}
+                          w="full"
+                        >
+                          Gráficos
+                        </Button>
+                        <Button 
+                          colorScheme="purple" 
+                          variant="ghost" 
+                          size="sm"
+                          leftIcon={<BarChart3 size={16} />}
+                          onClick={() => navigate(`/relatorios/avaliacao/tabelas?questionarioId=${avaliacao.id}`)}
+                          w="full"
+                        >
+                          Tabelas (Geral)
+                        </Button>
+                        {/* Por curso e por turno: todos */}
+                        <Button 
+                          colorScheme="purple" 
+                          variant="ghost" 
+                          size="sm"
+                          leftIcon={<BarChart3 size={16} />}
+                          onClick={() => navigate(`/relatorios/avaliacao/tabelas/por-curso?questionarioId=${avaliacao.id}`)}
+                          w="full"
+                        >
+                          Por Curso
+                        </Button>
+                        <Button 
+                          colorScheme="purple" 
+                          variant="ghost" 
+                          size="sm"
+                          leftIcon={<BarChart3 size={16} />}
+                          onClick={() => navigate(`/relatorios/avaliacao/tabelas/por-curso-turno?questionarioId=${avaliacao.id}`)}
+                          w="full"
+                        >
+                          Por Curso-Turno
+                        </Button>
+                        {/* Por turma e por disciplina: somente PAC, TCC, PEX, Disciplina e Estágio */}
+                        {(avaliacao.tipoItemAvaliado === 'Disciplina' ||
+                          avaliacao.tipoItemAvaliado === 'TCC' ||
+                          avaliacao.tipoItemAvaliado === 'ProjetoExtensionista' ||
+                          avaliacao.tipoItemAvaliado === 'PACExtensionista' ||
+                          avaliacao.tipoItemAvaliado === 'Estagio') && (
+                          <>
+                            <Button 
+                              colorScheme="purple" 
+                              variant="ghost" 
+                              size="sm"
+                              leftIcon={<BarChart3 size={16} />}
+                              onClick={() => navigate(`/relatorios/avaliacao/tabelas/por-turma?questionarioId=${avaliacao.id}`)}
+                              w="full"
+                            >
+                              Por Turma
+                            </Button>
+                            <Button 
+                              colorScheme="purple" 
+                              variant="ghost" 
+                              size="sm"
+                              leftIcon={<BarChart3 size={16} />}
+                              onClick={() => navigate(`/relatorios/avaliacao/tabelas/por-disciplina?questionarioId=${avaliacao.id}`)}
+                              w="full"
+                            >
+                              Por Disciplina
+                            </Button>
+                          </>
+                        )}
                       </VStack>
                     </VStack>
                   </HStack>

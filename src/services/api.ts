@@ -1,10 +1,10 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
-import { API_CONFIG } from '../config/api.config';
+import { API_URL } from '../config/api-url';
 
 export const api = axios.create({
-  baseURL: API_CONFIG.BASE_URL,
-  timeout: API_CONFIG.TIMEOUT,
+  baseURL: API_URL,
+  timeout: 120000, // 2 minutos
 });
 
 api.interceptors.request.use((config) => {

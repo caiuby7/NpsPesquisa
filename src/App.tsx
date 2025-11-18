@@ -22,6 +22,15 @@ const ExcluirFormularioPage = lazy(() => import("./pages/excluir-formulario/[id]
 const CreateQuestionPage = lazy(() => import("./pages/create-question"));
 const CreateQuestionWithIdPage = lazy(() => import("./pages/create-question/[id]"));
 const QuestionsPage = lazy(() => import("./pages/questions"));
+const QuestoesVinculosPage = lazy(() => import("./pages/questoes-vinculos"));
+const QuestoesVinculosListaPage = lazy(() => import("./pages/questoes-vinculos/lista"));
+const RelatoriosAvaliacaoGraficosPage = lazy(() => import("./pages/relatorios/avaliacao"));
+const RelatoriosAvaliacaoTabelaPage = lazy(() => import("./pages/relatorios/avaliacao/tabelas"));
+const RelatoriosAvaliacaoTabelaPorCursoPage = lazy(() => import("./pages/relatorios/avaliacao/tabelas-por-curso"));
+const RelatoriosAvaliacaoTabelaPorCursoTurnoPage = lazy(() => import("./pages/relatorios/avaliacao/tabelas-por-curso-turno"));
+const RelatoriosAvaliacaoTabelaPorTurmaPage = lazy(() => import("./pages/relatorios/avaliacao/tabelas-por-turma"));
+const RelatoriosAvaliacaoTabelaPorDisciplinaPage = lazy(() => import("./pages/relatorios/avaliacao/tabelas-por-disciplina"));
+const QuestoesVinculosListaDetalhePage = lazy(() => import("./pages/questoes-vinculos/lista-detalhe"));
 const LoginPage = lazy(() => import("./pages/login"));
 const LoginTotvsPage = lazy(() => import("./pages/login-totvs"));
 const HomePage = lazy(() => import("./pages/home"));
@@ -134,6 +143,9 @@ function App() {
                   <Route path="/editar-formulario/:id" element={<ProtectedRoute><EditarFormularioPage /></ProtectedRoute>} />
                   <Route path="/excluir-formulario/:id" element={<ProtectedRoute><ExcluirFormularioPage /></ProtectedRoute>} />
                   <Route path="/questions" element={<ProtectedRoute><QuestionsPage /></ProtectedRoute>} />
+                  <Route path="/questoes-vinculos" element={<ProtectedRoute><QuestoesVinculosPage /></ProtectedRoute>} />
+                  <Route path="/questoes-vinculos/lista" element={<ProtectedRoute><QuestoesVinculosListaPage /></ProtectedRoute>} />
+                  <Route path="/questoes-vinculos/lista/:id" element={<ProtectedRoute><QuestoesVinculosListaDetalhePage /></ProtectedRoute>} />
                   <Route path="/create-question" element={<ProtectedRoute><CreateQuestionPage /></ProtectedRoute>} />
                   <Route path="/create-question/:id" element={<ProtectedRoute><CreateQuestionWithIdPage /></ProtectedRoute>} />
                   <Route path="/participantes" element={<ProtectedRoute><ParticipantesPage /></ProtectedRoute>} />
@@ -185,6 +197,12 @@ function App() {
                   {/* Relatórios */}
                   <Route path="/relatorios" element={<ProtectedRoute><RelatoriosPage /></ProtectedRoute>} />
                   <Route path="/relatorios/acompanhamento" element={<ProtectedRoute><RelatoriosAcompanhamentoPage /></ProtectedRoute>} />
+                  <Route path="/relatorios/avaliacao/graficos" element={<ProtectedRoute><RelatoriosAvaliacaoGraficosPage /></ProtectedRoute>} />
+                  <Route path="/relatorios/avaliacao/tabelas" element={<ProtectedRoute><RelatoriosAvaliacaoTabelaPage /></ProtectedRoute>} />
+                  <Route path="/relatorios/avaliacao/tabelas/por-curso" element={<ProtectedRoute><RelatoriosAvaliacaoTabelaPorCursoPage /></ProtectedRoute>} />
+                  <Route path="/relatorios/avaliacao/tabelas/por-curso-turno" element={<ProtectedRoute><RelatoriosAvaliacaoTabelaPorCursoTurnoPage /></ProtectedRoute>} />
+                  <Route path="/relatorios/avaliacao/tabelas/por-turma" element={<ProtectedRoute><RelatoriosAvaliacaoTabelaPorTurmaPage /></ProtectedRoute>} />
+                  <Route path="/relatorios/avaliacao/tabelas/por-disciplina" element={<ProtectedRoute><RelatoriosAvaliacaoTabelaPorDisciplinaPage /></ProtectedRoute>} />
                 </Routes>
               </Suspense>
             </Router>

@@ -51,6 +51,7 @@ import {
   Building
 } from 'lucide-react';
 import MainLayout from '../../../components/layout/main-layout.component';
+import { ENVIRONMENT } from '../../../config/environment';
 
 interface Instituicao {
   id: number;
@@ -92,7 +93,7 @@ const DisciplinasPage: React.FC = () => {
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://apiavaliacao.catolicasc.org.br/api';
+  const API_BASE_URL = process.env.REACT_APP_API_URL || ENVIRONMENT.API_URL;
   const toast = useToast();
 
   useEffect(() => {

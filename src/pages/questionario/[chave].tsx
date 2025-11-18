@@ -54,6 +54,7 @@ export default function QuestionarioPorChavePage() {
       if (!chave) return;
       try {
         const response = await api.get(`/Questionario/por-chave/${chave}`);
+        console.log('📊 Dados recebidos do backend:', response.data);
         setData(response.data);
       } catch (error: any) {
         console.error('Erro ao carregar questionário:', error);
@@ -213,17 +214,28 @@ export default function QuestionarioPorChavePage() {
             </Text>
           </Box>
 
-          {/* Seção de Informações - Mostrar apenas para Disciplina, Turma, Estágio, TCC, Projeto Extensionista e PAC Extensionista */}
-          {(data.tipoItemAvaliado === "Disciplina" || data.tipoItemAvaliado === "Turma" || 
-            data.tipoItemAvaliado === "Estagio" || data.tipoItemAvaliado === "TCC" || 
-            data.tipoItemAvaliado === "ProjetoExtensionista" || data.tipoItemAvaliado === "PACExtensionista") && (
+          {/* Seção de Informações - Mostrar para Disciplina, Curso, Turma, Estágio, TCC, Projeto Extensionista e PAC Extensionista */}
+          {(() => {
+            const shouldShow = (data.tipoItemAvaliado === "Disciplina" || data.tipoItemAvaliado === "Curso" || data.tipoItemAvaliado === "Turma" || 
+              data.tipoItemAvaliado === "Estagio" || data.tipoItemAvaliado === "TCC" || 
+              data.tipoItemAvaliado === "ProjetoExtensionista" || data.tipoItemAvaliado === "PACExtensionista");
+            if (data.tipoItemAvaliado === "Curso") {
+              console.log('🎓 Debug Card Info - Curso:', {
+                shouldShow,
+                itensAvaliados: data.itensAvaliados,
+                itensAvaliadosLength: data.itensAvaliados?.length
+              });
+            }
+            return shouldShow;
+          })() && (
             <Box bg="blue.50" p={6} borderRadius="lg" border="1px solid" borderColor="blue.200">
               <HStack spacing={3} mb={3}>
                 <Box w={6} h={6} bg="green.500" borderRadius="md" display="flex" alignItems="center" justifyContent="center">
                   <Text color="white" fontSize="sm" fontWeight="bold">📋</Text>
                 </Box>
                 <Text fontSize="lg" fontWeight="bold" color="blue.800">
-                  {data.tipoItemAvaliado === "Disciplina" ? "Suas Disciplinas" : 
+                  {data.tipoItemAvaliado === "Disciplina" ? "Suas Disciplinas" :
+                   data.tipoItemAvaliado === "Curso" ? "Seus Cursos" :
                    data.tipoItemAvaliado === "Turma" ? "Suas Turmas" :
                    data.tipoItemAvaliado === "Estagio" ? "Seus Estágios" :
                    data.tipoItemAvaliado === "TCC" ? "Seus TCCs" :
@@ -242,6 +254,13 @@ export default function QuestionarioPorChavePage() {
                       <>
                         Você {verbo} <Text as="span" fontWeight="bold" bg="blue.100" px={2} py={1} borderRadius="md">{count} {count === 1 ? 'disciplina' : 'disciplinas'}</Text>. 
                         Para cada disciplina, avalie os aspectos listados abaixo.
+                      </>
+                    );
+                  } else if (data.tipoItemAvaliado === "Curso") {
+                    return (
+                      <>
+                        Você está vinculado a <Text as="span" fontWeight="bold" bg="blue.100" px={2} py={1} borderRadius="md">{count} {count === 1 ? 'curso' : 'cursos'}</Text>. 
+                        Para cada curso, avalie os aspectos listados abaixo.
                       </>
                     );
                   } else if (data.tipoItemAvaliado === "Turma") {
@@ -308,9 +327,9 @@ export default function QuestionarioPorChavePage() {
                 <Text color="white" fontSize="sm" fontWeight="bold">📊</Text>
               </Box>
             <Text fontSize="lg" fontWeight="bold" color="blue.800">
-              {data.tipoItemAvaliado === "Disciplina" ? "Avaliação das Disciplinas" : 
+              {data.tipoItemAvaliado === "Disciplina" ? "Avaliação das Disciplinas" :
+               data.tipoItemAvaliado === "Curso" ? "Avaliação dos Cursos" :
                data.tipoItemAvaliado === "Turma" ? "Avaliação das Turmas" :
-               data.tipoItemAvaliado === "Curso" ? "Avaliação do Curso" : 
                data.tipoItemAvaliado === "Professor" ? "Avaliação do Professor" :
                data.tipoItemAvaliado === "Coordenador" ? "Avaliação do Coordenador" :
                data.tipoItemAvaliado === "Estagio" ? "Avaliação dos Estágios" :
@@ -324,6 +343,8 @@ export default function QuestionarioPorChavePage() {
             <Text mb={6} color="gray.600">
               {data.tipoItemAvaliado === "Disciplina" ? 
                 "Para cada disciplina, indique o grau de concordância com as seguintes afirmações:" :
+               data.tipoItemAvaliado === "Curso" ?
+                "Para cada curso, indique o grau de concordância com as seguintes afirmações:" :
                data.tipoItemAvaliado === "Turma" ?
                 "Para cada turma, indique o grau de concordância com as seguintes afirmações:" :
                data.tipoItemAvaliado === "Estagio" ?
@@ -335,24 +356,30 @@ export default function QuestionarioPorChavePage() {
                 "Indique o grau de concordância com as seguintes afirmações:"}
             </Text>
 
-            {/* Tarja azul com nome do item - mostrar apenas quando não for Disciplina */}
-            {(data.tipoItemAvaliado === "Curso" || data.tipoItemAvaliado === "Infraestrutura") && data.itensAvaliados && data.itensAvaliados.length > 0 && (
-              <Box bg="blue.600" p={4} borderRadius="lg" mb={6}>
-                <HStack spacing={3}>
-                  <Box w={6} h={6} bg="white" borderRadius="sm" display="flex" alignItems="center" justifyContent="center">
-                    <Text color="blue.600" fontSize="sm" fontWeight="bold">📚</Text>
-                  </Box>
-                  <VStack spacing={1} align="start">
-                    <Text fontWeight="bold" fontSize="lg" color="white">
-                      {data.itensAvaliados[0].nomeItemEspecifico}
-                    </Text>
-                    {data.itensAvaliados[0].descricaoItem && (
-                      <Text fontSize="sm" color="blue.100" fontWeight="normal">
-                        {data.itensAvaliados[0].descricaoItem}
-                      </Text>
-                    )}
-                  </VStack>
-                </HStack>
+            {/* Tarja azul com nome do item - mostrar apenas para Infraestrutura */}
+            {data.tipoItemAvaliado === "Infraestrutura" && data.itensAvaliados && data.itensAvaliados.length > 0 && (
+              <Box mb={6}>
+                <VStack spacing={3} align="stretch">
+                  {data.itensAvaliados.map((item, index) => (
+                    <Box key={item.id || index} bg="blue.600" p={4} borderRadius="lg">
+                      <HStack spacing={3}>
+                        <Box w={6} h={6} bg="white" borderRadius="sm" display="flex" alignItems="center" justifyContent="center">
+                          <Text color="blue.600" fontSize="sm" fontWeight="bold">📚</Text>
+                        </Box>
+                        <VStack spacing={1} align="start">
+                          <Text fontWeight="bold" fontSize="lg" color="white">
+                            {item.nomeItemEspecifico}
+                          </Text>
+                          {item.descricaoItem && (
+                            <Text fontSize="sm" color="blue.100" fontWeight="normal">
+                              {item.descricaoItem}
+                            </Text>
+                          )}
+                        </VStack>
+                      </HStack>
+                    </Box>
+                  ))}
+                </VStack>
               </Box>
             )}
 

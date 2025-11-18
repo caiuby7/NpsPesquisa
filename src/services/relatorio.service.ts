@@ -84,6 +84,8 @@ export interface DadosAcompanhamento {
   turno: string;
   codTurma: string;
   disciplina: string;
+  tipoDisciplina?: string;
+  itemAvaliado?: string;
   qtdTotal: number;
   qtdResp: number;
   taxaResposta: number;
@@ -93,22 +95,52 @@ export interface TotaisAcompanhamento {
   totalGeral: number;
   totalRespostas: number;
   taxaGeral: number;
+  totalItensAvaliados?: number;
+  tipoItemAvaliado?: string;
+  nomeItemAvaliado?: string;
+}
+
+export interface ResumoAvaliacao {
+  questionarioId: number;
+  nomeAvaliacao: string;
+  descricaoAvaliacao: string;
+  dataInicio: string;
+  dataFim: string;
+  ativo: boolean;
+  totalParticipantes: number;
+  totalRespondidos: number;
+  totalNaoRespondidos: number;
+  participantesAlunos: number;
+  respondidosAlunos: number;
+  participantesProfessores: number;
+  respondidosProfessores: number;
+  participantesCoordenadores: number;
+  respondidosCoordenadores: number;
+  percentualRespondidos: number;
+  instituicaoNome: string;
+  nivelEnsinoNome: string;
+  statusAvaliacao: string;
+  primeiraResposta?: string;
+  ultimaResposta?: string;
 }
 
 export interface RelatorioAcompanhamento {
   tipo: string;
   periodoLetivo: string;
   instituicao: string;
+  nomeAvaliacao: string;
+  descricaoAvaliacao: string;
+  statusAvaliacao: string;
+  tipoItemAvaliado?: string;
+  dataInicio?: string;
+  dataFim?: string;
   dados: DadosAcompanhamento[];
   totais: TotaisAcompanhamento;
+  resumo?: ResumoAvaliacao;
 }
 
 export interface AcompanhamentoFiltros {
-  tipo: string;
   avaliacao?: number;
-  periodoLetivo: number;
-  instituicao: number;
-  curso?: number;
 }
 
 class RelatorioService {
@@ -373,22 +405,7 @@ class RelatorioService {
         console.log('✅ Dados reais recebidos do backend (endpoint específico):', response.data);
         return response.data;
       } catch (specificError) {
-        console.log('⚠️ Endpoint específico não disponível, tentando endpoint alternativo...');
-        
-        // Tentar usar o endpoint de relatório por curso como alternativa
-        if (filtros.curso) {
-          const alternativeResponse = await api.post(API_URLS.RELATORIO_POR_CURSO, {
-            questionarioId: filtros.avaliacao,
-            cursoId: filtros.curso,
-            periodoLetivoId: filtros.periodoLetivo,
-            instituicaoId: filtros.instituicao
-          });
-          
-          console.log('✅ Dados recebidos do endpoint alternativo:', alternativeResponse.data);
-          // Converter dados do endpoint alternativo para o formato esperado
-          return this.converterDadosAlternativos(alternativeResponse.data, filtros);
-        }
-        
+        console.log('⚠️ Endpoint específico não disponível.');
         throw specificError;
       }
     } catch (error) {
@@ -431,6 +448,7 @@ class RelatorioService {
           turno: item.turno || 'N/A',
           codTurma: item.codigoTurma || item.codTurma || 'N/A',
           disciplina: item.disciplina || item.nomeDisciplina || 'N/A',
+          itemAvaliado: item.itemAvaliado || 'Disciplina',
           qtdTotal: item.totalParticipantes || item.qtdTotal || 0,
           qtdResp: item.totalRespostas || item.qtdResp || 0,
           taxaResposta: item.taxaResposta || ((item.totalRespostas || 0) / (item.totalParticipantes || 1)) * 100
@@ -444,9 +462,13 @@ class RelatorioService {
     const taxaGeral = totalGeral > 0 ? (totalRespostas / totalGeral) * 100 : 0;
     
     return {
-      tipo: filtros.tipo,
+      tipo: 'Relatório',
       periodoLetivo: 'Dados do Backend',
       instituicao: 'Dados do Backend',
+      nomeAvaliacao: 'Avaliação do Backend',
+      descricaoAvaliacao: 'Dados convertidos do backend',
+      statusAvaliacao: 'Em Andamento',
+      tipoItemAvaliado: 'Disciplina', // Default para dados do backend
       dados: dadosAcompanhamento,
       totais: {
         totalGeral,
@@ -468,6 +490,7 @@ class RelatorioService {
         turno: 'Noturno',
         codTurma: 'T1ADM01N',
         disciplina: 'EMPREENDEDORISMO ESTRATÉGICO E CRIATIVO',
+        itemAvaliado: 'Disciplina',
         qtdTotal: 44,
         qtdResp: 21,
         taxaResposta: 47.7
@@ -478,6 +501,7 @@ class RelatorioService {
         turno: 'Noturno',
         codTurma: 'T1ADM01N',
         disciplina: 'ESTUDOS QUANTITATIVOS APLICADOS A NEGÓCIOS',
+        itemAvaliado: 'Disciplina',
         qtdTotal: 29,
         qtdResp: 17,
         taxaResposta: 58.6
@@ -488,6 +512,7 @@ class RelatorioService {
         turno: 'Noturno',
         codTurma: 'T1ADM01N',
         disciplina: 'FUNDAMENTOS DE MARKETING',
+        itemAvaliado: 'Disciplina',
         qtdTotal: 48,
         qtdResp: 23,
         taxaResposta: 47.9
@@ -498,6 +523,7 @@ class RelatorioService {
         turno: 'Noturno',
         codTurma: 'T1ADM03N',
         disciplina: 'FINANÇAS CORPORATIVAS',
+        itemAvaliado: 'Disciplina',
         qtdTotal: 48,
         qtdResp: 24,
         taxaResposta: 50.0
@@ -508,6 +534,7 @@ class RelatorioService {
         turno: 'Noturno',
         codTurma: 'T1ADM03N',
         disciplina: 'LIDERANÇA E CULTURA ORGANIZACIONAL',
+        itemAvaliado: 'Disciplina',
         qtdTotal: 30,
         qtdResp: 20,
         taxaResposta: 66.7
@@ -518,6 +545,7 @@ class RelatorioService {
         turno: 'Noturno',
         codTurma: 'T1ADM05N',
         disciplina: 'LOGÍSTICA E GESTÃO DA CADEIA DE SUPRIMENTOS',
+        itemAvaliado: 'Disciplina',
         qtdTotal: 58,
         qtdResp: 37,
         taxaResposta: 63.8
@@ -528,6 +556,7 @@ class RelatorioService {
         turno: 'Noturno',
         codTurma: 'T1ADM05N',
         disciplina: 'PLANEJAMENTO ESTRATÉGICO',
+        itemAvaliado: 'Disciplina',
         qtdTotal: 31,
         qtdResp: 14,
         taxaResposta: 45.2
@@ -538,6 +567,7 @@ class RelatorioService {
         turno: 'Noturno',
         codTurma: 'T1ADM07N',
         disciplina: 'SISTEMAS FINANCEIROS E MERCADO DE CAPITAIS',
+        itemAvaliado: 'Disciplina',
         qtdTotal: 25,
         qtdResp: 9,
         taxaResposta: 36.0
@@ -548,6 +578,7 @@ class RelatorioService {
         turno: 'Noturno',
         codTurma: 'T1ADM07N',
         disciplina: 'CONTROLADORIA E ORÇAMENTO EMPRESARIAL',
+        itemAvaliado: 'Disciplina',
         qtdTotal: 18,
         qtdResp: 5,
         taxaResposta: 27.8
@@ -558,6 +589,7 @@ class RelatorioService {
         turno: 'Noturno',
         codTurma: 'T1ADM07N',
         disciplina: 'PESQUISA DE MERCADO',
+        itemAvaliado: 'Disciplina',
         qtdTotal: 22,
         qtdResp: 6,
         taxaResposta: 27.3
@@ -569,6 +601,7 @@ class RelatorioService {
         turno: 'Noturno',
         codTurma: 'T1CCON01N',
         disciplina: 'EMPREENDEDORISMO ESTRATÉGICO E CRIATIVO',
+        itemAvaliado: 'Disciplina',
         qtdTotal: 36,
         qtdResp: 29,
         taxaResposta: 80.6
@@ -579,6 +612,7 @@ class RelatorioService {
         turno: 'Noturno',
         codTurma: 'T1CCON01N',
         disciplina: 'ESTUDOS QUANTITATIVOS APLICADOS A NEGÓCIOS',
+        itemAvaliado: 'Disciplina',
         qtdTotal: 24,
         qtdResp: 23,
         taxaResposta: 95.8
@@ -589,6 +623,7 @@ class RelatorioService {
         turno: 'Noturno',
         codTurma: 'T1CCON01N',
         disciplina: 'FUNDAMENTOS DA CONTABILIDADE E DE SUA PROFISSÃO',
+        itemAvaliado: 'Disciplina',
         qtdTotal: 26,
         qtdResp: 24,
         taxaResposta: 92.3
@@ -599,6 +634,7 @@ class RelatorioService {
         turno: 'Noturno',
         codTurma: 'T1CCON03N',
         disciplina: 'DEMONSTRAÇÕES CONTÁBEIS E SUAS ESTRUTURAS',
+        itemAvaliado: 'Disciplina',
         qtdTotal: 39,
         qtdResp: 27,
         taxaResposta: 69.2
@@ -609,6 +645,7 @@ class RelatorioService {
         turno: 'Noturno',
         codTurma: 'T1CCON03N',
         disciplina: 'FINANÇAS CORPORATIVAS',
+        itemAvaliado: 'Disciplina',
         qtdTotal: 43,
         qtdResp: 27,
         taxaResposta: 62.8
@@ -619,6 +656,7 @@ class RelatorioService {
         turno: 'Noturno',
         codTurma: 'T1CCON03N',
         disciplina: 'TEORIA DA CONTABILIDADE E ÉTICA PROFISSIONAL',
+        itemAvaliado: 'Disciplina',
         qtdTotal: 18,
         qtdResp: 15,
         taxaResposta: 83.3
@@ -629,6 +667,7 @@ class RelatorioService {
         turno: 'Noturno',
         codTurma: 'T1CCON05N',
         disciplina: 'CONTABILIDADE AVANÇADA',
+        itemAvaliado: 'Disciplina',
         qtdTotal: 18,
         qtdResp: 13,
         taxaResposta: 72.2
@@ -639,6 +678,7 @@ class RelatorioService {
         turno: 'Noturno',
         codTurma: 'T1CCON05N',
         disciplina: 'SISTEMAS FINANCEIROS E MERCADO DE CAPITAIS',
+        itemAvaliado: 'Disciplina',
         qtdTotal: 15,
         qtdResp: 11,
         taxaResposta: 73.3
@@ -649,6 +689,7 @@ class RelatorioService {
         turno: 'Noturno',
         codTurma: 'T1CCON07N',
         disciplina: 'AUDITORIA CONTÁBIL',
+        itemAvaliado: 'Disciplina',
         qtdTotal: 18,
         qtdResp: 18,
         taxaResposta: 100.0
@@ -659,6 +700,7 @@ class RelatorioService {
         turno: 'Noturno',
         codTurma: 'T1CCON07N',
         disciplina: 'CONTROLADORIA E ORÇAMENTO EMPRESARIAL',
+        itemAvaliado: 'Disciplina',
         qtdTotal: 16,
         qtdResp: 13,
         taxaResposta: 81.3
@@ -669,6 +711,7 @@ class RelatorioService {
         turno: 'Noturno',
         codTurma: 'T1CCON07N',
         disciplina: 'PERÍCIA, MEDIAÇÃO E ARBITRAGEM',
+        itemAvaliado: 'Disciplina',
         qtdTotal: 24,
         qtdResp: 22,
         taxaResposta: 91.7
@@ -678,10 +721,7 @@ class RelatorioService {
     // Filtrar dados se necessário
     let dadosFiltrados = dados;
     
-    if (filtros.curso) {
-      // Aqui você poderia filtrar por curso específico se necessário
-      // Por enquanto, mantemos todos os dados
-    }
+    // Sem filtros adicionais
 
     // Calcular totais
     const totalGeral = dadosFiltrados.reduce((sum, item) => sum + item.qtdTotal, 0);
@@ -689,9 +729,13 @@ class RelatorioService {
     const taxaGeral = totalGeral > 0 ? (totalRespostas / totalGeral) * 100 : 0;
 
     return {
-      tipo: filtros.tipo,
+      tipo: 'Relatório',
       periodoLetivo: '2024/1',
       instituicao: 'Universidade Católica de Santa Catarina',
+      nomeAvaliacao: 'Avaliação do Professor na Ótica do Acadêmico_2024_1',
+      descricaoAvaliacao: 'Esta pesquisa tem por objetivo mapear demandas institucionais decorrentes das ações desenvolvidas pela IES. Visando a melhoria contínua no que se refere a qualidade do ensino, pesquisa e extensão, aos serviços oferecidos e a infraestrutura disponibilizada.',
+      statusAvaliacao: 'Em Andamento',
+      tipoItemAvaliado: 'Disciplina', // Default para dados mockados
       dados: dadosFiltrados,
       totais: {
         totalGeral,

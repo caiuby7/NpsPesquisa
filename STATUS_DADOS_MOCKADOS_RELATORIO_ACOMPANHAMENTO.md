@@ -183,3 +183,5 @@ Os dados que você está vendo são mockados porque:
 **Status:** ✅ Dados Mockados Funcionando  
 **Próximo:** 🔧 Implementar Backend para Dados Reais
 
+
+

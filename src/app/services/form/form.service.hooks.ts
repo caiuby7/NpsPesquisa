@@ -3,15 +3,15 @@ import { FormGetParams, FormPostParams } from "./form.services.types";
 import { FormServices } from "./form.services";
 
 const STALE_TIME = 10 * 1000;
-const GET_FORM_QUERY_KEY = "";
 const POST_FORM_KEY = "post-form-key";
 
 export const useGetForm = (param: FormGetParams) => {
   return useQuery({
-    queryKey: [GET_FORM_QUERY_KEY],
+    queryKey: ["form", param.id],
     queryFn: async () => FormServices.get(param),
     staleTime: STALE_TIME,
     refetchOnWindowFocus: false,
+    enabled: Boolean(param?.id),
   });
 };
 

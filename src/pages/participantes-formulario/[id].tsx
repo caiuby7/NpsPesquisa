@@ -9,6 +9,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import Cookies from 'js-cookie';
+import { API_URL } from "../../config/api-url";
 
 interface Participante {
   id: number;
@@ -343,7 +344,7 @@ const ParticipantesFormularioPage = () => {
                   questionarioId: id,
                   alunosDisponiveis: alunosDisponiveis.length,
                   selecionados: selecionados,
-                  apiBaseUrl: process.env.REACT_APP_API_URL || 'https://apiavaliacao.catolicasc.org.br/api'
+                  apiBaseUrl: API_URL
                 });
                 
                 toast({

@@ -118,6 +118,22 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
     questoes: questoes.map((q: QuestionResponse) => ({ id: q.id, texto: q.texto, tipo: q.tipo, isCondicional: q.isCondicional }))
   });
   
+  // Debug específico para Curso
+  if (tipoItemAvaliado === "Curso") {
+    console.log('🎓 Debug - Item Avaliado: CURSO:', {
+      tipoItemAvaliado,
+      itensAvaliados,
+      itensAvaliadosLength: itensAvaliados?.length,
+      shouldUseGroupedStructure,
+      itensAvaliadosData: itensAvaliados?.map(i => ({ 
+        id: i.id, 
+        nome: i.nomeItemEspecifico,
+        cursoId: i.cursoId,
+        itemAvaliadoId: i.itemAvaliadoId
+      }))
+    });
+  }
+  
   // Debug específico para questão 44
   const questao44 = questoes.find((q: QuestionResponse) => q.id === 44);
   if (questao44) {
@@ -325,7 +341,7 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
     });
 
     // Verificar se todas as questões obrigatórias foram respondidas
-    const isQuestaoAgrupada = tipoItemAvaliado !== "Curso" && tipoItemAvaliado !== "Estrutura" && tipoItemAvaliado !== "Infraestrutura" && shouldUseGroupedStructure && itensAvaliados;
+    const isQuestaoAgrupada = tipoItemAvaliado !== "Estrutura" && tipoItemAvaliado !== "Infraestrutura" && shouldUseGroupedStructure && itensAvaliados;
     
     return todasQuestoes.every((q: QuestionResponse) => {
       if (!q.obrigatorio) return true;
@@ -566,6 +582,11 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
       );
       
       if (isQuestaoCondicional) {
+        // Para questões condicionais, verificar se a questão está visível primeiro
+        if (!shouldShowQuestion(q.id)) {
+          return false; // Não incluir questões condicionais não visíveis nas não respondidas
+        }
+        
         // Para questões condicionais, verificar se a opção que as ativa está selecionada
         const questaoPrincipal = questoes.find((questaoPrincipal: QuestionResponse) => 
           questaoPrincipal.opcoes?.some((opcao: any) => 
@@ -842,6 +863,12 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
       );
       
       if (isQuestaoCondicional) {
+        // Para questões condicionais, verificar se a questão está visível primeiro
+        if (!shouldShowQuestion(q.id)) {
+          console.log(`❌ Questão condicional ${q.id} NÃO está visível - não deve ser validada`);
+          return false; // Não validar questões condicionais não visíveis
+        }
+        
         // Para questões condicionais, verificar se a opção que as ativa está selecionada
         const questaoPrincipal = questoes.find((questaoPrincipal: QuestionResponse) => 
           questaoPrincipal.opcoes?.some((opcao: any) => 
@@ -875,7 +902,8 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
               isOptionSelected,
               deveValidar: isOptionSelected,
               questaoCondicionalTexto: q.texto?.substring(0, 50) + "...",
-              questaoCondicionalTipo: q.tipo
+              questaoCondicionalTipo: q.tipo,
+              isVisible: shouldShowQuestion(q.id)
             });
             
             // Só validar se a opção que ativa a condição estiver selecionada
@@ -888,7 +916,7 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
       }
       
       // Verificar se esta questão específica está na estrutura agrupada
-      const isQuestaoAgrupada = tipoItemAvaliado !== "Curso" && tipoItemAvaliado !== "Estrutura" && tipoItemAvaliado !== "Infraestrutura" && shouldUseGroupedStructure && itensAvaliados;
+      const isQuestaoAgrupada = tipoItemAvaliado !== "Estrutura" && tipoItemAvaliado !== "Infraestrutura" && shouldUseGroupedStructure && itensAvaliados;
       
       if (isQuestaoAgrupada) {
         // Para estrutura agrupada, verificar se todas as respostas para cada item foram respondidas
@@ -1585,8 +1613,8 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
         {visibleQuestions.map((questao: QuestionResponse) => {
           console.log(`🔍 Renderizando questão ${questao.id} (${questao.texto})`);
           
-          // Para Curso, Estrutura e Infraestrutura, sempre usar renderização normal
-          if (tipoItemAvaliado === "Curso" || tipoItemAvaliado === "Estrutura" || tipoItemAvaliado === "Infraestrutura") {
+          // Para Estrutura e Infraestrutura, sempre usar renderização normal
+          if (tipoItemAvaliado === "Estrutura" || tipoItemAvaliado === "Infraestrutura") {
             return renderNormalQuestion(questao);
           }
           

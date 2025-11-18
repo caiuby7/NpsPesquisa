@@ -51,6 +51,9 @@ export const API_URLS = {
   RELATORIO_POR_CAMPUS: `${ENVIRONMENT.API_URL}/Questionario/relatorio-por-campus`,
   RELATORIO_ACOMPANHAMENTO: `${ENVIRONMENT.API_URL}/Questionario/relatorio-acompanhamento`,
   RELATORIO_ACOMPANHAMENTO_EXCEL: `${ENVIRONMENT.API_URL}/Questionario/relatorio-acompanhamento/excel`,
+  RELATORIO_AVALIACAO_GERAL: `${ENVIRONMENT.API_URL}/RelatoriosAvaliacao/geral-avaliacao`,
+  RELATORIO_AVALIACAO_GERAL_EXCEL: `${ENVIRONMENT.API_URL}/RelatoriosAvaliacao/geral-avaliacao/excel`,
+  RELATORIO_AVALIACAO_GERAL_PDF: `${ENVIRONMENT.API_URL}/RelatoriosAvaliacao/geral-avaliacao/pdf`,
 };
 
 /**
