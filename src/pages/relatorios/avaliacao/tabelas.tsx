@@ -24,8 +24,9 @@ import {
   StatNumber,
   StatHelpText,
 } from '@chakra-ui/react';
-import { FiRefreshCw, FiDownload } from 'react-icons/fi';
+import { FiRefreshCw, FiDownload, FiArrowLeft, FiFileText } from 'react-icons/fi';
 import { MainLayout } from '../../../components/layout/main-layout.component';
+import { useNavigate } from 'react-router-dom';
 import { useGetAvaliacoes } from '../../../app/services/avaliacao/avaliacao.service.hooks';
 import { useRelatorioAvaliacaoGeral } from '../../../hooks/useRelatorioAvaliacao';
 import {
@@ -36,6 +37,7 @@ import {
 } from '../../../services/relatorios-avaliacao.service';
 
 const RelatorioAvaliacaoTabela: React.FC = () => {
+  const navigate = useNavigate();
   const toast = useToast();
   const [avaliacaoSelecionada, setAvaliacaoSelecionada] = useState<string>('');
 
@@ -71,13 +73,27 @@ const RelatorioAvaliacaoTabela: React.FC = () => {
       // Para EscalaLinear, ordenar numericamente pelo rótulo
       if (pergunta.tipo === 'EscalaLinear') {
         opcoes = opcoes.sort((a, b) => {
-          const numA = parseInt(a.rotulo, 10);
-          const numB = parseInt(b.rotulo, 10);
+          // Tentar converter ambos para números
+          const numA = parseFloat(a.rotulo?.toString().trim() || '0');
+          const numB = parseFloat(b.rotulo?.toString().trim() || '0');
+          
+          // Se ambos são números válidos, ordenar numericamente
           if (!isNaN(numA) && !isNaN(numB)) {
             return numA - numB;
           }
-          // Se não conseguir converter, manter ordem original
-          return a.rotulo.localeCompare(b.rotulo);
+          
+          // Se apenas A é número, A vem primeiro
+          if (!isNaN(numA) && isNaN(numB)) {
+            return -1;
+          }
+          
+          // Se apenas B é número, B vem primeiro
+          if (isNaN(numA) && !isNaN(numB)) {
+            return 1;
+          }
+          
+          // Se nenhum é número, ordenar alfabeticamente
+          return (a.rotulo || '').localeCompare(b.rotulo || '');
         });
       }
 
@@ -192,11 +208,65 @@ const RelatorioAvaliacaoTabela: React.FC = () => {
     }
   };
 
+  const handleExportarPdf = async () => {
+    if (!avaliacaoSelecionada) {
+      toast({
+        title: 'Selecione uma avaliação',
+        status: 'warning',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    try {
+      const blob = await relatoriosAvaliacaoService.exportarRelatorioGeralPdf({
+        questionarioId: Number(avaliacaoSelecionada),
+        incluirRespostasTextuais: false,
+        incluirAnaliseSentimentos: false,
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Relatorio_Avaliacao_${avaliacaoSelecionada}_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: 'PDF exportado com sucesso',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao exportar PDF',
+        description: error.message || 'Não foi possível exportar o relatório. Tente novamente.',
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+      });
+    }
+  };
+
   return (
     <MainLayout>
       <Box p={8}>
         <Flex direction={{ base: 'column', lg: 'row' }} justify="space-between" align={{ base: 'flex-start', lg: 'center' }} mb={6} gap={4}>
           <Box>
+            <Flex mb={4}>
+              <Button
+                leftIcon={<FiArrowLeft />}
+                variant="ghost"
+                onClick={() => navigate('/relatorios')}
+                size="sm"
+              >
+                Voltar para Central de Relatórios
+              </Button>
+            </Flex>
             <Heading size="lg">Relatório Geral — Visão Tabular</Heading>
             <Text color="gray.600">Visualize os resultados consolidados do questionário em formato tabular detalhado.</Text>
           </Box>
@@ -229,6 +299,14 @@ const RelatorioAvaliacaoTabela: React.FC = () => {
                 onClick={handleExportarExcel}
               >
                 Exportar Excel
+              </Button>
+              <Button
+                leftIcon={<FiFileText />}
+                variant="outline"
+                colorScheme="red"
+                onClick={handleExportarPdf}
+              >
+                Exportar PDF
               </Button>
             </Flex>
           </Flex>

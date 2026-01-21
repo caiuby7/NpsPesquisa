@@ -546,6 +546,7 @@ const CriarAvaliacaoPage: React.FC = () => {
         break;
         
       case 'Estrutura':
+      case 'Pesquisa':
         filtrosVisiveis.push('periodoLetivo');
         break;
         

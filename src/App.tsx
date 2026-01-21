@@ -60,6 +60,8 @@ const TestConditionalQuestionsPage = lazy(() => import("./pages/test-conditional
 // Página de Relatórios
 const RelatoriosPage = lazy(() => import("./pages/relatorios"));
 const RelatoriosAcompanhamentoPage = lazy(() => import("./pages/relatorios/acompanhamento-relatorios"));
+const RelatorioComparativoPage = lazy(() => import("./pages/relatorios/comparativo"));
+const RelatorioComparativoAgrupadoPage = lazy(() => import("./pages/relatorios/comparativo/agrupado"));
 
 // Páginas de Configurações
 const ConfiguracoesPage = lazy(() => import("./app/pages/configuracoes"));
@@ -203,6 +205,8 @@ function App() {
                   <Route path="/relatorios/avaliacao/tabelas/por-curso-turno" element={<ProtectedRoute><RelatoriosAvaliacaoTabelaPorCursoTurnoPage /></ProtectedRoute>} />
                   <Route path="/relatorios/avaliacao/tabelas/por-turma" element={<ProtectedRoute><RelatoriosAvaliacaoTabelaPorTurmaPage /></ProtectedRoute>} />
                   <Route path="/relatorios/avaliacao/tabelas/por-disciplina" element={<ProtectedRoute><RelatoriosAvaliacaoTabelaPorDisciplinaPage /></ProtectedRoute>} />
+                  <Route path="/relatorios/comparativo" element={<ProtectedRoute><RelatorioComparativoPage /></ProtectedRoute>} />
+                  <Route path="/relatorios/comparativo/:tipoAgrupamento" element={<ProtectedRoute><RelatorioComparativoAgrupadoPage /></ProtectedRoute>} />
                 </Routes>
               </Suspense>
             </Router>

@@ -28,11 +28,12 @@ import {
   Collapse,
   IconButton,
 } from '@chakra-ui/react';
-import { FiChevronDown, FiChevronUp, FiRefreshCw } from 'react-icons/fi';
+import { FiChevronDown, FiChevronUp, FiRefreshCw, FiArrowLeft } from 'react-icons/fi';
 import { MainLayout } from '../../../components/layout/main-layout.component';
+import { useNavigate } from 'react-router-dom';
 import { useGetAvaliacoes } from '../../../app/services/avaliacao/avaliacao.service.hooks';
 import { useRelatorioAvaliacaoGeral } from '../../../hooks/useRelatorioAvaliacao';
-import { RelatorioAvaliacaoGeralDto, RelatorioAvaliacaoPerguntaDto } from '../../../services/relatorios-avaliacao.service';
+import { RelatorioAvaliacaoGeralDto, RelatorioAvaliacaoPerguntaDto, RelatorioAvaliacaoCategoriaSentimentoDto } from '../../../services/relatorios-avaliacao.service';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -45,6 +46,116 @@ import {
 import { Bar, Pie } from 'react-chartjs-2';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
+
+// Cores para sentimentos (mesmas do dashboard)
+const sentimentoColor: Record<string, string> = {
+  'Muito negativo': '#e53935',
+  'Negativo': '#ff8a80',
+  'Misto': '#333',
+  'Positivo': '#43a047',
+  'Muito positivo': '#00e676',
+  'Neutro': '#bdbdbd',
+};
+
+interface Sentimento {
+  sentimento: string;
+  quantidade: number;
+}
+
+interface CategoriaSentimento {
+  categoria: string;
+  total: number;
+  sentimentos: Sentimento[];
+}
+
+function getSegments(sentimentos: Sentimento[]) {
+  const total = sentimentos.reduce((acc, s) => acc + s.quantidade, 0) || 1;
+  let startAngle = 0;
+  return sentimentos.map(s => {
+    const percent = s.quantidade / total;
+    const angle = percent * 360;
+    const segment = {
+      color: sentimentoColor[s.sentimento] || '#bdbdbd',
+      startAngle,
+      endAngle: startAngle + angle,
+      percent,
+      label: s.sentimento,
+    };
+    startAngle += angle;
+    return segment;
+  });
+}
+
+function polarToCartesian(cx: number, cy: number, r: number, angle: number) {
+  const rad = (angle - 90) * Math.PI / 180.0;
+  return {
+    x: cx + (r * Math.cos(rad)),
+    y: cy + (r * Math.sin(rad))
+  };
+}
+
+function describeArc(cx: number, cy: number, r: number, startAngle: number, endAngle: number) {
+  const start = polarToCartesian(cx, cy, r, endAngle);
+  const end = polarToCartesian(cx, cy, r, startAngle);
+  const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1';
+  return [
+    'M', start.x, start.y,
+    'A', r, r, 0, largeArcFlag, 0, end.x, end.y
+  ].join(' ');
+}
+
+function BubbleSegmented({ categoria, total, sentimentos, size = 120 }: CategoriaSentimento & { size?: number }) {
+  const r = size / 2 - 6;
+  const cx = size / 2;
+  const cy = size / 2;
+  const segments = getSegments(sentimentos);
+  return (
+    <Box position="relative" w={`${size}px`} h={`${size}px`} mx={2} my={2}>
+      <svg width={size} height={size}>
+        <circle cx={cx} cy={cy} r={r} fill="#f8f9fa" />
+        {segments.map((seg, i) => (
+          <path
+            key={i}
+            d={describeArc(cx, cy, r, seg.startAngle, seg.endAngle)}
+            stroke={seg.color}
+            strokeWidth={8}
+            fill="none"
+          />
+        ))}
+      </svg>
+      <Box position="absolute" top="0" left="0" w="100%" h="100%" display="flex" flexDirection="column" alignItems="center" justifyContent="center" pointerEvents="none">
+        <Text fontWeight="bold" fontSize={size > 100 ? 'md' : 'sm'} color="#222" textAlign="center">{categoria.length > 16 ? categoria.slice(0, 14) + '...' : categoria}</Text>
+        <Text fontSize="xs" color="#888">{total}</Text>
+      </Box>
+    </Box>
+  );
+}
+
+function BubbleSegmentedChart({ data }: { data: CategoriaSentimento[] }) {
+  return (
+    <>
+      <Box display="flex" flexWrap="wrap" gap={4} justifyContent="center" alignItems="center" py={6}>
+        {data.map((cat) => (
+          <BubbleSegmented
+            key={cat.categoria}
+            categoria={cat.categoria}
+            total={cat.total}
+            sentimentos={cat.sentimentos}
+            size={Math.max(80, Math.min(180, 60 + cat.total * 10))}
+          />
+        ))}
+      </Box>
+      <Box mt={2} mb={4} display="flex" justifyContent="center" gap={4} flexWrap="wrap">
+        <Box display="flex" alignItems="center"><Box w="16px" h="16px" bg="#e53935" borderRadius="50%" mr={1} />Muito negativo</Box>
+        <Box display="flex" alignItems="center"><Box w="16px" h="16px" bg="#ff8a80" borderRadius="50%" mr={1} />Negativo</Box>
+        <Box display="flex" alignItems="center"><Box w="16px" h="16px" bg="#333" borderRadius="50%" mr={1} />Misto</Box>
+        <Box display="flex" alignItems="center"><Box w="16px" h="16px" bg="#43a047" borderRadius="50%" mr={1} />Positivo</Box>
+        <Box display="flex" alignItems="center"><Box w="16px" h="16px" bg="#00e676" borderRadius="50%" mr={1} />Muito positivo</Box>
+        <Box display="flex" alignItems="center"><Box w="16px" h="16px" bg="#bdbdbd" borderRadius="50%" mr={1} />Neutro</Box>
+      </Box>
+    </>
+  );
+}
 
 const randomColorPalette = ['#2563eb', '#dc2626', '#16a34a', '#f59e0b', '#7c3aed', '#0ea5e9', '#f97316', '#4338ca', '#10b981'];
 
@@ -111,6 +222,7 @@ const buildPieData = (resumo: RelatorioAvaliacaoGeralDto['resumoParticipantes'])
 };
 
 const RelatorioAvaliacaoGraficos: React.FC = () => {
+  const navigate = useNavigate();
   const toast = useToast();
   const [avaliacaoSelecionada, setAvaliacaoSelecionada] = useState<string>('');
   const [mostrarTextos, setMostrarTextos] = useState<Record<number, boolean>>({});
@@ -182,6 +294,16 @@ const RelatorioAvaliacaoGraficos: React.FC = () => {
       <Box p={8}>
         <Flex direction={{ base: 'column', lg: 'row' }} justify="space-between" align={{ base: 'flex-start', lg: 'center' }} mb={6} gap={4}>
           <Box>
+            <Flex mb={4}>
+              <Button
+                leftIcon={<FiArrowLeft />}
+                variant="ghost"
+                onClick={() => navigate('/relatorios')}
+                size="sm"
+              >
+                Voltar para Central de Relatórios
+              </Button>
+            </Flex>
             <Heading size="lg">Relatório Geral por Avaliação</Heading>
             <Text color="gray.600">
               Visualize gráficos e insights agregados das respostas coletadas para cada questionário.
@@ -457,55 +579,142 @@ const RelatorioAvaliacaoGraficos: React.FC = () => {
                       </Box>
                     ) : pergunta.tipo === 'CaixaTexto' ? (
                       <Box>
-                        <Text color="gray.600" mb={3}>
-                          Esta é uma questão aberta. {pergunta.respostasTextuais.length > 0 
-                            ? `Clique no botão acima para ver as ${pergunta.respostasTextuais.length} resposta(s) textual(is).`
-                            : 'Não há respostas textuais registradas.'}
-                        </Text>
-                        {pergunta.opcoes.length > 0 && (
-                          <Table variant="simple" size="md">
-                            <Thead>
-                              <Tr>
-                                <Th>Opção/Resposta</Th>
-                                <Th textAlign="right">Total</Th>
-                              </Tr>
-                            </Thead>
-                            <Tbody>
-                              {pergunta.opcoes.map((opcao, opcaoIndex) => {
-                                // Para questões abertas, dividir o texto concatenado em linhas separadas
-                                // O backend envia com Environment.NewLine, mas pode vir também com semicolons
-                                let linhasTexto: string[] = [];
-                                if (pergunta.tipo === 'CaixaTexto' && opcao.rotulo) {
-                                  // Primeiro tenta dividir por quebras de linha
-                                  linhasTexto = opcao.rotulo.split(/\r\n|\r|\n/).filter(linha => linha.trim().length > 0);
-                                  // Se não encontrou quebras de linha, tenta dividir por semicolons
-                                  if (linhasTexto.length === 1 && opcao.rotulo.includes(';')) {
-                                    linhasTexto = opcao.rotulo.split(';').map(l => l.trim()).filter(linha => linha.length > 0);
-                                  }
-                                } else {
-                                  linhasTexto = [opcao.rotulo || 'Não informado'];
-                                }
-                                
-                                return (
-                                  <React.Fragment key={opcao.opcaoId || `textual-${opcaoIndex}`}>
-                                    {linhasTexto.map((linha, linhaIndex) => (
-                                      <Tr key={`${opcao.opcaoId || 'textual'}-${linhaIndex}`}>
-                                        <Td maxW="600px">
-                                          <Text fontWeight="medium" whiteSpace="pre-wrap" wordBreak="break-word">
-                                            {linha}
-                                          </Text>
-                                        </Td>
-                                      </Tr>
-                                    ))}
-                                  </React.Fragment>
-                                );
-                              })}
-                              <Tr fontWeight="bold" bg="gray.100">
-                                <Td>Total</Td>
-                                <Td textAlign="right">{pergunta.totalRespostas}</Td>
-                              </Tr>
-                            </Tbody>
-                          </Table>
+                        {/* Mostrar análise de sentimento por categoria (como no dashboard) se disponível */}
+                        {pergunta.analiseSentimentoPorCategoria && pergunta.analiseSentimentoPorCategoria.length > 0 ? (
+                          <>
+                            <Text color="gray.600" mb={4} fontWeight="medium" fontSize="lg">
+                              Análise de Sentimento por Categoria - {pergunta.totalRespostas} resposta(s)
+                            </Text>
+                            <BubbleSegmentedChart 
+                              data={pergunta.analiseSentimentoPorCategoria.map(cat => ({
+                                categoria: cat.categoria,
+                                total: cat.total,
+                                sentimentos: cat.sentimentos.map(s => ({
+                                  sentimento: s.sentimento,
+                                  quantidade: s.quantidade
+                                }))
+                              }))} 
+                            />
+                          </>
+                        ) : pergunta.analiseSentimentoAgregada && pergunta.analiseSentimentoAgregada.length > 0 ? (
+                          <>
+                            <Text color="gray.600" mb={4} fontWeight="medium">
+                              Análise de Sentimento - {pergunta.totalRespostas} resposta(s)
+                            </Text>
+                            <Box height="260px" mb={4}>
+                              <Bar
+                                data={{
+                                  labels: pergunta.analiseSentimentoAgregada.map(s => s.sentimento),
+                                  datasets: [
+                                    {
+                                      label: '% de respostas',
+                                      data: pergunta.analiseSentimentoAgregada.map(s => Number(s.percentual.toFixed(2))),
+                                      backgroundColor: pergunta.analiseSentimentoAgregada.map((_, index) => 
+                                        randomColorPalette[index % randomColorPalette.length]
+                                      ),
+                                    },
+                                  ],
+                                }}
+                                options={{
+                                  maintainAspectRatio: false,
+                                  responsive: true,
+                                  plugins: {
+                                    legend: {
+                                      display: false,
+                                    },
+                                    tooltip: {
+                                      callbacks: {
+                                        label: (context) => `${context.formattedValue}% (${pergunta.analiseSentimentoAgregada![context.dataIndex].quantidade} respostas)`,
+                                      },
+                                    },
+                                  },
+                                  scales: {
+                                    y: {
+                                      beginAtZero: true,
+                                      max: 100,
+                                      ticks: {
+                                        callback: (value) => `${value}%`,
+                                      },
+                                    },
+                                  },
+                                }}
+                              />
+                            </Box>
+                            <Table size="sm" mt={4} variant="striped" colorScheme="gray">
+                              <Thead>
+                                <Tr>
+                                  <Th>Sentimento</Th>
+                                  <Th textAlign="right">Quantidade</Th>
+                                  <Th textAlign="right">Percentual</Th>
+                                </Tr>
+                              </Thead>
+                              <Tbody>
+                                {pergunta.analiseSentimentoAgregada.map((sentimento) => (
+                                  <Tr key={sentimento.sentimento}>
+                                    <Td>
+                                      <Text fontWeight="medium">{sentimento.sentimento}</Text>
+                                    </Td>
+                                    <Td textAlign="right">{sentimento.quantidade}</Td>
+                                    <Td textAlign="right">{sentimento.percentual.toFixed(2)}%</Td>
+                                  </Tr>
+                                ))}
+                                <Tr fontWeight="bold" bg="gray.100">
+                                  <Td>Total</Td>
+                                  <Td textAlign="right">{pergunta.totalRespostas}</Td>
+                                  <Td textAlign="right">100%</Td>
+                                </Tr>
+                              </Tbody>
+                            </Table>
+                          </>
+                        ) : (
+                          <>
+                            <Text color="gray.600" mb={3}>
+                              Esta é uma questão aberta. {pergunta.respostasTextuais.length > 0 
+                                ? `Clique no botão acima para ver as ${pergunta.respostasTextuais.length} resposta(s) textual(is).`
+                                : 'Não há respostas textuais registradas.'}
+                            </Text>
+                            {pergunta.opcoes.length > 0 && (
+                              <Table variant="simple" size="md">
+                                <Thead>
+                                  <Tr>
+                                    <Th>Opção/Resposta</Th>
+                                    <Th textAlign="right">Total</Th>
+                                  </Tr>
+                                </Thead>
+                                <Tbody>
+                                  {pergunta.opcoes.map((opcao, opcaoIndex) => {
+                                    let linhasTexto: string[] = [];
+                                    if (pergunta.tipo === 'CaixaTexto' && opcao.rotulo) {
+                                      linhasTexto = opcao.rotulo.split(/\r\n|\r|\n/).filter(linha => linha.trim().length > 0);
+                                      if (linhasTexto.length === 1 && opcao.rotulo.includes(';')) {
+                                        linhasTexto = opcao.rotulo.split(';').map(l => l.trim()).filter(linha => linha.length > 0);
+                                      }
+                                    } else {
+                                      linhasTexto = [opcao.rotulo || 'Não informado'];
+                                    }
+                                    
+                                    return (
+                                      <React.Fragment key={opcao.opcaoId || `textual-${opcaoIndex}`}>
+                                        {linhasTexto.map((linha, linhaIndex) => (
+                                          <Tr key={`${opcao.opcaoId || 'textual'}-${linhaIndex}`}>
+                                            <Td maxW="600px">
+                                              <Text fontWeight="medium" whiteSpace="pre-wrap" wordBreak="break-word">
+                                                {linha}
+                                              </Text>
+                                            </Td>
+                                          </Tr>
+                                        ))}
+                                      </React.Fragment>
+                                    );
+                                  })}
+                                  <Tr fontWeight="bold" bg="gray.100">
+                                    <Td>Total</Td>
+                                    <Td textAlign="right">{pergunta.totalRespostas}</Td>
+                                  </Tr>
+                                </Tbody>
+                              </Table>
+                            )}
+                          </>
                         )}
                       </Box>
                     ) : (

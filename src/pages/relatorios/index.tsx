@@ -5,170 +5,260 @@ import {
   Heading,
   Text,
   VStack,
-  HStack,
+  SimpleGrid,
   Card,
   CardBody,
   CardHeader,
-  SimpleGrid,
-  Button,
-  Select,
-  FormControl,
-  FormLabel,
   useColorModeValue,
-  Badge,
-  Stat,
-  StatLabel,
-  StatNumber,
-  StatHelpText,
-  StatArrow,
-  Progress,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  TableContainer,
-  Spinner,
-  Alert,
-  AlertIcon,
-  AlertTitle,
-  AlertDescription,
-  Tabs,
-  TabList,
-  TabPanels,
-  Tab,
-  TabPanel,
-  Flex,
   Icon,
-  Divider
+  HStack,
+  Badge,
+  Divider,
+  Spinner
 } from '@chakra-ui/react';
+import { useNavigate } from 'react-router-dom';
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line
-} from 'recharts';
-import {
-  BarChart3,
-  Users,
-  GraduationCap,
-  Clock,
-  Globe,
-  TrendingUp,
-  FileText,
-  Download,
-  Filter
-} from 'lucide-react';
+  FiBarChart2,
+  FiUsers,
+  FiFileText,
+  FiTrendingUp,
+  FiLayers,
+  FiGitMerge,
+  FiPieChart,
+  FiTable
+} from 'react-icons/fi';
 import MainLayout from '../../components/layout/main-layout.component';
-import { useRelatorioRespondentes, useDashboardAdminStats, RelatorioFilters } from '../../hooks/useRelatorio';
+import { useAuth } from '../../contexts/AuthContext';
+import { participanteService, ParticipanteDadosRelatorioDto } from '../../services/participante.service';
 
-interface RelatorioData {
-  totalRespondentes: number;
-  totalConvidados: number;
-  taxaResposta: number;
-  porPesquisa: Array<{
-    pesquisaId: number;
-    nomePesquisa: string;
-    respondentes: number;
-    convidados: number;
-    taxaResposta: number;
-  }>;
-  porCurso: Array<{
-    cursoId: number;
-    nomeCurso: string;
-    respondentes: number;
-    convidados: number;
-    taxaResposta: number;
-  }>;
-  porTurno: Array<{
-    turno: string;
-    respondentes: number;
-    convidados: number;
-    taxaResposta: number;
-  }>;
-  porCampus: Array<{
-    campus: string;
-    respondentes: number;
-    convidados: number;
-    taxaResposta: number;
-  }>;
+interface RelatorioCard {
+  id: string;
+  title: string;
+  description: string;
+  icon: React.ElementType;
+  href: string;
+  badge?: string;
+  badgeColor?: string;
+  category: string;
 }
 
 const RelatoriosPage: React.FC = () => {
-  const [filtroPesquisa, setFiltroPesquisa] = useState<string>('todas');
-  const [filtroCampus, setFiltroCampus] = useState<string>('todos');
-  const [filtrosRelatorio, setFiltrosRelatorio] = useState<RelatorioFilters>({});
-
-  // Buscar dados usando hooks
-  const { data: relatorioData, isLoading: loading, error: relatorioError } = useRelatorioRespondentes(filtrosRelatorio);
-  const { data: dashboardStats } = useDashboardAdminStats();
-
-  const bg = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [dadosParticipante, setDadosParticipante] = useState<ParticipanteDadosRelatorioDto | null>(null);
+  const [loading, setLoading] = useState(true);
   const cardBg = useColorModeValue('white', 'gray.700');
+  const borderColor = useColorModeValue('gray.200', 'gray.700');
+  const hoverBg = useColorModeValue('gray.50', 'gray.600');
 
-  // Atualizar filtros quando os controles mudarem
   useEffect(() => {
-    const novosFiltros: RelatorioFilters = {};
-    
-    // Adicionar filtros conforme necessário
-    if (filtroCampus !== 'todos') {
-      // Mapear campus para instituição (isso seria melhor com um endpoint específico)
-      switch (filtroCampus) {
-        case 'JGS':
-          novosFiltros.instituicaoId = 1; // Assumindo ID da instituição JGS
-          break;
-        case 'JOI':
-          novosFiltros.instituicaoId = 2; // Assumindo ID da instituição JOI
-          break;
-        case 'EaD':
-          novosFiltros.instituicaoId = 3; // Assumindo ID da instituição EaD
-          break;
+    const carregarDadosParticipante = async () => {
+      try {
+        // Apenas carregar dados se não for administrador ou CPA
+        if (user?.perfil && ['aluno', 'professor', 'coordenador'].includes(user.perfil.toLowerCase())) {
+          const dados = await participanteService.obterMeusDados();
+          setDadosParticipante(dados);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar dados do participante:', error);
+      } finally {
+        setLoading(false);
       }
+    };
+
+    carregarDadosParticipante();
+  }, [user]);
+
+  const relatorios: RelatorioCard[] = [
+    {
+      id: 'dashboard',
+      title: 'Dashboard Geral',
+      description: 'Visão geral com métricas e indicadores principais do sistema',
+      icon: FiBarChart2,
+      href: '/dashboard',
+      badge: 'GERAL',
+      badgeColor: 'blue',
+      category: 'Geral'
+    },
+    {
+      id: 'acompanhamento',
+      title: 'Acompanhamento de Respondentes',
+      description: 'Acompanhe o status das respostas, taxas de participação e métricas de engajamento',
+      icon: FiUsers,
+      href: '/relatorios/acompanhamento',
+      badge: 'ACOMP',
+      badgeColor: 'green',
+      category: 'Acompanhamento'
+    },
+    {
+      id: 'avaliacao-graficos',
+      title: 'Relatórios de Avaliação - Gráficos',
+      description: 'Visualize os resultados das avaliações através de gráficos interativos com análise de sentimentos',
+      icon: FiPieChart,
+      href: '/relatorios/avaliacao/graficos',
+      badge: 'GRAF',
+      badgeColor: 'purple',
+      category: 'Avaliação'
+    },
+    {
+      id: 'avaliacao-tabelas',
+      title: 'Relatórios de Avaliação - Tabelas',
+      description: 'Visualize os resultados das avaliações em formato tabular detalhado',
+      icon: FiTable,
+      href: '/relatorios/avaliacao/tabelas',
+      badge: 'TAB',
+      badgeColor: 'orange',
+      category: 'Avaliação'
+    },
+    {
+      id: 'avaliacao-por-curso',
+      title: 'Avaliação por Curso',
+      description: 'Relatórios agrupados por curso com análise detalhada dos resultados',
+      icon: FiLayers,
+      href: '/relatorios/avaliacao/tabelas/por-curso',
+      badge: 'CURSO',
+      badgeColor: 'teal',
+      category: 'Agrupados'
+    },
+    {
+      id: 'avaliacao-por-curso-turno',
+      title: 'Avaliação por Curso e Turno',
+      description: 'Relatórios agrupados por curso e turno para análise segmentada',
+      icon: FiLayers,
+      href: '/relatorios/avaliacao/tabelas/por-curso-turno',
+      badge: 'CURSO-TURNO',
+      badgeColor: 'cyan',
+      category: 'Agrupados'
+    },
+    {
+      id: 'avaliacao-por-turma',
+      title: 'Avaliação por Turma',
+      description: 'Relatórios específicos por turma com resultados detalhados',
+      icon: FiFileText,
+      href: '/relatorios/avaliacao/tabelas/por-turma',
+      badge: 'TURMA',
+      badgeColor: 'pink',
+      category: 'Agrupados'
+    },
+    {
+      id: 'avaliacao-por-disciplina',
+      title: 'Avaliação por Disciplina',
+      description: 'Relatórios agrupados por disciplina com análise de desempenho',
+      icon: FiFileText,
+      href: '/relatorios/avaliacao/tabelas/por-disciplina',
+      badge: 'DISC',
+      badgeColor: 'yellow',
+      category: 'Agrupados'
+    },
+    {
+      id: 'comparativo',
+      title: 'Relatório Comparativo',
+      description: 'Compare resultados entre diferentes tipos de participantes (Alunos, Professores, Coordenadores)',
+      icon: FiGitMerge,
+      href: '/relatorios/comparativo',
+      badge: 'COMP',
+      badgeColor: 'red',
+      category: 'Comparativo'
+    },
+    {
+      id: 'comparativo-por-curso',
+      title: 'Comparativo por Curso',
+      description: 'Compare resultados agrupados por curso entre diferentes tipos de participantes',
+      icon: FiGitMerge,
+      href: '/relatorios/comparativo/por-curso',
+      badge: 'COMP-CURSO',
+      badgeColor: 'red',
+      category: 'Comparativo'
+    },
+    {
+      id: 'comparativo-por-curso-turno',
+      title: 'Comparativo por Curso/Turno',
+      description: 'Compare resultados agrupados por curso e turno entre diferentes tipos de participantes',
+      icon: FiGitMerge,
+      href: '/relatorios/comparativo/por-curso-turno',
+      badge: 'COMP-CURSO-TURNO',
+      badgeColor: 'red',
+      category: 'Comparativo'
+    },
+    {
+      id: 'comparativo-por-turma',
+      title: 'Comparativo por Turma',
+      description: 'Compare resultados agrupados por turma entre diferentes tipos de participantes',
+      icon: FiGitMerge,
+      href: '/relatorios/comparativo/por-turma',
+      badge: 'COMP-TURMA',
+      badgeColor: 'red',
+      category: 'Comparativo'
+    },
+    {
+      id: 'comparativo-por-disciplina',
+      title: 'Comparativo por Disciplina',
+      description: 'Compare resultados agrupados por disciplina entre diferentes tipos de participantes',
+      icon: FiGitMerge,
+      href: '/relatorios/comparativo/por-disciplina',
+      badge: 'COMP-DISC',
+      badgeColor: 'red',
+      category: 'Comparativo'
     }
+  ];
+
+  // Filtrar relatórios baseado no perfil do usuário
+  const relatoriosFiltrados = React.useMemo(() => {
+    if (!user?.perfil) return relatorios;
     
-    setFiltrosRelatorio(novosFiltros);
-  }, [filtroPesquisa, filtroCampus]);
+    const perfil = user.perfil.toLowerCase();
+    
+    // Administrador e CPA veem todos os relatórios
+    if (perfil === 'administrador' || perfil === 'cpa') {
+      return relatorios;
+    }
 
-  const coresGrafico = ['#38A169', '#3182CE', '#D69E2E', '#E53E3E', '#805AD5', '#DD6B20', '#319795', '#38B2AC'];
+    // Aluno, Professor e Coordenador veem apenas relatórios relevantes
+    const relatoriosPermitidos = relatorios.filter(rel => {
+      // Relatórios gerais sempre disponíveis
+      if (rel.category === 'Acompanhamento' || rel.category === 'Avaliação') {
+        return true;
+      }
 
-  const exportarRelatorio = (tipo: string) => {
-    // Implementar exportação de relatório
-    console.log(`Exportando relatório: ${tipo}`);
-  };
+      // Relatórios agrupados e comparativos só aparecem se o participante tiver dados
+      if (rel.category === 'Agrupados' || rel.category === 'Comparativo') {
+        if (!dadosParticipante) return false;
+        
+        // Verificar se o relatório é relevante para o participante
+        if (rel.id.includes('por-curso') && dadosParticipante.cursoIds.length === 0) {
+          return false;
+        }
+        if (rel.id.includes('por-turma') && dadosParticipante.turmaIds.length === 0) {
+          return false;
+        }
+        if (rel.id.includes('por-disciplina') && dadosParticipante.disciplinaIds.length === 0) {
+          return false;
+        }
+        
+        return true;
+      }
+
+      return false;
+    });
+
+    return relatoriosPermitidos;
+  }, [user, dadosParticipante, relatorios]);
+
+  const categorias = ['Acompanhamento', 'Avaliação', 'Agrupados', 'Comparativo'];
+
+  const relatoriosPorCategoria = categorias.map(categoria => ({
+    categoria,
+    relatorios: relatoriosFiltrados.filter(r => r.category === categoria)
+  }));
 
   if (loading) {
     return (
       <MainLayout>
         <Container maxW="7xl" py={8}>
-          <Box textAlign="center" py={20}>
-            <Spinner size="xl" color="blue.500" />
-            <Text mt={4} fontSize="lg">Carregando relatórios...</Text>
-          </Box>
-        </Container>
-      </MainLayout>
-    );
-  }
-
-  if (relatorioError) {
-    return (
-      <MainLayout>
-        <Container maxW="7xl" py={8}>
-          <Alert status="error">
-            <AlertIcon />
-            <AlertTitle>Erro!</AlertTitle>
-            <AlertDescription>{relatorioError.message}</AlertDescription>
-          </Alert>
+          <VStack spacing={8} align="center" justify="center" minH="400px">
+            <Spinner size="xl" />
+            <Text color="gray.600">Carregando relatórios disponíveis...</Text>
+          </VStack>
         </Container>
       </MainLayout>
     );
@@ -181,430 +271,70 @@ const RelatoriosPage: React.FC = () => {
           {/* Cabeçalho */}
           <Box>
             <Heading size="xl" color="blue.600" mb={2}>
-              📊 Relatórios - Acompanhamento dos Respondentes
+              📊 Central de Relatórios
             </Heading>
             <Text color="gray.600" fontSize="lg">
-              Análise detalhada das respostas por diferentes categorias
+              {user?.perfil && ['aluno', 'professor', 'coordenador'].includes(user.perfil.toLowerCase())
+                ? 'Relatórios disponíveis para você'
+                : 'Acesse todos os relatórios e análises disponíveis no sistema'}
             </Text>
           </Box>
 
-          {/* Estatísticas Gerais */}
-          <SimpleGrid columns={{ base: 1, md: 4 }} spacing={6}>
-            <Card bg={cardBg} border="1px solid" borderColor={borderColor}>
-              <CardBody>
-                <Stat>
-                  <StatLabel>Total Respondentes</StatLabel>
-                  <StatNumber color="green.500">
-                    {relatorioData?.totalRespondentes.toLocaleString() || dashboardStats?.totalRespostas.toLocaleString() || '0'}
-                  </StatNumber>
-                  <StatHelpText>
-                    <StatArrow type="increase" />
-                    Taxa de {relatorioData?.taxaResposta.toFixed(1) || dashboardStats?.taxaRespostaGeral.toFixed(1) || '0'}%
-                  </StatHelpText>
-                </Stat>
-              </CardBody>
-            </Card>
-
-            <Card bg={cardBg} border="1px solid" borderColor={borderColor}>
-              <CardBody>
-                <Stat>
-                  <StatLabel>Total Convidados</StatLabel>
-                  <StatNumber>
-                    {relatorioData?.totalConvidados.toLocaleString() || dashboardStats?.totalParticipantes.toLocaleString() || '0'}
-                  </StatNumber>
-                </Stat>
-              </CardBody>
-            </Card>
-
-            <Card bg={cardBg} border="1px solid" borderColor={borderColor}>
-              <CardBody>
-                <Stat>
-                  <StatLabel>Taxa de Resposta</StatLabel>
-                  <StatNumber color="blue.500">
-                    {relatorioData?.taxaResposta.toFixed(1) || dashboardStats?.taxaRespostaGeral.toFixed(1) || '0'}%
-                  </StatNumber>
-                  <StatHelpText>
-                    <StatArrow type="increase" />
-                    Dados em tempo real
-                  </StatHelpText>
-                </Stat>
-              </CardBody>
-            </Card>
-
-            <Card bg={cardBg} border="1px solid" borderColor={borderColor}>
-              <CardBody>
-                <Stat>
-                  <StatLabel>Pendentes</StatLabel>
-                  <StatNumber color="orange.500">
-                    {(relatorioData?.totalConvidados || dashboardStats?.totalParticipantes || 0) - 
-                     (relatorioData?.totalRespondentes || dashboardStats?.totalRespostas || 0)}
-                  </StatNumber>
-                  <StatHelpText>
-                    Aguardando resposta
-                  </StatHelpText>
-                </Stat>
-              </CardBody>
-            </Card>
-          </SimpleGrid>
-
-          {/* Filtros */}
-          <Card bg={cardBg} border="1px solid" borderColor={borderColor}>
-            <CardHeader>
-              <HStack spacing={4}>
-                <Icon as={Filter} w={5} h={5} color="blue.500" />
-                <Heading size="md">Filtros</Heading>
-              </HStack>
-            </CardHeader>
-            <CardBody>
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                <FormControl>
-                  <FormLabel>Pesquisa</FormLabel>
-                  <Select value={filtroPesquisa} onChange={(e) => setFiltroPesquisa(e.target.value)}>
-                    <option value="todas">Todas as Pesquisas</option>
-                    {relatorioData?.porPesquisa.map(pesquisa => (
-                      <option key={pesquisa.pesquisaId} value={pesquisa.pesquisaId.toString()}>
-                        {pesquisa.nomePesquisa}
-                      </option>
-                    ))}
-                  </Select>
-                </FormControl>
-
-                <FormControl>
-                  <FormLabel>Campus</FormLabel>
-                  <Select value={filtroCampus} onChange={(e) => setFiltroCampus(e.target.value)}>
-                    <option value="todos">Todos os Campus</option>
-                    <option value="JGS">JGS (Jaraguá do Sul)</option>
-                    <option value="JOI">JOI (Joinville)</option>
-                    <option value="EaD">EaD (Educação a Distância)</option>
-                  </Select>
-                </FormControl>
-              </SimpleGrid>
-            </CardBody>
-          </Card>
-
-          {/* Tabs de Relatórios */}
-          <Tabs variant="enclosed" colorScheme="blue">
-            <TabList>
-              <Tab>
-                <Icon as={BarChart3} mr={2} />
-                Por Pesquisa
-              </Tab>
-              <Tab>
-                <Icon as={GraduationCap} mr={2} />
-                Por Curso
-              </Tab>
-              <Tab>
-                <Icon as={Clock} mr={2} />
-                Por Turno
-              </Tab>
-              <Tab>
-                <Icon as={Globe} mr={2} />
-                Geral EaD/JGS/JOI
-              </Tab>
-            </TabList>
-
-            <TabPanels>
-              {/* Relatório por Pesquisa */}
-              <TabPanel px={0}>
-                <VStack spacing={6} align="stretch">
-                  <Card bg={cardBg} border="1px solid" borderColor={borderColor}>
-                    <CardHeader>
-                      <Heading size="md">Respondentes por Pesquisa</Heading>
-                    </CardHeader>
-                    <CardBody>
-                      <ResponsiveContainer width="100%" height={400}>
-                        <BarChart data={relatorioData?.porPesquisa}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="nomePesquisa" />
-                          <YAxis />
-                          <Tooltip />
-                          <Legend />
-                          <Bar dataKey="respondentes" fill="#38A169" name="Respondentes" />
-                          <Bar dataKey="convidados" fill="#E2E8F0" name="Total Convidados" />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </CardBody>
-                  </Card>
-
-                  <TableContainer>
-                    <Table variant="simple">
-                      <Thead>
-                        <Tr>
-                          <Th>Pesquisa</Th>
-                          <Th isNumeric>Respondentes</Th>
-                          <Th isNumeric>Total Convidados</Th>
-                          <Th isNumeric>Taxa de Resposta</Th>
-                          <Th>Progresso</Th>
-                        </Tr>
-                      </Thead>
-                      <Tbody>
-                        {relatorioData?.porPesquisa.map(pesquisa => (
-                          <Tr key={pesquisa.pesquisaId}>
-                            <Td>
-                              <Text fontWeight="medium">{pesquisa.nomePesquisa}</Text>
-                            </Td>
-                            <Td isNumeric>
-                              <Badge colorScheme="green" fontSize="sm">
-                                {pesquisa.respondentes.toLocaleString()}
-                              </Badge>
-                            </Td>
-                            <Td isNumeric>{pesquisa.convidados.toLocaleString()}</Td>
-                            <Td isNumeric>
-                              <Badge 
-                                colorScheme={pesquisa.taxaResposta >= 70 ? "green" : pesquisa.taxaResposta >= 50 ? "yellow" : "red"}
-                                fontSize="sm"
-                              >
-                                {pesquisa.taxaResposta.toFixed(1)}%
-                              </Badge>
-                            </Td>
-                            <Td>
-                              <Progress 
-                                value={pesquisa.taxaResposta} 
-                                colorScheme={pesquisa.taxaResposta >= 70 ? "green" : pesquisa.taxaResposta >= 50 ? "yellow" : "red"}
-                                size="sm"
-                                borderRadius="md"
-                              />
-                            </Td>
-                          </Tr>
-                        ))}
-                      </Tbody>
-                    </Table>
-                  </TableContainer>
-                </VStack>
-              </TabPanel>
-
-              {/* Relatório por Curso */}
-              <TabPanel px={0}>
-                <VStack spacing={6} align="stretch">
-                  <Card bg={cardBg} border="1px solid" borderColor={borderColor}>
-                    <CardHeader>
-                      <Heading size="md">Respondentes por Curso</Heading>
-                    </CardHeader>
-                    <CardBody>
-                      <ResponsiveContainer width="100%" height={400}>
-                        <BarChart data={relatorioData?.porCurso}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="nomeCurso" />
-                          <YAxis />
-                          <Tooltip />
-                          <Legend />
-                          <Bar dataKey="respondentes" fill="#3182CE" name="Respondentes" />
-                          <Bar dataKey="convidados" fill="#E2E8F0" name="Total Convidados" />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </CardBody>
-                  </Card>
-
-                  <TableContainer>
-                    <Table variant="simple">
-                      <Thead>
-                        <Tr>
-                          <Th>Curso</Th>
-                          <Th isNumeric>Respondentes</Th>
-                          <Th isNumeric>Total Convidados</Th>
-                          <Th isNumeric>Taxa de Resposta</Th>
-                          <Th>Progresso</Th>
-                        </Tr>
-                      </Thead>
-                      <Tbody>
-                        {relatorioData?.porCurso.map(curso => (
-                          <Tr key={curso.cursoId}>
-                            <Td>
-                              <Text fontWeight="medium">{curso.nomeCurso}</Text>
-                            </Td>
-                            <Td isNumeric>
-                              <Badge colorScheme="blue" fontSize="sm">
-                                {curso.respondentes.toLocaleString()}
-                              </Badge>
-                            </Td>
-                            <Td isNumeric>{curso.convidados.toLocaleString()}</Td>
-                            <Td isNumeric>
-                              <Badge 
-                                colorScheme={curso.taxaResposta >= 70 ? "green" : curso.taxaResposta >= 50 ? "yellow" : "red"}
-                                fontSize="sm"
-                              >
-                                {curso.taxaResposta.toFixed(1)}%
-                              </Badge>
-                            </Td>
-                            <Td>
-                              <Progress 
-                                value={curso.taxaResposta} 
-                                colorScheme={curso.taxaResposta >= 70 ? "green" : curso.taxaResposta >= 50 ? "yellow" : "red"}
-                                size="sm"
-                                borderRadius="md"
-                              />
-                            </Td>
-                          </Tr>
-                        ))}
-                      </Tbody>
-                    </Table>
-                  </TableContainer>
-                </VStack>
-              </TabPanel>
-
-              {/* Relatório por Turno */}
-              <TabPanel px={0}>
-                <VStack spacing={6} align="stretch">
-                  <Card bg={cardBg} border="1px solid" borderColor={borderColor}>
-                    <CardHeader>
-                      <Heading size="md">Respondentes por Turno</Heading>
-                    </CardHeader>
-                    <CardBody>
-                      <ResponsiveContainer width="100%" height={400}>
-                        <PieChart>
-                          <Pie
-                            data={relatorioData?.porTurno}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={false}
-                            label={(entry: any) => `${entry.turno}: ${entry.taxaResposta.toFixed(1)}%`}
-                            outerRadius={120}
-                            fill="#8884d8"
-                            dataKey="respondentes"
-                          >
-                            {relatorioData?.porTurno.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={coresGrafico[index % coresGrafico.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                          <Legend />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </CardBody>
-                  </Card>
-
-                  <TableContainer>
-                    <Table variant="simple">
-                      <Thead>
-                        <Tr>
-                          <Th>Turno</Th>
-                          <Th isNumeric>Respondentes</Th>
-                          <Th isNumeric>Total Convidados</Th>
-                          <Th isNumeric>Taxa de Resposta</Th>
-                          <Th>Progresso</Th>
-                        </Tr>
-                      </Thead>
-                      <Tbody>
-                        {relatorioData?.porTurno.map(turno => (
-                          <Tr key={turno.turno}>
-                            <Td>
-                              <Text fontWeight="medium">{turno.turno}</Text>
-                            </Td>
-                            <Td isNumeric>
-                              <Badge colorScheme="purple" fontSize="sm">
-                                {turno.respondentes.toLocaleString()}
-                              </Badge>
-                            </Td>
-                            <Td isNumeric>{turno.convidados.toLocaleString()}</Td>
-                            <Td isNumeric>
-                              <Badge 
-                                colorScheme={turno.taxaResposta >= 70 ? "green" : turno.taxaResposta >= 50 ? "yellow" : "red"}
-                                fontSize="sm"
-                              >
-                                {turno.taxaResposta.toFixed(1)}%
-                              </Badge>
-                            </Td>
-                            <Td>
-                              <Progress 
-                                value={turno.taxaResposta} 
-                                colorScheme={turno.taxaResposta >= 70 ? "green" : turno.taxaResposta >= 50 ? "yellow" : "red"}
-                                size="sm"
-                                borderRadius="md"
-                              />
-                            </Td>
-                          </Tr>
-                        ))}
-                      </Tbody>
-                    </Table>
-                  </TableContainer>
-                </VStack>
-              </TabPanel>
-
-              {/* Relatório Geral EaD/JGS/JOI */}
-              <TabPanel px={0}>
-                <VStack spacing={6} align="stretch">
-                  <Card bg={cardBg} border="1px solid" borderColor={borderColor}>
-                    <CardHeader>
-                      <Heading size="md">Respondentes por Campus</Heading>
-                    </CardHeader>
-                    <CardBody>
-                      <ResponsiveContainer width="100%" height={400}>
-                        <BarChart data={relatorioData?.porCampus}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="campus" />
-                          <YAxis />
-                          <Tooltip />
-                          <Legend />
-                          <Bar dataKey="respondentes" fill="#D69E2E" name="Respondentes" />
-                          <Bar dataKey="convidados" fill="#E2E8F0" name="Total Convidados" />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </CardBody>
-                  </Card>
-
-                  <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6}>
-                    {relatorioData?.porCampus.map(campus => (
-                      <Card key={campus.campus} bg={cardBg} border="1px solid" borderColor={borderColor}>
-                        <CardBody textAlign="center">
-                          <VStack spacing={4}>
-                            <Icon as={Globe} w={12} h={12} color="orange.500" />
-                            <Text fontWeight="bold" fontSize="lg">{campus.campus}</Text>
-                            <VStack spacing={2}>
-                              <Text fontSize="2xl" fontWeight="bold" color="orange.500">
-                                {campus.respondentes.toLocaleString()}
-                              </Text>
-                              <Text fontSize="sm" color="gray.600">
-                                de {campus.convidados.toLocaleString()} convidados
-                              </Text>
-                              <Badge 
-                                colorScheme={campus.taxaResposta >= 70 ? "green" : campus.taxaResposta >= 50 ? "yellow" : "red"}
-                                fontSize="md"
-                                px={3}
-                                py={1}
-                              >
-                                {campus.taxaResposta.toFixed(1)}% de resposta
-                              </Badge>
-                            </VStack>
-                            <Progress 
-                              value={campus.taxaResposta} 
-                              colorScheme={campus.taxaResposta >= 70 ? "green" : campus.taxaResposta >= 50 ? "yellow" : "red"}
-                              size="lg"
-                              borderRadius="md"
-                              w="100%"
+          {/* Relatórios por Categoria */}
+          {relatoriosPorCategoria.map(({ categoria, relatorios: rels }) => (
+            rels.length > 0 && (
+              <Box key={categoria}>
+                <Heading size="md" color="gray.700" mb={4}>
+                  {categoria}
+                </Heading>
+                <Divider mb={4} />
+                <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
+                  {rels.map((relatorio) => (
+                    <Card
+                      key={relatorio.id}
+                      bg={cardBg}
+                      border="1px solid"
+                      borderColor={borderColor}
+                      cursor="pointer"
+                      transition="all 0.2s"
+                      _hover={{
+                        transform: 'translateY(-4px)',
+                        boxShadow: 'lg',
+                        bg: hoverBg
+                      }}
+                      onClick={() => navigate(relatorio.href)}
+                    >
+                      <CardHeader>
+                        <HStack justify="space-between" align="start">
+                          <HStack spacing={3}>
+                            <Icon
+                              as={relatorio.icon}
+                              w={6}
+                              h={6}
+                              color="blue.500"
                             />
-                          </VStack>
-                        </CardBody>
-                      </Card>
-                    ))}
-                  </SimpleGrid>
-                </VStack>
-              </TabPanel>
-            </TabPanels>
-          </Tabs>
-
-          {/* Botões de Ação */}
-          <Card bg={cardBg} border="1px solid" borderColor={borderColor}>
-            <CardBody>
-              <HStack spacing={4} justify="center">
-                <Button
-                  leftIcon={<Icon as={Download} />}
-                  colorScheme="blue"
-                  size="lg"
-                  onClick={() => exportarRelatorio('completo')}
-                >
-                  Exportar Relatório Completo
-                </Button>
-                <Button
-                  leftIcon={<Icon as={FileText} />}
-                  colorScheme="green"
-                  size="lg"
-                  onClick={() => exportarRelatorio('resumido')}
-                >
-                  Exportar Resumo
-                </Button>
-              </HStack>
-            </CardBody>
-          </Card>
+                            <VStack align="start" spacing={0}>
+                              <Heading size="sm">{relatorio.title}</Heading>
+                            </VStack>
+                          </HStack>
+                          {relatorio.badge && (
+                            <Badge colorScheme={relatorio.badgeColor}>
+                              {relatorio.badge}
+                            </Badge>
+                          )}
+                        </HStack>
+                      </CardHeader>
+                      <CardBody pt={0}>
+                        <Text color="gray.600" fontSize="sm">
+                          {relatorio.description}
+                        </Text>
+                      </CardBody>
+                    </Card>
+                  ))}
+                </SimpleGrid>
+              </Box>
+            )
+          ))}
         </VStack>
       </Container>
     </MainLayout>

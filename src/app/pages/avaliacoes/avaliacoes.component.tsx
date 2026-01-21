@@ -268,6 +268,7 @@ const AvaliacoesPage: React.FC = () => {
       case 'Curso': return <GraduationCap size={16} color="gray.400" />;
       case 'Turma': return <Users size={16} color="gray.400" />;
       case 'Estrutura': return <Building size={16} color="gray.400" />;
+      case 'Pesquisa': return <Building size={16} color="gray.400" />;
       case 'ProjetoExtensionista': return <Target size={16} color="gray.400" />;
       case 'PACExtensionista': return <Target size={16} color="gray.400" />;
       case 'Estagio': return <Target size={16} color="gray.400" />;
@@ -360,6 +361,7 @@ const AvaliacoesPage: React.FC = () => {
                 <option value="TCC">TCC</option>
                 <option value="ProjetoExtensionista">Projeto Extensionista</option>
                 <option value="Estrutura">Estrutura</option>
+                <option value="Pesquisa">Pesquisa</option>
               </Select>
             </FormControl>
           </SimpleGrid>
@@ -535,79 +537,16 @@ const AvaliacoesPage: React.FC = () => {
                           📊 Acompanhar
                         </Button>
                         <Divider />
-                        <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={1}>
-                          Relatórios
-                        </Text>
                         <Button 
                           colorScheme="purple" 
                           variant="ghost" 
                           size="sm"
                           leftIcon={<BarChart3 size={16} />}
-                          onClick={() => navigate(`/relatorios/avaliacao/graficos?questionarioId=${avaliacao.id}`)}
+                          onClick={() => navigate(`/relatorios?questionarioId=${avaliacao.id}`)}
                           w="full"
                         >
-                          Gráficos
+                          Central de Relatórios
                         </Button>
-                        <Button 
-                          colorScheme="purple" 
-                          variant="ghost" 
-                          size="sm"
-                          leftIcon={<BarChart3 size={16} />}
-                          onClick={() => navigate(`/relatorios/avaliacao/tabelas?questionarioId=${avaliacao.id}`)}
-                          w="full"
-                        >
-                          Tabelas (Geral)
-                        </Button>
-                        {/* Por curso e por turno: todos */}
-                        <Button 
-                          colorScheme="purple" 
-                          variant="ghost" 
-                          size="sm"
-                          leftIcon={<BarChart3 size={16} />}
-                          onClick={() => navigate(`/relatorios/avaliacao/tabelas/por-curso?questionarioId=${avaliacao.id}`)}
-                          w="full"
-                        >
-                          Por Curso
-                        </Button>
-                        <Button 
-                          colorScheme="purple" 
-                          variant="ghost" 
-                          size="sm"
-                          leftIcon={<BarChart3 size={16} />}
-                          onClick={() => navigate(`/relatorios/avaliacao/tabelas/por-curso-turno?questionarioId=${avaliacao.id}`)}
-                          w="full"
-                        >
-                          Por Curso-Turno
-                        </Button>
-                        {/* Por turma e por disciplina: somente PAC, TCC, PEX, Disciplina e Estágio */}
-                        {(avaliacao.tipoItemAvaliado === 'Disciplina' ||
-                          avaliacao.tipoItemAvaliado === 'TCC' ||
-                          avaliacao.tipoItemAvaliado === 'ProjetoExtensionista' ||
-                          avaliacao.tipoItemAvaliado === 'PACExtensionista' ||
-                          avaliacao.tipoItemAvaliado === 'Estagio') && (
-                          <>
-                            <Button 
-                              colorScheme="purple" 
-                              variant="ghost" 
-                              size="sm"
-                              leftIcon={<BarChart3 size={16} />}
-                              onClick={() => navigate(`/relatorios/avaliacao/tabelas/por-turma?questionarioId=${avaliacao.id}`)}
-                              w="full"
-                            >
-                              Por Turma
-                            </Button>
-                            <Button 
-                              colorScheme="purple" 
-                              variant="ghost" 
-                              size="sm"
-                              leftIcon={<BarChart3 size={16} />}
-                              onClick={() => navigate(`/relatorios/avaliacao/tabelas/por-disciplina?questionarioId=${avaliacao.id}`)}
-                              w="full"
-                            >
-                              Por Disciplina
-                            </Button>
-                          </>
-                        )}
                       </VStack>
                     </VStack>
                   </HStack>

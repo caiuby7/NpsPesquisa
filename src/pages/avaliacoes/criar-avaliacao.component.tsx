@@ -372,6 +372,7 @@ const CriarAvaliacaoPage: React.FC = () => {
       case 'Turma': return <FiUsers size={20} />;
               case 'Coordenador': return <FiUsers size={20} />;
               case 'Estrutura': return <FiHome size={20} />;
+              case 'Pesquisa': return <FiHome size={20} />;
       default: return <FiTarget size={20} />;
     }
   };
@@ -385,6 +386,7 @@ const CriarAvaliacaoPage: React.FC = () => {
       case 'Turma': return 'Turma';
       case 'Coordenador': return 'Coordenador';
       case 'Estrutura': return 'Estrutura';
+      case 'Pesquisa': return 'Pesquisa';
       default: return tipo;
     }
   };
@@ -438,6 +440,7 @@ const CriarAvaliacaoPage: React.FC = () => {
                   <option value="TCC">TCC</option>
                   <option value="ProjetoExtensionista">Projeto Extensionista</option>
                   <option value="Estrutura">Estrutura</option>
+                  <option value="Pesquisa">Pesquisa</option>
                 </Select>
               </FormControl>
             </SimpleGrid>

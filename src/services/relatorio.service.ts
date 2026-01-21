@@ -86,6 +86,7 @@ export interface DadosAcompanhamento {
   disciplina: string;
   tipoDisciplina?: string;
   itemAvaliado?: string;
+  professorNome?: string;
   qtdTotal: number;
   qtdResp: number;
   taxaResposta: number;

@@ -251,6 +251,7 @@ const FiltrosAvancados: React.FC<FiltrosAvancadosProps> = ({
         filtrosVisiveis.push('periodoLetivo', 'curso', 'tiposTurma', 'nivelEnsino');
         break;
       case 'Estrutura':
+      case 'Pesquisa':
         filtrosVisiveis.push('periodoLetivo');
         break;
     }

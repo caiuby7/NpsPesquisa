@@ -125,7 +125,7 @@ const ParticipantesFormularioPage = () => {
     formData.append("file", file);
     try {
       const token = Cookies.get("token") || '';
-      await api.post(`/Questionario/${id}/importar-participantes-xls`, formData, {
+      await api.post(`/Questionario/${id}/importar-participantes-por-email-xls`, formData, {
         headers: {
           Authorization: `Bearer ${token}`
         },
@@ -406,6 +406,11 @@ const ParticipantesFormularioPage = () => {
               <ModalHeader>Importar Participantes via XLS</ModalHeader>
               <ModalCloseButton />
               <ModalBody>
+                <Text fontSize="sm" color="gray.600" mb={4}>
+                  Estrutura esperada: Participante (coluna 1), Tipo (coluna 2), Email (coluna 3).
+                  <br />
+                  O sistema buscará participantes existentes pelo email.
+                </Text>
                 <Input
                   type="file"
                   accept=".xls,.xlsx"

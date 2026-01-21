@@ -341,7 +341,7 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
     });
 
     // Verificar se todas as questões obrigatórias foram respondidas
-    const isQuestaoAgrupada = tipoItemAvaliado !== "Estrutura" && tipoItemAvaliado !== "Infraestrutura" && shouldUseGroupedStructure && itensAvaliados;
+    const isQuestaoAgrupada = tipoItemAvaliado !== "Estrutura" && tipoItemAvaliado !== "Pesquisa" && tipoItemAvaliado !== "Infraestrutura" && shouldUseGroupedStructure && itensAvaliados;
     
     return todasQuestoes.every((q: QuestionResponse) => {
       if (!q.obrigatorio) return true;
@@ -916,7 +916,7 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
       }
       
       // Verificar se esta questão específica está na estrutura agrupada
-      const isQuestaoAgrupada = tipoItemAvaliado !== "Estrutura" && tipoItemAvaliado !== "Infraestrutura" && shouldUseGroupedStructure && itensAvaliados;
+      const isQuestaoAgrupada = tipoItemAvaliado !== "Estrutura" && tipoItemAvaliado !== "Pesquisa" && tipoItemAvaliado !== "Infraestrutura" && shouldUseGroupedStructure && itensAvaliados;
       
       if (isQuestaoAgrupada) {
         // Para estrutura agrupada, verificar se todas as respostas para cada item foram respondidas
@@ -1613,8 +1613,8 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
         {visibleQuestions.map((questao: QuestionResponse) => {
           console.log(`🔍 Renderizando questão ${questao.id} (${questao.texto})`);
           
-          // Para Estrutura e Infraestrutura, sempre usar renderização normal
-          if (tipoItemAvaliado === "Estrutura" || tipoItemAvaliado === "Infraestrutura") {
+          // Para Estrutura, Pesquisa e Infraestrutura, sempre usar renderização normal
+          if (tipoItemAvaliado === "Estrutura" || tipoItemAvaliado === "Pesquisa" || tipoItemAvaliado === "Infraestrutura") {
             return renderNormalQuestion(questao);
           }
           

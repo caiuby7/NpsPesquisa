@@ -187,6 +187,7 @@ const AvaliacoesPage: React.FC = () => {
       'Turma': 'teal',
       'Coordenador': 'pink',
       'Estrutura': 'gray',
+      'Pesquisa': 'gray',
       'ProjetoExtensionista': 'cyan',
       'PACExtensionista': 'yellow',
       'Estagio': 'indigo',

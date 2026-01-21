@@ -32,12 +32,14 @@ import {
   StatArrow,
 } from '@chakra-ui/react';
 import { MainLayout } from '../../components/layout/main-layout.component';
-import { FiDownload, FiFileText, FiUsers, FiTrendingUp } from 'react-icons/fi';
+import { FiDownload, FiFileText, FiUsers, FiTrendingUp, FiArrowLeft } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 import { apiFetch, apiFetchJson } from '../../utils/api-fetch';
 import { API_URLS } from '../../config/api-urls';
 import { relatorioService, AcompanhamentoFiltros, RelatorioAcompanhamento } from '../../services/relatorio.service';
 
 const RelatoriosAcompanhamento: React.FC = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [relatorio, setRelatorio] = useState<RelatorioAcompanhamento | null>(null);
   const [filtros, setFiltros] = useState<AcompanhamentoFiltros>({
@@ -92,7 +94,6 @@ const RelatoriosAcompanhamento: React.FC = () => {
         return;
       }
       
-      console.log('🚀 Gerando relatório com filtros:', filtros);
       const dados = await relatorioService.getRelatorioAcompanhamento(filtros);
       setRelatorio(dados);
 
@@ -170,7 +171,7 @@ const RelatoriosAcompanhamento: React.FC = () => {
   };
 
   const agruparDadosPorCursoETurno = (dados: any[], tipoItemAvaliado?: string) => {
-    const cursos = new Map<string, { curso: string; codCurso: string; turnos: Map<string, { turno: string; itens: any[] }> }>();
+    const cursos = new Map<string, { curso: string; codCurso: string; turnos: Map<string, { turno: string; turmas: Map<string, { codTurma: string; itens: any[] }> }> }>();
     const isValorInvalido = (valor: any) => valor === null || valor === undefined || valor === '-';
 
     dados.forEach(item => {
@@ -184,6 +185,9 @@ const RelatoriosAcompanhamento: React.FC = () => {
       const cursoKey = `${item.curso}-${item.codCurso}`;
       const turnoValor = item.turno ?? '-';
       const turnoKey = turnoValor;
+      const codTurmaValor = item.codTurma ?? '-';
+      // Usar uma chave única que inclui curso, turno e turma para evitar conflitos
+      const turmaKey = `${cursoKey}-${turnoKey}-${codTurmaValor}`;
 
       if (!cursos.has(cursoKey)) {
         cursos.set(cursoKey, {
@@ -198,11 +202,20 @@ const RelatoriosAcompanhamento: React.FC = () => {
       if (!cursoEntry.turnos.has(turnoKey)) {
         cursoEntry.turnos.set(turnoKey, {
           turno: turnoValor,
+          turmas: new Map()
+        });
+      }
+
+      const turnoEntry = cursoEntry.turnos.get(turnoKey)!;
+
+      if (!turnoEntry.turmas.has(turmaKey)) {
+        turnoEntry.turmas.set(turmaKey, {
+          codTurma: codTurmaValor,
           itens: []
         });
       }
 
-      cursoEntry.turnos.get(turnoKey)!.itens.push(item);
+      turnoEntry.turmas.get(turmaKey)!.itens.push(item);
     });
 
     return Array.from(cursos.entries()).map(([cursoKey, cursoValue]) => ({
@@ -212,7 +225,11 @@ const RelatoriosAcompanhamento: React.FC = () => {
       turnos: Array.from(cursoValue.turnos.entries()).map(([turnoKey, turnoValue]) => ({
         key: turnoKey,
         turno: turnoValue.turno,
-        itens: turnoValue.itens
+        turmas: Array.from(turnoValue.turmas.entries()).map(([turmaKey, turmaValue]) => ({
+          key: turmaKey,
+          codTurma: turmaValue.codTurma,
+          itens: turmaValue.itens
+        }))
       }))
     }));
   };
@@ -241,7 +258,8 @@ const RelatoriosAcompanhamento: React.FC = () => {
   const esconderColunasTurmaEItem = ['Curso', 'Alunos'].includes(tipoItemAvaliadoRelatorio);
   const mostrarColunaCodTurma = !esconderColunasTurmaEItem;
   const mostrarColunasDisciplina = ['Disciplina', 'TCC', 'Estagio', 'ProjetoExtensionista', 'PACExtensionista'].includes(tipoItemAvaliadoRelatorio);
-  const colunasAntesMetricas = 2 + (mostrarColunaCodTurma ? 1 : 0) + (mostrarColunasDisciplina ? 1 : 0);
+  const mostrarColunaProfessor = mostrarColunasDisciplina; // Mostrar professor apenas quando mostrar disciplina
+  const colunasAntesMetricas = 2 + (mostrarColunaCodTurma ? 1 : 0) + (mostrarColunasDisciplina ? 1 : 0) + (mostrarColunaProfessor ? 1 : 0);
   const dadosAgrupados = relatorio ? agruparDadosPorCursoETurno(relatorio.dados, tipoItemAvaliadoRelatorio) : [];
 
   return (
@@ -527,6 +545,7 @@ const RelatoriosAcompanhamento: React.FC = () => {
                         {mostrarColunaCodTurma && <Th>CODTURMA</Th>}
                         {/* Mostrar colunas de disciplina apenas para tipos relacionados a disciplinas */}
                         {mostrarColunasDisciplina && <Th>DISCIPLINA</Th>}
+                        {mostrarColunaProfessor && <Th>PROFESSOR</Th>}
                         <Th isNumeric>TOTAL</Th>
                         <Th isNumeric>QTD_RESP</Th>
                         <Th isNumeric>TAXA</Th>
@@ -534,50 +553,39 @@ const RelatoriosAcompanhamento: React.FC = () => {
                     </Thead>
                     <Tbody>
                       {dadosAgrupados.map(curso => {
-                        const totaisCurso = calcularTotais(curso.turnos.flatMap(turno => turno.itens));
-                        let primeiraLinhaCurso = true;
+                        const totaisCurso = calcularTotais(curso.turnos.flatMap(turno => turno.turmas.flatMap(turma => turma.itens)));
 
                         return (
                           <React.Fragment key={curso.key}>
                             {curso.turnos.map(turno => {
-                              const totaisTurno = calcularTotais(turno.itens);
-                              let primeiraLinhaTurno = true;
+                              const totaisTurno = calcularTotais(turno.turmas.flatMap(turma => turma.itens));
 
                               return (
                                 <React.Fragment key={`${curso.key}-${turno.key}`}>
-                                  {turno.itens.map((item, index) => {
-                                    const mostrarCurso = primeiraLinhaCurso;
-                                    if (primeiraLinhaCurso) {
-                                      primeiraLinhaCurso = false;
-                                    }
-
-                                    const mostrarTurno = primeiraLinhaTurno;
-                                    if (primeiraLinhaTurno) {
-                                      primeiraLinhaTurno = false;
-                                    }
-
+                                  {turno.turmas.map(turma => {
                                     return (
-                                      <Tr key={`${curso.key}-${turno.key}-${index}`}>
-                                        <Td fontWeight={mostrarCurso ? 'bold' : 'normal'}>
-                                          {mostrarCurso ? item.curso : ''}
-                                        </Td>
-                                        <Td fontWeight={mostrarTurno ? 'bold' : 'normal'}>
-                                          {mostrarTurno ? (item.turno ?? '-') : ''}
-                                        </Td>
-                                        {mostrarColunaCodTurma && (
-                                          <Td fontWeight={mostrarTurno ? 'bold' : 'normal'}>
-                                            {mostrarTurno ? item.codTurma : ''}
-                                          </Td>
-                                        )}
-                                        {mostrarColunasDisciplina && <Td>{item.disciplina}</Td>}
-                                        <Td isNumeric>{item.qtdTotal}</Td>
-                                        <Td isNumeric>{item.qtdResp}</Td>
-                                        <Td isNumeric>
-                                          <Badge colorScheme={getCorBadge(item.taxaResposta)}>
-                                            {item.taxaResposta.toFixed(1)}%
-                                          </Badge>
-                                        </Td>
-                                      </Tr>
+                                      <React.Fragment key={`${curso.key}-${turno.key}-${turma.key}`}>
+                                        {turma.itens.map((item, index) => {
+                                          return (
+                                            <Tr key={`${curso.key}-${turno.key}-${turma.key}-${index}`}>
+                                              <Td>{item.curso}</Td>
+                                              <Td>{item.turno ?? '-'}</Td>
+                                              {mostrarColunaCodTurma && (
+                                                <Td>{item.codTurma ?? '-'}</Td>
+                                              )}
+                                              {mostrarColunasDisciplina && <Td>{item.disciplina}</Td>}
+                                              {mostrarColunaProfessor && <Td>{item.professorNome ?? '-'}</Td>}
+                                              <Td isNumeric>{item.qtdTotal}</Td>
+                                              <Td isNumeric>{item.qtdResp}</Td>
+                                              <Td isNumeric>
+                                                <Badge colorScheme={getCorBadge(item.taxaResposta)}>
+                                                  {item.taxaResposta.toFixed(1)}%
+                                                </Badge>
+                                              </Td>
+                                            </Tr>
+                                          );
+                                        })}
+                                      </React.Fragment>
                                     );
                                   })}
 

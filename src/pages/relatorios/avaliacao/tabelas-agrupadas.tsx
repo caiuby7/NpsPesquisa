@@ -29,8 +29,9 @@ import {
   AccordionPanel,
   AccordionIcon,
 } from '@chakra-ui/react';
-import { FiRefreshCw, FiDownload } from 'react-icons/fi';
+import { FiRefreshCw, FiDownload, FiArrowLeft, FiFileText } from 'react-icons/fi';
 import { MainLayout } from '../../../components/layout/main-layout.component';
+import { useNavigate } from 'react-router-dom';
 import { useGetAvaliacoes } from '../../../app/services/avaliacao/avaliacao.service.hooks';
 import {
   RelatorioAvaliacaoAgrupadoDto,
@@ -48,6 +49,7 @@ interface TabelasAgrupadasProps {
 }
 
 const TabelasAgrupadas: React.FC<TabelasAgrupadasProps> = ({ titulo, descricao, obterRelatorio, tipoAgrupamento }) => {
+  const navigate = useNavigate();
   const toast = useToast();
   const [avaliacaoSelecionada, setAvaliacaoSelecionada] = useState<string>('');
   const [relatoriosAgrupados, setRelatoriosAgrupados] = useState<RelatorioAvaliacaoAgrupadoDto[]>([]);
@@ -56,7 +58,10 @@ const TabelasAgrupadas: React.FC<TabelasAgrupadasProps> = ({ titulo, descricao, 
   const { data: avaliacoes = [], isLoading: carregandoAvaliacoes } = useGetAvaliacoes();
 
   const processarPerguntasParaTabela = (perguntas: RelatorioAvaliacaoPerguntaDto[]) => {
-    return perguntas.map((pergunta, index) => {
+    // Filtrar questões condicionais sem respostas (mesmo padrão do relatório geral)
+    return perguntas
+      .filter((pergunta) => pergunta.totalRespostas > 0)
+      .map((pergunta, index) => {
       const ordem = pergunta.ordem > 0 ? pergunta.ordem : index + 1;
       const enunciadoNormalizado = pergunta.enunciado.replace(/^\d+\.\s*/, '');
 
@@ -80,13 +85,27 @@ const TabelasAgrupadas: React.FC<TabelasAgrupadasProps> = ({ titulo, descricao, 
       // Para EscalaLinear, ordenar numericamente pelo rótulo
       if (pergunta.tipo === 'EscalaLinear') {
         opcoes = opcoes.sort((a, b) => {
-          const numA = parseInt(a.rotulo, 10);
-          const numB = parseInt(b.rotulo, 10);
+          // Tentar converter ambos para números
+          const numA = parseFloat(a.rotulo?.toString().trim() || '0');
+          const numB = parseFloat(b.rotulo?.toString().trim() || '0');
+          
+          // Se ambos são números válidos, ordenar numericamente
           if (!isNaN(numA) && !isNaN(numB)) {
             return numA - numB;
           }
-          // Se não conseguir converter, manter ordem original
-          return a.rotulo.localeCompare(b.rotulo);
+          
+          // Se apenas A é número, A vem primeiro
+          if (!isNaN(numA) && isNaN(numB)) {
+            return -1;
+          }
+          
+          // Se apenas B é número, B vem primeiro
+          if (isNaN(numA) && !isNaN(numB)) {
+            return 1;
+          }
+          
+          // Se nenhum é número, ordenar alfabeticamente
+          return (a.rotulo || '').localeCompare(b.rotulo || '');
         });
       }
 
@@ -214,11 +233,95 @@ const TabelasAgrupadas: React.FC<TabelasAgrupadasProps> = ({ titulo, descricao, 
     }
   };
 
+  const handleExportarPdf = async () => {
+    if (!avaliacaoSelecionada) {
+      toast({
+        title: 'Selecione uma avaliação',
+        status: 'warning',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    try {
+      const request = {
+        questionarioId: Number(avaliacaoSelecionada),
+        incluirRespostasTextuais: false,
+        incluirAnaliseSentimentos: false,
+      };
+
+      let blob: Blob;
+      let nomeArquivo: string;
+
+      if (tipoAgrupamento) {
+        switch (tipoAgrupamento) {
+          case 'por-curso':
+            blob = await relatoriosAvaliacaoService.exportarRelatorioPorCursoPdf(request);
+            nomeArquivo = `Relatorio_Por_Curso_${avaliacaoSelecionada}_${new Date().toISOString().split('T')[0]}.pdf`;
+            break;
+          case 'por-curso-turno':
+            blob = await relatoriosAvaliacaoService.exportarRelatorioPorCursoTurnoPdf(request);
+            nomeArquivo = `Relatorio_Por_Curso_Turno_${avaliacaoSelecionada}_${new Date().toISOString().split('T')[0]}.pdf`;
+            break;
+          case 'por-turma':
+            blob = await relatoriosAvaliacaoService.exportarRelatorioPorTurmaPdf(request);
+            nomeArquivo = `Relatorio_Por_Turma_${avaliacaoSelecionada}_${new Date().toISOString().split('T')[0]}.pdf`;
+            break;
+          case 'por-disciplina':
+            blob = await relatoriosAvaliacaoService.exportarRelatorioPorDisciplinaPdf(request);
+            nomeArquivo = `Relatorio_Por_Disciplina_${avaliacaoSelecionada}_${new Date().toISOString().split('T')[0]}.pdf`;
+            break;
+          default:
+            blob = await relatoriosAvaliacaoService.exportarRelatorioGeralPdf(request);
+            nomeArquivo = `Relatorio_${avaliacaoSelecionada}_${new Date().toISOString().split('T')[0]}.pdf`;
+        }
+      } else {
+        blob = await relatoriosAvaliacaoService.exportarRelatorioGeralPdf(request);
+        nomeArquivo = `Relatorio_${avaliacaoSelecionada}_${new Date().toISOString().split('T')[0]}.pdf`;
+      }
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = nomeArquivo;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: 'PDF exportado com sucesso',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao exportar PDF',
+        description: error.message || 'Não foi possível exportar o relatório. Tente novamente.',
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+      });
+    }
+  };
+
   return (
     <MainLayout>
       <Box p={8}>
         <Flex direction={{ base: 'column', lg: 'row' }} justify="space-between" align={{ base: 'flex-start', lg: 'center' }} mb={6} gap={4}>
           <Box>
+            <Flex mb={4}>
+              <Button
+                leftIcon={<FiArrowLeft />}
+                variant="ghost"
+                onClick={() => navigate('/relatorios')}
+                size="sm"
+              >
+                Voltar para Central de Relatórios
+              </Button>
+            </Flex>
             <Heading size="lg">{titulo}</Heading>
             <Text color="gray.600">{descricao}</Text>
           </Box>
@@ -252,6 +355,14 @@ const TabelasAgrupadas: React.FC<TabelasAgrupadasProps> = ({ titulo, descricao, 
               >
                 Exportar Excel
               </Button>
+              <Button
+                leftIcon={<FiFileText />}
+                variant="outline"
+                colorScheme="red"
+                onClick={handleExportarPdf}
+              >
+                Exportar PDF
+              </Button>
             </Flex>
           </Flex>
         </Flex>
@@ -267,16 +378,13 @@ const TabelasAgrupadas: React.FC<TabelasAgrupadasProps> = ({ titulo, descricao, 
             {/* Estatísticas Gerais - Apenas uma vez no topo */}
             {relatoriosAgrupados.length > 0 && (() => {
               const primeiroRelatorio = relatoriosAgrupados[0].relatorio;
-              // Calcular totais somando todos os grupos
-              const totalConvites = relatoriosAgrupados.reduce(
-                (sum, grupo) => sum + (grupo.relatorio.resumoParticipantes.totalConvites || 0),
-                0
-              );
-              const totalRespondentes = relatoriosAgrupados.reduce(
-                (sum, grupo) => sum + (grupo.relatorio.resumoParticipantes.totalRespondentes || 0),
-                0
-              );
-              const percentualResposta = totalConvites > 0 ? (totalRespondentes / totalConvites) * 100 : 0;
+              // Os convites são únicos por questionário, não por grupo
+              // Usar o total do primeiro grupo (todos terão o mesmo valor)
+              const totalConvites = primeiroRelatorio.resumoParticipantes.totalConvites || 0;
+              // Para respondentes, usar o máximo (não somar, pois pode haver sobreposição entre grupos)
+              // Na verdade, o correto é usar o total do questionário, que está no primeiro relatório
+              const totalRespondentes = primeiroRelatorio.resumoParticipantes.totalRespondentes || 0;
+              const percentualResposta = primeiroRelatorio.resumoParticipantes.percentualResposta || 0;
 
               return (
                 <Box borderWidth="1px" borderRadius="lg" p={6} bg="gray.50">

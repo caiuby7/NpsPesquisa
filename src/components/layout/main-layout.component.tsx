@@ -399,6 +399,16 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                 Por Disciplina
               </NavItem>
               <NavItem 
+                icon={FiBarChart2} 
+                href="/relatorios/comparativo"
+                isActive={isActiveRoute('/relatorios/comparativo')}
+                onClick={() => navigate('/relatorios/comparativo')}
+                badge="COMP"
+                badgeColor="red"
+              >
+                Comparativo
+              </NavItem>
+              <NavItem 
                 icon={FiFileText} 
                 href="/institutional-evaluation-example"
                 isActive={isActiveRoute('/institutional-evaluation-example')}

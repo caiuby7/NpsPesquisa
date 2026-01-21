@@ -336,6 +336,7 @@ export default function QuestionarioPorChavePage() {
                data.tipoItemAvaliado === "TCC" ? "Avaliação dos TCCs" :
                data.tipoItemAvaliado === "ProjetoExtensionista" ? "Avaliação dos Projetos Extensionistas" :
                data.tipoItemAvaliado === "Infraestrutura" ? "Avaliação de Infraestrutura" :
+               data.tipoItemAvaliado === "Pesquisa" ? "Avaliação de Pesquisa" :
                "Avaliação"}
             </Text>
             </HStack>

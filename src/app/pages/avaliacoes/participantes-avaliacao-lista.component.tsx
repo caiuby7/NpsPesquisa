@@ -20,13 +20,23 @@ import {
   Card,
   CardBody,
   CardHeader,
-  IconButton
+  IconButton,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
+  Input
 } from '@chakra-ui/react';
 import { 
   UserPlus,
   Users,
   ArrowLeft,
-  Trash2
+  Trash2,
+  FileUp
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import MainLayout from '../../../components/layout/main-layout.component';
@@ -52,6 +62,8 @@ const ParticipantesAvaliacaoListaPage: React.FC = () => {
   const { data: avaliacao, isLoading: loadingAvaliacao } = useGetAvaliacaoById(Number(id));
   const [participantes, setParticipantes] = useState<ParticipanteAvaliacao[]>([]);
   const [loading, setLoading] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const { isOpen: isImportOpen, onOpen: onImportOpen, onClose: onImportClose } = useDisclosure();
 
   const toast = useToast();
   const navigate = useNavigate();
@@ -139,6 +151,87 @@ const ParticipantesAvaliacaoListaPage: React.FC = () => {
     }
   };
 
+  const handleImportExcel = async () => {
+    if (!file || !id) {
+      toast({
+        title: 'Erro',
+        description: 'Selecione um arquivo Excel',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      formData.append('file', file);
+
+      await api.post(`/Questionario/${id}/importar-participantes-por-email-xls`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      toast({
+        title: 'Sucesso',
+        description: 'Participantes importados com sucesso!',
+        status: 'success',
+        duration: 4000,
+        isClosable: true,
+      });
+
+      setFile(null);
+      onImportClose();
+      carregarParticipantes();
+    } catch (error: any) {
+      console.error('Erro ao importar:', error);
+      toast({
+        title: 'Erro',
+        description: error.response?.data?.message || 'Erro ao importar participantes do Excel',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownloadTemplate = async () => {
+    try {
+      const response = await api.get(`/Questionario/${id}/template-importacao-participantes-por-email`, {
+        responseType: 'blob',
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `template_importacao_participantes_${id}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+
+      toast({
+        title: 'Sucesso',
+        description: 'Template baixado com sucesso!',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error) {
+      console.error('Erro ao baixar template:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao baixar template',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+
   if (loadingAvaliacao || loading) {
     return (
       <MainLayout>
@@ -177,13 +270,23 @@ const ParticipantesAvaliacaoListaPage: React.FC = () => {
               <Text color="gray.600">{avaliacao.titulo}</Text>
             </Box>
           </HStack>
-          <Button
-            leftIcon={<UserPlus size={20} />}
-            colorScheme="blue"
-            onClick={() => navigate(`/avaliacoes/${id}/participantes/adicionar`)}
-          >
-            Adicionar Participantes
-          </Button>
+          <HStack spacing={3}>
+            <Button
+              leftIcon={<FileUp size={20} />}
+              colorScheme="green"
+              variant="outline"
+              onClick={onImportOpen}
+            >
+              Importar Excel
+            </Button>
+            <Button
+              leftIcon={<UserPlus size={20} />}
+              colorScheme="blue"
+              onClick={() => navigate(`/avaliacoes/${id}/participantes/adicionar`)}
+            >
+              Adicionar Participantes
+            </Button>
+          </HStack>
         </Flex>
 
         {/* Estatísticas */}
@@ -299,6 +402,55 @@ const ParticipantesAvaliacaoListaPage: React.FC = () => {
             </CardBody>
           </Card>
         )}
+
+        {/* Modal de Importação Excel */}
+        <Modal isOpen={isImportOpen} onClose={onImportClose} size="lg">
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>Importar Participantes via Excel</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              <VStack spacing={4} align="stretch">
+                <Text fontSize="sm" color="gray.600">
+                  Selecione um arquivo Excel (.xlsx) com a estrutura: Participante (coluna 1), Tipo (coluna 2), Email (coluna 3).
+                  <br />
+                  O sistema buscará participantes existentes pelo email e os adicionará ao questionário.
+                </Text>
+                <Button
+                  colorScheme="blue"
+                  variant="outline"
+                  onClick={handleDownloadTemplate}
+                  leftIcon={<FileUp size={16} />}
+                >
+                  Baixar Template Excel
+                </Button>
+                <Input
+                  type="file"
+                  accept=".xls,.xlsx"
+                  onChange={(e) => setFile(e.target.files?.[0] || null)}
+                />
+                {file && (
+                  <Text fontSize="sm" color="green.600">
+                    Arquivo selecionado: {file.name}
+                  </Text>
+                )}
+              </VStack>
+            </ModalBody>
+            <ModalFooter>
+              <Button variant="ghost" mr={3} onClick={onImportClose}>
+                Cancelar
+              </Button>
+              <Button
+                colorScheme="blue"
+                onClick={handleImportExcel}
+                isLoading={loading}
+                isDisabled={!file}
+              >
+                Importar
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
       </Box>
     </MainLayout>
   );
