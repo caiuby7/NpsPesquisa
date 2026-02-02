@@ -255,6 +255,23 @@ const RelatoriosAcompanhamento: React.FC = () => {
   };
 
   const tipoItemAvaliadoRelatorio = relatorio?.tipoItemAvaliado ?? relatorio?.totais?.tipoItemAvaliado ?? '-';
+  const tipoRespondenteEsperado: 'Aluno' | 'Professor' | 'Coordenador' | 'Todos' = (() => {
+    // Regra baseada no enum TipoItemAvaliado (backend):
+    // - Avaliações de Professores: Coordenador / Alunos / Turma -> respondente é Professor
+    // - Demais tipos -> respondente é Aluno
+    const tipo = (tipoItemAvaliadoRelatorio || '').toString();
+    if (['Coordenador', 'Alunos', 'Turma'].includes(tipo)) return 'Professor';
+    if (tipo === '-' || tipo.trim().length === 0) return 'Todos';
+    return 'Aluno';
+  })();
+
+  const mostrarResumoAlunos = tipoRespondenteEsperado === 'Aluno' || tipoRespondenteEsperado === 'Todos';
+  const mostrarResumoProfessores = tipoRespondenteEsperado === 'Professor' || tipoRespondenteEsperado === 'Todos';
+  // Atualmente não há regra que torne o respondente "Coordenador" neste relatório,
+  // mas mantemos o flag para compatibilidade futura.
+  const mostrarResumoCoordenadores = tipoRespondenteEsperado === 'Todos';
+  const colunasResumo = [mostrarResumoAlunos, mostrarResumoProfessores, mostrarResumoCoordenadores].filter(Boolean).length || 1;
+
   const esconderColunasTurmaEItem = ['Curso', 'Alunos'].includes(tipoItemAvaliadoRelatorio);
   const mostrarColunaCodTurma = !esconderColunasTurmaEItem;
   const mostrarColunasDisciplina = ['Disciplina', 'TCC', 'Estagio', 'ProjetoExtensionista', 'PACExtensionista'].includes(tipoItemAvaliadoRelatorio);
@@ -426,72 +443,78 @@ const RelatoriosAcompanhamento: React.FC = () => {
                 <Heading size="md">Detalhes por Tipo de Participante</Heading>
               </CardHeader>
               <CardBody>
-                <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-                  <Box>
-                    <Text fontWeight="bold" mb={2}>👨‍🎓 Alunos</Text>
-                    <VStack spacing={1} align="stretch">
-                      <HStack justify="space-between">
-                        <Text fontSize="sm">Total:</Text>
-                        <Text fontSize="sm" fontWeight="bold">{relatorio.resumo.participantesAlunos}</Text>
-                      </HStack>
-                      <HStack justify="space-between">
-                        <Text fontSize="sm">Respondidos:</Text>
-                        <Text fontSize="sm" fontWeight="bold" color="green.500">{relatorio.resumo.respondidosAlunos}</Text>
-                      </HStack>
-                      <HStack justify="space-between">
-                        <Text fontSize="sm">Taxa:</Text>
-                        <Text fontSize="sm" fontWeight="bold">
-                          {relatorio.resumo.participantesAlunos > 0 
-                            ? ((relatorio.resumo.respondidosAlunos / relatorio.resumo.participantesAlunos) * 100).toFixed(1)
-                            : 0}%
-                        </Text>
-                      </HStack>
-                    </VStack>
-                  </Box>
+                <SimpleGrid columns={{ base: 1, md: colunasResumo }} spacing={4}>
+                  {mostrarResumoAlunos && (
+                    <Box>
+                      <Text fontWeight="bold" mb={2}>👨‍🎓 Alunos</Text>
+                      <VStack spacing={1} align="stretch">
+                        <HStack justify="space-between">
+                          <Text fontSize="sm">Total:</Text>
+                          <Text fontSize="sm" fontWeight="bold">{relatorio.resumo.participantesAlunos}</Text>
+                        </HStack>
+                        <HStack justify="space-between">
+                          <Text fontSize="sm">Respondidos:</Text>
+                          <Text fontSize="sm" fontWeight="bold" color="green.500">{relatorio.resumo.respondidosAlunos}</Text>
+                        </HStack>
+                        <HStack justify="space-between">
+                          <Text fontSize="sm">Taxa:</Text>
+                          <Text fontSize="sm" fontWeight="bold">
+                            {relatorio.resumo.participantesAlunos > 0
+                              ? ((relatorio.resumo.respondidosAlunos / relatorio.resumo.participantesAlunos) * 100).toFixed(1)
+                              : 0}%
+                          </Text>
+                        </HStack>
+                      </VStack>
+                    </Box>
+                  )}
 
-                  <Box>
-                    <Text fontWeight="bold" mb={2}>👨‍🏫 Professores</Text>
-                    <VStack spacing={1} align="stretch">
-                      <HStack justify="space-between">
-                        <Text fontSize="sm">Total:</Text>
-                        <Text fontSize="sm" fontWeight="bold">{relatorio.resumo.participantesProfessores}</Text>
-                      </HStack>
-                      <HStack justify="space-between">
-                        <Text fontSize="sm">Respondidos:</Text>
-                        <Text fontSize="sm" fontWeight="bold" color="green.500">{relatorio.resumo.respondidosProfessores}</Text>
-                      </HStack>
-                      <HStack justify="space-between">
-                        <Text fontSize="sm">Taxa:</Text>
-                        <Text fontSize="sm" fontWeight="bold">
-                          {relatorio.resumo.participantesProfessores > 0 
-                            ? ((relatorio.resumo.respondidosProfessores / relatorio.resumo.participantesProfessores) * 100).toFixed(1)
-                            : 0}%
-                        </Text>
-                      </HStack>
-                    </VStack>
-                  </Box>
+                  {mostrarResumoProfessores && (
+                    <Box>
+                      <Text fontWeight="bold" mb={2}>👨‍🏫 Professores</Text>
+                      <VStack spacing={1} align="stretch">
+                        <HStack justify="space-between">
+                          <Text fontSize="sm">Total:</Text>
+                          <Text fontSize="sm" fontWeight="bold">{relatorio.resumo.participantesProfessores}</Text>
+                        </HStack>
+                        <HStack justify="space-between">
+                          <Text fontSize="sm">Respondidos:</Text>
+                          <Text fontSize="sm" fontWeight="bold" color="green.500">{relatorio.resumo.respondidosProfessores}</Text>
+                        </HStack>
+                        <HStack justify="space-between">
+                          <Text fontSize="sm">Taxa:</Text>
+                          <Text fontSize="sm" fontWeight="bold">
+                            {relatorio.resumo.participantesProfessores > 0
+                              ? ((relatorio.resumo.respondidosProfessores / relatorio.resumo.participantesProfessores) * 100).toFixed(1)
+                              : 0}%
+                          </Text>
+                        </HStack>
+                      </VStack>
+                    </Box>
+                  )}
 
-                  <Box>
-                    <Text fontWeight="bold" mb={2}>👨‍💼 Coordenadores</Text>
-                    <VStack spacing={1} align="stretch">
-                      <HStack justify="space-between">
-                        <Text fontSize="sm">Total:</Text>
-                        <Text fontSize="sm" fontWeight="bold">{relatorio.resumo.participantesCoordenadores}</Text>
-                      </HStack>
-                      <HStack justify="space-between">
-                        <Text fontSize="sm">Respondidos:</Text>
-                        <Text fontSize="sm" fontWeight="bold" color="green.500">{relatorio.resumo.respondidosCoordenadores}</Text>
-                      </HStack>
-                      <HStack justify="space-between">
-                        <Text fontSize="sm">Taxa:</Text>
-                        <Text fontSize="sm" fontWeight="bold">
-                          {relatorio.resumo.participantesCoordenadores > 0 
-                            ? ((relatorio.resumo.respondidosCoordenadores / relatorio.resumo.participantesCoordenadores) * 100).toFixed(1)
-                            : 0}%
-                        </Text>
-                      </HStack>
-                    </VStack>
-                  </Box>
+                  {mostrarResumoCoordenadores && (
+                    <Box>
+                      <Text fontWeight="bold" mb={2}>👨‍💼 Coordenadores</Text>
+                      <VStack spacing={1} align="stretch">
+                        <HStack justify="space-between">
+                          <Text fontSize="sm">Total:</Text>
+                          <Text fontSize="sm" fontWeight="bold">{relatorio.resumo.participantesCoordenadores}</Text>
+                        </HStack>
+                        <HStack justify="space-between">
+                          <Text fontSize="sm">Respondidos:</Text>
+                          <Text fontSize="sm" fontWeight="bold" color="green.500">{relatorio.resumo.respondidosCoordenadores}</Text>
+                        </HStack>
+                        <HStack justify="space-between">
+                          <Text fontSize="sm">Taxa:</Text>
+                          <Text fontSize="sm" fontWeight="bold">
+                            {relatorio.resumo.participantesCoordenadores > 0
+                              ? ((relatorio.resumo.respondidosCoordenadores / relatorio.resumo.participantesCoordenadores) * 100).toFixed(1)
+                              : 0}%
+                          </Text>
+                        </HStack>
+                      </VStack>
+                    </Box>
+                  )}
                 </SimpleGrid>
 
                 {/* Informações de Resposta */}
@@ -569,7 +592,7 @@ const RelatoriosAcompanhamento: React.FC = () => {
                                           return (
                                             <Tr key={`${curso.key}-${turno.key}-${turma.key}-${index}`}>
                                               <Td>{item.curso}</Td>
-                                              <Td>{item.turno ?? '-'}</Td>
+                                              <Td>{item.turno && item.turno.trim().length > 0 ? item.turno : '-'}</Td>
                                               {mostrarColunaCodTurma && (
                                                 <Td>{item.codTurma ?? '-'}</Td>
                                               )}

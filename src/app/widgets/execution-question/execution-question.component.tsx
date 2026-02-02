@@ -438,11 +438,52 @@ export default function ExecutionForm({ questionarioId, participanteId, chave, t
           return isEmpty;
         });
       } else {
-        // Para estrutura normal, verificar se a questão foi respondida
-        const resposta = responses[q.id];
-        const isEmpty = resposta === undefined || resposta === "" || resposta === null ||
-          (Array.isArray(resposta) && resposta.length === 0);
-        
+        // Para estrutura normal, verificar se a questão foi respondida.
+        // IMPORTANTE: questões condicionais são armazenadas com chave composta:
+        // - normal: `${questaoCondicionalId}_${questaoPrincipalId}`
+        // (isso precisa bater com a chave usada na renderização/onChange)
+        let respostaKey: string | number = q.id;
+        let resposta = responses[q.id];
+
+        const isQuestaoCondicional = questoes.some((questaoPrincipal: QuestionResponse) =>
+          questaoPrincipal.opcoes?.some((opcao: any) =>
+            opcao.questaoCondicional?.id === q.id
+          ) || questaoPrincipal.colunas?.some((coluna: any) =>
+            coluna.questaoCondicional?.id === q.id
+          )
+        );
+
+        if (isQuestaoCondicional) {
+          const questaoPrincipal = questoes.find((questaoPrincipal: QuestionResponse) =>
+            questaoPrincipal.opcoes?.some((opcao: any) =>
+              opcao.questaoCondicional?.id === q.id
+            ) || questaoPrincipal.colunas?.some((coluna: any) =>
+              coluna.questaoCondicional?.id === q.id
+            )
+          );
+
+          if (questaoPrincipal) {
+            respostaKey = `${q.id}_${questaoPrincipal.id}`;
+            resposta = responses[respostaKey];
+          }
+        }
+
+        const isEmpty =
+          resposta === undefined ||
+          resposta === "" ||
+          resposta === null ||
+          (Array.isArray(resposta) && resposta.length === 0) ||
+          (typeof resposta === "string" && resposta.trim() === "");
+
+        console.log(`🔍 Validação (liberar botão) - Questão ${q.id}:`, {
+          respostaKey,
+          resposta,
+          isEmpty,
+          obrigatorio: q.obrigatorio,
+          questaoTipo: q.tipo,
+          isQuestaoCondicional
+        });
+
         return !isEmpty;
       }
     });
